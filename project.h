@@ -45,7 +45,8 @@
 
 
 #include "levelmeter.h"
-#include "mixer-strips.h"
+#include "floatbuffer.h"
+
 
 
 class CProject;
@@ -137,18 +138,16 @@ class CWAVPlayer: public QObject
 
 public:
 
-  float *p_buffer; //pointer to external source
-  size_t length_frames; //len of buffer
-  size_t channels;
+  CFloatBuffer *p_buffer; //pointer to external source
+  
   size_t offset_frames; //current offset
-  size_t samplerate;
   
   int state; // 0 - stop, 1 - play, 2 - pause
   
   CWAVPlayer();
   ~CWAVPlayer();
   
-  void link (float *a_p_buffer, size_t a_length_frames, size_t a_channels, size_t a_samplerate);
+  void link (CFloatBuffer *a_p_buffer);
   
   void play();
 };

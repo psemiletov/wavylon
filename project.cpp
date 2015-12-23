@@ -918,23 +918,17 @@ void CProject::files_window_create()
 CWAVPlayer::CWAVPlayer()
 {
   p_buffer = 0;
-  length_frames = 0;
-  channels = 0;
   offset_frames = 0;
   state = 0;
-
 }
 
 
-void CWAVPlayer::link (float *a_p_buffer, size_t a_length_frames, size_t a_channels, size_t a_samplerate)
+void CWAVPlayer::link (CFloatBuffer *a_p_buffer)
 {
   offset_frames = 0;
   state = 0;
 
   p_buffer = a_p_buffer;
-  length_frames = a_length_frames;
-  channels = a_channels;
-  samplerate = a_samplerate;
 }
 
 
@@ -943,12 +937,17 @@ int wavplayer_pa_stream_callback (const void *input, void *output, unsigned long
   if (! wav_player)   
      return paAbort;
      
-  if (wav_player->offset_frames >= wav_player->length_frames)   
+  if (wav_player->offset_frames >= wav_player->p_buffer->length_frames)   
      return paAbort;
  
-  float *buf = wav_player->p_buffer + wav_player->offset_frames * wav_player->channels;
+  //float **inb = (float **)input;
+  float **outb = (float **)output;
+ 
+//  float *buf = wav_player->p_buffer + wav_player->offset_frames * wav_player->channels;
   
-  memcpy (output, buf, wav_player->channels * frameCount * sizeof (float));
+  for (size_t ch = 0; ch < wav_player->p_buffer->channels; ch++)
+       memcpy (outb[ch], wav_player->p_buffer->buffer[ch] + wav_player->offset_frames,
+       wav_player->->p_buffer->channels * frameCount * sizeof (float));
   
   wav_player->offset_frames += frameCount;
   
@@ -976,7 +975,10 @@ void CWAVPlayer::play()
 
   outputParameters.device = pa_device_id_out;
   outputParameters.channelCount = channels;
+  
   outputParameters.sampleFormat = paFloat32;
+  outputParameters.sampleFormat |= paNonInterleaved;
+  
   outputParameters.suggestedLatency = Pa_GetDeviceInfo (outputParameters.device)->defaultLowOutputLatency;;
   outputParameters.hostApiSpecificStreamInfo = NULL;
 
