@@ -16,7 +16,8 @@ useclang{
 
 SOURCES += wavylon.cpp \
     main.cpp \
-    document.cpp \
+    floatbuffer.cpp \
+    envelope.cpp \
     utils.cpp \
     fman.cpp \
     shortcuts.cpp \
@@ -31,8 +32,9 @@ SOURCES += wavylon.cpp \
 #    tinyplayer.cpp
 
 HEADERS += wavylon.h \
-    document.h \
     utils.h \
+    floatbuffer.h\
+    envelope.h \
     fman.h \
     shortcuts.h \
     logmemo.h \

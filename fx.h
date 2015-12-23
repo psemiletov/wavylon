@@ -10,7 +10,7 @@
 
 #include <cmath>
 
-
+#include "floatbuffer.h"
 #include "3pass_eq.h"
 
 enum FxState {
@@ -47,35 +47,33 @@ class AFx: public QObject
 public:
   
   FxState state;
+
   bool bypass;
   bool realtime;
 
   bool ui_visible;
   
-  float *buffer;  //inner buffer for some purposes
+  CFloatBuffer *float_buffer;  //inner buffer for some purposes
   
-  int samplerate;
-  int channels;
-
+  size_t channels;
+  size_t samplerate;
+  
   QWidget *wnd_ui;
   
   QString name;
 
-  AFx (int srate, int chann);
+  AFx (size_t srate);
   virtual ~AFx();
 
-  virtual size_t execute (float *samples, size_t length) = 0;
+  virtual size_t execute (float **input, float **output, size_t frames) = 0;
   virtual void set_state (FxState s);
-  virtual void reset_params (int srate, int chann);
-
-//  virtual void load_from_string (const QString &s) = 0;
-//  virtual QString save_to_string() = 0;
+  virtual void reset_params (size_t srate, size_t channels);
 
   void show_ui();
 
   //virtual void set_parameter (const QString &param, const QString &value) = 0;
 
-  virtual AFx* self_create (int srate, int chann) = 0;
+  virtual AFx* self_create (size_t srate) = 0;
 };
 
 
@@ -88,12 +86,12 @@ public:
   EQSTATE eq_state_ch00;
   EQSTATE eq_state_ch01;
 
-  CFxSimpleEQ (int srate, int chann);
+  CFxSimpleEQ (size_t srate);
   ~CFxSimpleEQ();
 
-  AFx* self_create (int srate, int chann);
+  AFx* self_create (size_t srate);
 
-  size_t execute (float *samples, size_t length);
+  size_t execute (float **input, float **output, size_t frames);
 
 public slots:
 
@@ -115,14 +113,14 @@ public:
 
   float gain;
 
-  CFxSimpleAmp (int srate, int chann);
+  CFxSimpleAmp (size_t srate);
   ~CFxSimpleAmp();
 
   QLabel *label;
 
-  AFx* self_create (int srate, int chann);
+  AFx* self_create (size_t srate);
 
-  size_t execute (float *samples, size_t length);
+  size_t execute (float **input, float **output, size_t frames);
 
 public slots:
 
@@ -138,37 +136,18 @@ public:
 
   float gain;
 
-  CFxSimpleOverdrive (int srate, int chann);
+  CFxSimpleOverdrive (size_t srate);
   ~CFxSimpleOverdrive();
 
-  AFx* self_create (int srate, int chann);
+  AFx* self_create (size_t srate);
 
-  size_t execute (float *samples, size_t length);
+  size_t execute (float **input, float **output, size_t frames);
 
 public slots:
 
   void dial_gain_valueChanged (int value);
 };
 
-
-class CFxSimpleNoiseGate: public AFx
-{
-  Q_OBJECT
-
-public:
-
-  float level; //in samples
-
-  CFxSimpleNoiseGate (int srate, int chann);
-
-  AFx* self_create (int srate, int chann);
-
-  size_t execute (float *samples, size_t length);
-
-public slots:
-
-  void	levelChanged (double d);
-};
 
 
 class CFxPitchShift: public AFx
@@ -178,119 +157,20 @@ class CFxPitchShift: public AFx
 public:
 
   QLabel *label;
+  
   double ratio;
 
-  CFxPitchShift (int srate, int chann);
+  CFxPitchShift (size_t srate);
   ~CFxPitchShift();
 
-  AFx* self_create (int srate, int chann);
+  AFx* self_create (size_t srate);
 
-  size_t execute (float *samples, size_t length);
+  size_t execute (float **input, float **output, size_t frames);
 
 public slots:
 
   void spb_ratio_changed (double value);
 };
-
-
-class CFxSimpleLimiter: public AFx
-{
-  Q_OBJECT
-
-public:
-
-  float threshold; //in samples
-
-  CFxSimpleLimiter (int srate, int chann);
-
-  AFx* self_create (int srate, int chann);
-
-  size_t execute (float *samples, size_t length);
-
-public slots:
-
-  void	levelChanged (double d);
-};
-
-
-class CFxSimpleDelay: public AFx
-{
-  Q_OBJECT
-
-public:
-
-  double dfactor;
-
-  float delay; //in samples
-
-  float current_delay_sample; //in samples
-
-  CRingbuffer *ringbuffer;
-
-  CFxSimpleDelay (int srate, int chann);
-  ~CFxSimpleDelay();
-
-  AFx* self_create (int srate, int chann);
-  void set_state (FxState s);
-
-  void reset_params (int srate, int chann);
-
-  size_t execute (float *samples, size_t length);
-
-public slots:
-
-  void delayChanged (double d);
-};
-
-
-class CFxSimpleComp: public AFx
-{
-  Q_OBJECT
-
-public:
-
-  float threshold; //in samples
-  float ratio; //in samples
-
-  CFxSimpleComp (int srate, int chann);
-
-  AFx* self_create (int srate, int chann);
-
-  size_t execute (float *samples, size_t length);
-
-public slots:
-
-  void	levelChanged (double d);
-  void	ratioChanged (double d);
-};
-
-
-class CFxStereoRotator: public AFx
-{
-  Q_OBJECT
-
-public:
-
-  int angle;
-  
-  float cos_coef;
-  float sin_coef;
-
-  CFxStereoRotator (int srate, int chann);
-  ~CFxStereoRotator();
-
-  QLabel *label;
-
-  AFx* self_create (int srate, int chann);
-
-  size_t execute (float *samples, size_t length);
-
-public slots:
-
-  void dial_angle_valueChanged (int value);
-};
-
-
 
 
 //available fx
@@ -306,7 +186,6 @@ public:
  AFx *find_by_name (const QString &fxname);
  QStringList names();
 };
-
 
 
 
@@ -343,8 +222,5 @@ inline void pan_sincos (float &l, float& r, float p)
   l = cos (pan);
   r = sin (pan);
 }
-
-
-
 
 #endif // FX_H
