@@ -14,11 +14,11 @@
 
 using namespace std;
 
+
+
 int proxy_video_decoder;
 double ogg_q;
-
 CFileFormats *file_formats;
-
 QString temp_mp3_fname;
 
 
@@ -40,43 +40,57 @@ CTioPlainAudio::~CTioPlainAudio()
 }
 
 
-float* CTioPlainAudio::load (const QString &fname)
+CFloatBuffer* CTioPlainAudio::load (const QString &fname)
 {
+  qDebug() << "CTioPlainAudio::load - 1";
   SF_INFO sf;
   sf.format = 0;
   
   SNDFILE *file = sf_open (fname.toUtf8().data(), SFM_READ, &sf);
-  
-  total_samples = sf.channels * sf.frames; 
-  
-  float *output_data  = new float [total_samples];
-  sf_count_t zzz = sf_readf_float (file, output_data, sf.frames);
+    
+  float *filebuf = new float [sf.channels * sf.frames];
+  sf_count_t zzz = sf_readf_float (file, filebuf, sf.frames);
     
   sf_close (file);
   
-  if (! output_data)
+  if (! filebuf)
     {
      qDebug() << "! output_data";
      return NULL; 
     }  
   
-  frames = sf.frames;
-  samplerate = sf.samplerate;
-  channels = sf.channels;
-  format = sf.format;
-/*
-  qDebug() << "frames = " << frames;
-  qDebug() << "total_samples = " << total_samples;
-  qDebug() << "bytes = " << total_samples * sizeof (float);
-  qDebug() << "MAX_INT = " << numeric_limits<int>::max();
-*/
-  return output_data;
+  //samplerate = sf.samplerate;
+//  format = sf.format;
+    
+  CFloatBuffer *fb = 0;
+  
+  if (sf.channels == 1)
+     fb = new CFloatBuffer (filebuf, sf.frames);
+  else   
+      fb = new CFloatBuffer (filebuf, sf.frames, sf.channels);  
+    
+  if (sf.channels != 1)
+     delete [] filebuf;
+  
+  fb->samplerate = sf.samplerate;
+  fb->sndfile_format = sf.format;
+
+//  qDebug() << "frames = " << sf.frames;
+  //qDebug() << "total_samples = " << total_samples;
+  //qDebug() << "bytes = " << total_samples * sizeof (float);
+  //qDebug() << "MAX_INT = " << numeric_limits<int>::max();
+
+
+  qDebug() << "CTioPlainAudio::load - 2";
+  
+
+  return fb;
 }
 
 
 bool CTioPlainAudio::save (const QString &fname)
 {
-  if (! input_data)
+  if (! float_input_buffer)
      {
       qDebug() << "! data";
       return false;
@@ -84,9 +98,16 @@ bool CTioPlainAudio::save (const QString &fname)
 
   SF_INFO sf;
 
+/*
   sf.samplerate = samplerate;
-  sf.channels = channels;
+  sf.channels = float_input_buffer->channels;
   sf.format = format;
+  */
+  
+  sf.samplerate = float_input_buffer->samplerate;
+  sf.channels = float_input_buffer->channels;
+  sf.format = float_input_buffer->sndfile_format;
+  
   
   if (! sf_format_check (&sf))
      {
@@ -95,19 +116,20 @@ bool CTioPlainAudio::save (const QString &fname)
      }  
   
   //if pcm 16 bit
-  //bool CTioPlainAudio::save_16bit_pcm (const QString &fname)
   if ((sf.format & SF_FORMAT_SUBMASK) == SF_FORMAT_PCM_16) 
       return save_16bit_pcm (fname);
 
-  SNDFILE *file = sf_open (fname.toUtf8().data(), SFM_WRITE, &sf);
+  SNDFILE *hfile = sf_open (fname.toUtf8().data(), SFM_WRITE, &sf);
 
   double quality = ogg_q;
-  sf_command (file, SFC_SET_VBR_ENCODING_QUALITY, &quality, sizeof (quality)) ;
+  sf_command (hfile, SFC_SET_VBR_ENCODING_QUALITY, &quality, sizeof (quality)) ;
 
   //qDebug() << "ogg_q = " << ogg_q;
 
-  sf_count_t zzz = sf_writef_float (file, input_data, frames);
-  sf_close (file);
+  float *interleavedbuf = float_input_buffer->to_interleaved();
+
+  sf_count_t zzz = sf_writef_float (hfile, interleavedbuf, float_input_buffer->length_frames);
+  sf_close (hfile);
 
   return true;
 }
@@ -116,13 +138,8 @@ bool CTioPlainAudio::save (const QString &fname)
 CTioHandler::CTioHandler()
 {
   list.append (new CTioPlainAudio);
-  //list.append (new CTioMad);
-  
-//  list.append (new CTioLAME);
-
   list.append (new CTioProxy);
-
-  
+ 
   CTio *instance;
 
   for (int i = 0; i < list.size(); i++)
@@ -153,26 +170,15 @@ bool CTioHandler::is_ext_supported (const QString &fname)
 
 CTio* CTioHandler::get_for_fname (const QString &fname)
 {
-//  qDebug() << "CTioHandler::get_for_fname: " << fname;
-
-//  qDebug() << "list.size: " << list.size();
-
   CTio *instance;
   QString ext = file_get_ext (fname).toLower();
   
-//  qDebug() << "ext: " << ext;
-
   for (int i = 0; i < list.size(); i++)
       {
        instance = list.at (i);
        
-  //     qDebug() << "i = " << i << " tio instance id: " << instance->id;
-       
        if (instance->extensions.indexOf (ext) != -1)
           return instance;
-          
-          
-    //   qDebug() << "i = " << i;   
       }
 
   return NULL;
@@ -183,13 +189,9 @@ CTioPlainAudio::CTioPlainAudio()
 {
   id = "CTioPlainAudio";
   ronly = false;
-  total_samples = 0;
-  input_data = 0;
   
-  frames = 0;
-  samplerate = 0;
-  channels = 0;
-  format = 0;
+  //samplerate = 0;
+  //format = 0;
   
   extensions += file_formats->hextensions.values();
 }
@@ -198,13 +200,9 @@ CTioPlainAudio::CTioPlainAudio()
 CTioPlainAudio::CTioPlainAudio (bool rnly)
 {
   ronly = rnly;
-  total_samples = 0;
-  input_data = 0;
-
-  frames = 0;
-  samplerate = 0;
-  channels = 0;
-  format = 0;
+  float_input_buffer = 0;
+  //samplerate = 0;
+  //format = 0;
 }
 
 
@@ -450,7 +448,7 @@ void file_formats_done()
 
 bool CTioPlainAudio::save_16bit_pcm (const QString &fname)
 {
-  if (! input_data)
+  if (! float_input_buffer)
      { 
       qDebug() << "! data";
       return false;
@@ -458,9 +456,10 @@ bool CTioPlainAudio::save_16bit_pcm (const QString &fname)
 
   SF_INFO sf;
 
-  sf.samplerate = samplerate;
-  sf.channels = channels;
-  sf.format = format; 
+  sf.samplerate = float_input_buffer->samplerate;
+  sf.channels = float_input_buffer->channels;
+  sf.format = SF_FORMAT_WAV; 
+  sf.format |= SF_FORMAT_PCM_16;
   
   if (! sf_format_check (&sf))
      {
@@ -472,13 +471,16 @@ bool CTioPlainAudio::save_16bit_pcm (const QString &fname)
 
 //correctly convert data to 16-bit array
 
-  size_t buflen = frames * sf.channels;
+  size_t buflen = float_input_buffer->length_frames * sf.channels;
+  
+  float *interleavedbuf = float_input_buffer->to_interleaved();
   
   short int *buf = new short int [buflen];
   
+  
   for (size_t i = 0; i < buflen; i++)
       {
-       float f = input_data[i];
+       float f = interleavedbuf[i];
 
        if (f >= 1.0)
           buf[i] = f * 32767;
@@ -488,11 +490,12 @@ bool CTioPlainAudio::save_16bit_pcm (const QString &fname)
    
   SNDFILE *file = sf_open (fname.toUtf8(), SFM_WRITE, &sf);
   
-  sf_count_t zzz = sf_writef_short (file, buf, frames);
+  sf_count_t zzz = sf_writef_short (file, buf, float_input_buffer->length_frames);
   
   sf_close (file);
 
-  delete buf;
+  delete [] buf;
+  delete [] interleavedbuf;
 
   return true;
 }
@@ -511,152 +514,6 @@ float* load_from_lame (QString &fname)
 }
 
 
-
-/*
-
-система кэширования:
-
-класс
-
-загрузить файл, конвертировать его в 32 бит float с частотой оцифровки подлинника
-сохранить во временный файл filename.ext.tmp
-
-предоставить функции чтения из этого временного файла в буфер и из буфера
-по произвольному смещению
-
-при вызове "сохранить исходный файл" конвертируем filename.ext.tmp в исходный файл
-
-для построения волновой формы сканируем filename.ext.tmp
-
-
- */
-
-
-/*
-#ifdef MAD_ENABLED
-
-CTioMad::CTioMad()
-{
-  extensions += "mp3";
-}
-
-
-CTioMad::~CTioMad()
-{
-
-
-}
-
-
-float* CTioMad::load (const QString &fname)
-{
-  qDebug() << "CTioMad::load";
-
- // QFileInfo fi (fname);
-
-  QString temp_fname = QDir::tempPath() + "/eko-temp-from-mp3.wav";
-
-  QString program = "madplay " + QString ("\"") + fname + QString ("\"") + " -o wave:" + temp_fname;
-
-  qDebug() << "temp_fname = " << temp_fname;
-
-  //QProcess *myProcess = new QProcess (this);
-  //myProcess->start (program);
-
-  if (file_exists (temp_fname))
-  if (QProcess::execute (program))
-     {
-      CTioPlainAudio *pa = new CTioPlainAudio (true);
-      float *f = pa->load (temp_fname);
-
-      total_samples = pa->total_samples;
-      frames = pa->frames;
-      samplerate = pa->samplerate;
-      channels = pa->channels;
-      format = pa->format;
-
-     // delete pa;
-
-      return f;
-     }
-}
-
-
-bool CTioMad::save (const QString &fname)
-{
-
-
-}
-
-
-bool CTioMad::save_16bit_pcm (const QString &fname)
-{
-
-
-}
-#endif
-*/
-
-
-
-CTioLAME::CTioLAME()
-{
-  qDebug() << "CTioLAME::CTioLAME";
-  extensions += "mp3";
-  ronly = true;
-  id = "CTioLAME";
-
-}
-
-
-CTioLAME::~CTioLAME()
-{
-
-
-}
-
-
-float* CTioLAME::load (const QString &fname)
-{
-  QString command = "lame --decode \"" + fname + "\" " + temp_mp3_fname;
-  
-  int exit_code = QProcess::execute (command);
-  
-  if (exit_code < 0)
-     return 0;
-
-  if (file_exists (temp_mp3_fname))
-     {
-      CTioPlainAudio *pa = new CTioPlainAudio (true);
-      float *f = pa->load (temp_mp3_fname);
-
-      total_samples = pa->total_samples;
-      frames = pa->frames;
-      samplerate = pa->samplerate;
-      channels = pa->channels;
-      format = pa->format;
-
-      return f;
-     }
-}
-
-
-bool CTioLAME::save (const QString &fname)
-{
-  error_string = tr ("saving of this format is not supported");
-  return false;
-}
-
-
-bool CTioLAME::save_16bit_pcm (const QString &fname)
-{
-  error_string = tr ("saving of this format is not supported");
-  return false;
-}
-
-
-
-
 CTioProxy::CTioProxy()
 {
   //qDebug() << "CTioProxy::CTioProxy";
@@ -664,14 +521,11 @@ CTioProxy::CTioProxy()
   id = "CTioProxy";
   
   
-  //QString exts_mp3 = "mp3";
-  
  // proxies[exts_mp3] = "lame --decode \"@FILEIN\" \"@FILEOUT\"";
   //extensions += exts_mp3;
   
   QString exts_videos = "mp3,avi,mp4,mpeg2,flv,mkv,aac,vob,wmv,3gp,3ga,m2t,mov,mpeg,h264,ts,webm,asf,wma,ogm,rm,qt,nut,smi,ac3,divx,dv,fli,flc,cpk";
-  
-  
+    
   //QString exts_videos = "avi,mp4";
   
   //FFMPEG: ffmpeg -i \"@FILEIN\" -acodec pcm_s16le -ac 2 \"@FILEOUT\"
@@ -682,19 +536,21 @@ CTioProxy::CTioProxy()
   
   QStringList sl_proxy_video_decoders;
 
-#ifdef Q_OS_WIN
+#if defined(Q_OS_WIN) || defined(Q_OS_OS2)
+
 
   QString ffmpeg_path = QCoreApplication::applicationDirPath() + "/" + "ffmpeg.exe";
-
   sl_proxy_video_decoders.append (ffmpeg_path + " -y -nostats -i \"@FILEIN\" -acodec pcm_s16le -ac 2 \"@FILEOUT\"");
+
+  QString mplayer_path = QCoreApplication::applicationDirPath() + "/" + "mplayer.exe";
+  sl_proxy_video_decoders.append (mplayer_path + " -really-quiet -ao pcm:fast:file=\"@FILEOUT\" -vo null -vc null \"@FILEIN\"");
 
 #else
 
   sl_proxy_video_decoders.append ("ffmpeg -y -nostats -i \"@FILEIN\" -acodec pcm_s16le -ac 2 \"@FILEOUT\"");
+  sl_proxy_video_decoders.append ("mplayer -really-quiet -ao pcm:fast:file=\"@FILEOUT\" -vo null -vc null \"@FILEIN\"");
 
 #endif
-
-  sl_proxy_video_decoders.append ("mplayer -really-quiet -ao pcm:fast:file=\"@FILEOUT\" -vo null -vc null \"@FILEIN\"");
   
   //qDebug() << "=========== proxy_video_decoder: " << proxy_video_decoder; 
     
@@ -703,11 +559,8 @@ CTioProxy::CTioProxy()
   QStringList lexts_videos = exts_videos.split (",");
   foreach (QString ext, lexts_videos)
           {
-          // qDebug() << "add ext: " << ext;
            extensions += ext;
           }
-     
-    
 }
 
 
@@ -718,7 +571,7 @@ CTioProxy::~CTioProxy()
 }
 
 
-float* CTioProxy::load (const QString &fname)
+CFloatBuffer* CTioProxy::load (const QString &fname)
 {
  qDebug() << "CTioProxy::load " << fname; 
 
@@ -728,27 +581,12 @@ float* CTioProxy::load (const QString &fname)
 
   QList <QString> keys = proxies.keys();
  
- /*
-  QList <QString> values = proxies.keys();
- 
-  qDebug() << "-------------";
-  
- 
-  for (int i = 0; i < values.size(); i++)
-      qDebug() << values[i];
-  
-  qDebug() << "-------------";
-  
-  */
   for (int i = 0; i < keys.size(); i++)
      {
       QString key = keys[i];
       
-      
       if (key.indexOf (",") != -1)
          {
-          //qDebug() << "key.value: " << proxies[key];
-    
           QStringList l = key.split (",");
           if (l.indexOf (ext) != -1)
              command = proxies[key]; 
@@ -761,8 +599,6 @@ float* CTioProxy::load (const QString &fname)
      }
 
 //  qDebug() << "command: " << command;
-  
-  
   
   if (command.isEmpty() || command.isNull())
     return 0;
@@ -788,13 +624,9 @@ float* CTioProxy::load (const QString &fname)
   if (file_exists (temp_mp3_fname))
      {
       CTioPlainAudio *pa = new CTioPlainAudio (true);
-      float *f = pa->load (temp_mp3_fname);
-
-      total_samples = pa->total_samples;
-      frames = pa->frames;
-      samplerate = pa->samplerate;
-      channels = pa->channels;
-      format = pa->format;
+      CFloatBuffer *f = pa->load (temp_mp3_fname);
+      //samplerate = pa->samplerate;
+      //format = pa->format;
 
       return f;
      }

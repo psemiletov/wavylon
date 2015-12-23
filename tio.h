@@ -9,9 +9,8 @@
 
 #include <sndfile.h>
 
-//#ifdef MAD_ENABLED
-//#include <mad.h>
-//#endif
+#include "floatbuffer.h"
+
 
 
 class CFileFormats
@@ -47,20 +46,14 @@ public:
 
   bool ronly;
   
-  size_t total_samples;
+ // int samplerate;
+ // int format;
   
-  float *input_data;
-
-  size_t frames;
-  
-  int samplerate;
-  int channels;
-  int format;
-  
+  CFloatBuffer *float_input_buffer;
   QStringList extensions;
   QString error_string;
 
-  virtual float* load (const QString &fname) = 0;
+  virtual CFloatBuffer* load (const QString &fname) = 0;
   virtual bool save (const QString &fname) = 0;
   virtual bool save_16bit_pcm (const QString &fname) = 0;
 };
@@ -76,38 +69,7 @@ public:
   CTioPlainAudio (bool rnly);
 
   ~CTioPlainAudio();
-  float* load (const QString &fname);
-  bool save (const QString &fname);
-  bool save_16bit_pcm (const QString &fname);
-};
-
-/*
-#ifdef MAD_ENABLED
-class CTioMad: public CTio
-{
-  Q_OBJECT
-
-public:
-
-  CTioMad();
-  ~CTioMad();
-  float* load (const QString &fname);
-  bool save (const QString &fname);
-  bool save_16bit_pcm (const QString &fname);
-};
-#endif
-*/
-
-
-class CTioLAME: public CTio
-{
-  Q_OBJECT
-
-public:
-
-  CTioLAME();
-  ~CTioLAME();
-  float* load (const QString &fname);
+  CFloatBuffer* load (const QString &fname);
   bool save (const QString &fname);
   bool save_16bit_pcm (const QString &fname);
 };
@@ -123,7 +85,7 @@ public:
 
   CTioProxy();
   ~CTioProxy();
-  float* load (const QString &fname);
+  CFloatBuffer* load (const QString &fname);
   bool save (const QString &fname);
   bool save_16bit_pcm (const QString &fname);
 };

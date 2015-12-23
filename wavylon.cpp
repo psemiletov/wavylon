@@ -102,7 +102,6 @@ extern int buffer_size_frames_multiplier;
 extern int proxy_video_decoder;
 
 
-extern CSoundBuffer *sound_clipboard;
 extern CFileFormats *file_formats;
 
 extern QString temp_mp3_fname;
@@ -123,7 +122,6 @@ extern int rec_channels;
 extern int pa_device_id_in;
 extern int pa_device_id_out;
 
-extern CDSP *dsp;
 
 
 QStringList lpa_apis;
@@ -133,7 +131,6 @@ PaStream *pa_stream;
 PaStream *pa_stream_in;
 
 
-extern CDocumentHolder *documents;
 
 CLogMemo *glog;
 
@@ -141,174 +138,8 @@ CLogMemo *glog;
 extern int transport_state;
 extern double ogg_q;
 
-extern CFxRackWindow *wnd_fxrack;
-
-
-
-//int resampling_realtime_quality;
 
 int simple_counter = 0;
-
-
-/*
-void pa_info()
-{
-  PaHostApiIndex phai = Pa_GetHostApiCount();
-   	
-  for (PaHostApiIndex i = 0; i < phai; i++)
-      {   
-       const PaHostApiInfo *phainfo = Pa_GetHostApiInfo (i); 	       
-       lpa_apis.append (phainfo->name);
-     }  
-  
-  
-  PaDeviceIndex devindex = Pa_GetDefaultOutputDevice(); 	
-   
-  devindex = Pa_GetDeviceCount(); 	
-  
-  for (PaDeviceIndex i = 0; i < devindex - 1; i++)
-      {   
-       
-       PaDeviceInfo *di = Pa_GetDeviceInfo 	(i);
-       
-       //qDebug() << i << " --- name: " << di->name;
-       //qDebug() << i << " --- defaultSampleRate: " << di->defaultSampleRate;
-       //qDebug() << i << " --- defaultLowOutputLatency: " << di->defaultLowOutputLatency;
-       //qDebug() << i << " --- defaultHighOutputLatency: " << di->defaultHighOutputLatency;
-       
-       lpa_devices.append (di->name);
-     }  
-}
-*/
-
-/*
-static void StreamFinished (void* userData )
-{
-   paTestData *data = (paTestData *) userData;
-   printf( "Stream Completed: %s\n", data->message );
-}
-*/
-
-int pa_input_stream_callback (const void *input, void *output, unsigned long frameCount, const PaStreamCallbackTimeInfo *timeInfo, PaStreamCallbackFlags statusFlags, void *userData)
-{
-  if (transport_state == STATE_EXIT)
-     return paAbort;
-
-  if (b_monitor_input)
-     memcpy (output, (float *)input, 2 * frameCount * sizeof (float));
-
-
-  dsp->process_rec ((float *)input, 2, frameCount);
-
-  if (rec_channels == 2)
-    {
-     sf_writef_float (file_temp_handle, (float *)input, frameCount);
-     return paContinue; 	
-    }
-  
-  //if 1 channel
-
-  float *tb = new float[frameCount];
-  float *buffer = (float *)input;
-
-  size_t c = 0;
-  size_t i = 0;
-  
-  size_t samples_total = frameCount * 2;
-    
-  while (i < samples_total)
-        {
-         float ls = buffer [i];
-         float l = buffer [i] * 0.5;
-         i++;
-
-         float rs = buffer [i];
-         float r = buffer [i] * 0.5;
-         i++;
-        
-         if (mono_recording_mode == 0)
-            tb[c++] = l + r;
-         else
-         if (mono_recording_mode == 1)
-            tb[c++] = ls;
-         else
-         if (mono_recording_mode == 2)
-            tb[c++] = rs;
-        }
-
-  sf_writef_float (file_temp_handle, (float *)tb, frameCount);
-
-
-  
-  delete []tb;
-  
-  return paContinue; 	
-}
-
-
-int pa_stream_callback (const void *input, void *output, unsigned long frameCount, const PaStreamCallbackTimeInfo *timeInfo, PaStreamCallbackFlags statusFlags, void *userData)
-{
-  if (transport_state == STATE_EXIT)
-     return paAbort;
-
-  CDocument *d = documents->current; 
-    
-  if (! d)
-     {
-      transport_state = STATE_STOP;
-      return paAbort;
-     } 
-  
-  size_t nsamples = frameCount * documents->current->wave_edit->waveform->sound_buffer->channels;
-
-  if (d->wave_edit->waveform->play_looped)
-     {
-      if (! d->wave_edit->waveform->selected)
-         {
-           if (d->wave_edit->waveform->sound_buffer->buffer_offset >= 
-               d->wave_edit->waveform->sound_buffer->samples_total - nsamples) 
-              {
-               d->wave_edit->waveform->sound_buffer->buffer_offset = 0;
-              }                                          
-          }
-      else //looped, but selected
-           {
-            if (d->wave_edit->waveform->sound_buffer->buffer_offset >= d->wave_edit->waveform->sample_end()) 
-                d->wave_edit->waveform->sound_buffer->buffer_offset = d->wave_edit->waveform->sample_start();
-           }
-     }
-   else //not looped at all
-   if (d->wave_edit->waveform->sound_buffer->buffer_offset >= 
-       d->wave_edit->waveform->sound_buffer->samples_total)
-       {
-        d->wave_edit->waveform->timer.stop();
-        wnd_fxrack->tm_level_meter.stop();
-
-        transport_state = STATE_STOP;
-        wnd_fxrack->fx_rack->set_state_all (FXS_STOP);
-
-//        qDebug() << "full stop";
-//        qDebug() << "buffer offset: " << d->wave_edit->waveform->sound_buffer->buffer_offset;
-//        qDebug() << "samples total: " << d->wave_edit->waveform->sound_buffer->samples_total;
-
-        d->wave_edit->waveform->sound_buffer->buffer_offset = 0;
-        d->wave_edit->waveform->scrollbar->setValue (0);
-        
-        return paAbort;
-       }
- 
-  if (dsp->process (frameCount) == 0)
-     {
-      qDebug() << "return from process()";
-      transport_state = STATE_STOP;
-      return paAbort;
-     }
-  
-  memcpy (output, dsp->temp_buffer, nsamples * sizeof (float));
-  
-  return paContinue; 	
-}
-
 
 
 QStringList get_sound_devices()
@@ -320,15 +151,15 @@ QStringList get_sound_devices()
       {   
        const PaDeviceInfo *di = Pa_GetDeviceInfo (i);
        
-       #if defined(Q_OS_WIN) || defined(Q_OS_OS2)
+#if defined(Q_OS_WIN) || defined(Q_OS_OS2)
        
        l.append (str_from_locale (di->name));
        
-       #else
+#else
 
        l.append (di->name);
        
-       #endif
+#endif
      }  
   
   return l;
@@ -485,13 +316,13 @@ void CWavylon::writeSettings()
   if (project_manager->project)
      settings->setValue ("last_session", project_manager->project->paths.fname_project);
      
-
+/*
   if (wnd_fxrack->isVisible())
      {
       settings->setValue ("wnd_fxrack.pos", wnd_fxrack->pos());
       settings->setValue ("wnd_fxrack.size", wnd_fxrack->size());
      }  
-
+*/
   delete settings;
 }
 
@@ -611,11 +442,11 @@ CWavylon::CWavylon()
   idx_tab_learn = 0;
   
   transport_state = STATE_STOP;
-  
+ /* 
   transport_control = new CTransportControl;
   connect(transport_control, SIGNAL(play_pause()), this, SLOT(slot_transport_play()));
   connect(transport_control, SIGNAL(stop()), this, SLOT(slot_transport_stop()));
-  
+  */
   create_paths();
   
   QString sfilename = dir_config + "/wavylon.conf";
@@ -745,12 +576,10 @@ CWavylon::CWavylon()
   idx_tab_edit_activate();
     
   
-  dsp = new CDSP;
-     
-  wnd_fxrack = new CFxRackWindow;
+  //dsp = new CDSP;
+    
   
-  documents->transport_control = transport_control;
-  
+  /*
   QPoint ps = settings->value ("wnd_fxrack.pos", QPoint (pos().x() + width() + 3, y())).toPoint();
   
   if (settings->value ("wnd_fxrack_visible", true).toBool())
@@ -759,7 +588,7 @@ CWavylon::CWavylon()
       wnd_fxrack->show();
       wnd_fxrack->raise();
      } 
-     
+    */ 
   
   if (file_exists (settings->value ("temp_path", QDir::tempPath()).toString() + fname_tempfile))
      QFile::remove (settings->value ("temp_path", QDir::tempPath()).toString() + fname_tempfile);
@@ -799,27 +628,17 @@ void CWavylon::closeEvent (QCloseEvent *event)
   if (main_tab_widget->currentIndex() == idx_tab_tune)
      leaving_tune();
 
-  if (settings->value("session_restore", false).toBool())
-     {
-      QString fname_session (dir_sessions);
-      fname_session.append ("/def-session-777");
-      documents->save_to_session (fname_session);
-     }
-
   writeSettings();
 
   qstring_save (fname_fif, sl_fif_history.join ("\n"));
   
   delete shortcuts;
   
-  delete dsp;
-  dsp = 0;
+//  delete dsp;
+//  dsp = 0;
   
-  delete wnd_fxrack;
-  wnd_fxrack = 0;
-  
-  delete documents;
-  documents = 0;
+//  delete wnd_fxrack;
+//  wnd_fxrack = 0;
   
   delete project_manager;
   project_manager = 0;
@@ -868,7 +687,7 @@ void CWavylon::open()
   qDebug() << "CEKO::open() - start";
 
   transport_state = STATE_STOP;
-  wnd_fxrack->fx_rack->set_state_all (FXS_STOP);
+  //wnd_fxrack->fx_rack->set_state_all (FXS_STOP);
 
   if (pa_stream)
      {
@@ -883,24 +702,8 @@ void CWavylon::open()
      }
 
 
-  qDebug() << "1";
-  
-  qDebug() << settings->value ("use_trad_dialogs", "0").toBool();
-
   if (! settings->value ("use_trad_dialogs", "0").toBool())
      {
-      /*CDocument *d = documents->get_current();
-
-      if (d)
-         {
-          if (file_exists (d->file_name))
-              fman->nav (get_file_path (d->file_name));
-          else
-              fman->nav (dir_last);
-         }
-      else
-          fman->nav (dir_last);
-*/
       main_tab_widget->setCurrentIndex (idx_tab_fman);
       fm_entry_mode = FM_ENTRY_MODE_OPEN;
 
@@ -991,33 +794,13 @@ void CWavylon::open()
 bool CWavylon::save()
 {
   project_manager->project_save();
- /* CDocument *d = documents->get_current();
-
-  if (! d)
-     return false;
-
-  if (d->wave_edit->isReadOnly())
-     {
-      log->log (tr ("This file is open in the read-only mode. You can save it with another name using <b>Save as</b>"));
-      return false;
-     }
-
-  if (file_exists (d->file_name))
-     d->save_with_name (d->file_name);
-  else
-      return saveAs();
-
-  return true;*/
+  return true;
 }
 
 
 bool CWavylon::saveAs()
 {
-  CDocument *d = documents->get_current();
-  
-  if (! d)
-     return false;
-
+/*  
   if (! settings->value ("use_trad_dialogs", "0").toBool())
      {
       main_tab_widget->setCurrentIndex (idx_tab_fman);
@@ -1098,7 +881,7 @@ bool CWavylon::saveAs()
    else
        dialog.setSidebarUrls (sidebarUrls_old);
 
-  settings->setValue ("dialog_size", dialog.size());
+  settings->setValue ("dialog_size", dialog.size());*/
   return true;
 }
 
@@ -1196,64 +979,31 @@ void CWavylon::createActions()
 
 void CWavylon::createMenus()
 {
-  fileMenu = menuBar()->addMenu (tr ("File"));
-  fileMenu->setTearOffEnabled (true);
-
-  fileMenu->addAction (act_test);
-
-  fileMenu->addAction (newAct);
   
-  add_to_menu (fileMenu, tr ("Record"), SLOT(file_record()));
-  add_to_menu (fileMenu, tr ("Open"), SLOT(open()), "Ctrl+O", ":/icons/file-open.png");
-  add_to_menu (fileMenu, tr ("Last closed file"), SLOT(file_last_opened()));
-  
-  fileMenu->addSeparator();
-
-  add_to_menu (fileMenu, tr ("Change format"), SLOT(file_change_format()));
-  add_to_menu (fileMenu, tr ("File info"), SLOT(file_info()));
-
-  fileMenu->addSeparator();
-
-  fileMenu->addAction (saveAct);
-  fileMenu->addAction (saveAsAct);
-
-  QMenu *tm = fileMenu->addMenu (tr ("Save as different"));
-  tm->setTearOffEnabled (true);
-
-  add_to_menu (tm, tr ("Save timestamped version"), SLOT(file_save_version()), "Alt+S");
-  add_to_menu (tm, tr ("Save session"), SLOT(session_save_as()));
-
-  fileMenu->addSeparator();
-
-  tm = fileMenu->addMenu (tr ("Import/Export"));
-  tm->setTearOffEnabled (true);
-  add_to_menu (tm, tr ("Import from RAW"), SLOT(file_import_raw()));
-  add_to_menu (tm, tr ("Export to MP3"), SLOT(file_export_mp3()));
-
- // add_to_menu (tm, tr ("Export to RAW"), SLOT(file_export_raw()));
-
-  fileMenu->addSeparator();
-
-  menu_file_actions = fileMenu->addMenu (tr ("File actions"));
-  add_to_menu (menu_file_actions, tr ("Reload"), SLOT(file_reload()));
-      
-  menu_file_recent = fileMenu->addMenu (tr ("Recent files"));
-  menu_file_sessions = fileMenu->addMenu (tr ("Sessions"));
-
-  fileMenu->addSeparator();
-
-  add_to_menu (fileMenu, tr ("Close current"), SLOT(close_current()), "Ctrl+W");
-
-  fileMenu->addAction (exitAct);
-
-
   menu_project = menuBar()->addMenu (tr ("Project"));
   menu_project->setTearOffEnabled (true);
+
+  //menu_project->addAction (act_test);
+
+  menu_project->addAction (newAct);
+  
+  add_to_menu (menu_project, tr ("Record"), SLOT(file_record()));
+  add_to_menu (menu_project, tr ("Open"), SLOT(open()), "Ctrl+O", ":/icons/file-open.png");
+  add_to_menu (menu_project, tr ("Last closed file"), SLOT(file_last_opened()));
+  menu_file_recent = menu_project->addMenu (tr ("Recent files"));
+  
+  fileMenu->addSeparator();
+  
 
   add_to_menu (menu_project, tr ("WAVs"), SLOT(project_call_wavs_wnd()));
   add_to_menu (menu_project, tr ("Project settings"), SLOT(project_props()));
   add_to_menu (menu_project, tr ("Project mixdown"), SLOT(project_mixdown()));
   
+  add_to_menu (menu_project, tr ("Close current"), SLOT(close_current()), "Ctrl+W");
+
+  menu_project->addSeparator();
+  
+  menu_project->addAction (exitAct);
   
   
   
@@ -1281,18 +1031,11 @@ void CWavylon::createMenus()
   editMenu->addAction (copyAct);
   editMenu->addAction (pasteAct);
 
-  add_to_menu (editMenu, tr ("Copy to new"), SLOT(ed_copy_to_new()));
-  add_to_menu (editMenu, tr ("Copy to new (default format)"), SLOT(ed_copy_to_new_fmt()));
-
   add_to_menu (editMenu, tr ("Delete (Del)"), SLOT(ed_delete()));
   add_to_menu (editMenu, tr ("Trim"), SLOT(ed_trim()));
   
   editMenu->addSeparator();
-
-  add_to_menu (editMenu, tr ("Copy current file name"), SLOT(edit_copy_current_fname()), "Ctrl+W");
-
-  editMenu->addSeparator();
-
+  
   add_to_menu (editMenu, tr ("Select all"), SLOT(ed_select_all()), "Ctrl+A");
   add_to_menu (editMenu, tr ("Deselect"), SLOT(ed_deselect()));
   
@@ -1309,9 +1052,9 @@ void CWavylon::createMenus()
   add_to_menu (menu_search, tr ("Find next"), SLOT(search_find_next()),"F3");
   add_to_menu (menu_search, tr ("Find previous"), SLOT(search_find_prev()),"Ctrl+F3");
 
-
-  menu_functions = menuBar()->addMenu (tr ("Functions"));
-  menu_functions->setTearOffEnabled (true);
+  
+  //menu_functions = menuBar()->addMenu (tr ("Functions"));
+  //menu_functions->setTearOffEnabled (true);
 
 
   
@@ -1326,12 +1069,8 @@ void CWavylon::createMenus()
   menu_nav->addSeparator();
   
 
-  //add_to_menu (menu_nav, tr ("Save position"), SLOT(nav_save_pos()));
-  //add_to_menu (menu_nav, tr ("Go to saved position"), SLOT(nav_goto_pos()));
-  add_to_menu (menu_nav, tr ("Next tab"), SLOT(nav_goto_right_tab()));
-  add_to_menu (menu_nav, tr ("Prev tab"), SLOT(nav_goto_left_tab()));
   add_to_menu (menu_nav, tr ("Focus the Famous input field"), SLOT(nav_focus_to_fif()), "Ctrl+F");
-  add_to_menu (menu_nav, tr ("Focus the editor"), SLOT(nav_focus_to_editor()));
+  //add_to_menu (menu_nav, tr ("Focus the editor"), SLOT(nav_focus_to_editor()));
 
   menu_fm = menuBar()->addMenu (tr ("Fm"));
   menu_fm->setTearOffEnabled (true);
@@ -1346,7 +1085,7 @@ void CWavylon::createMenus()
   menu_fm_file_infos = menu_fm->addMenu (tr ("File information"));
   menu_fm_file_infos->setTearOffEnabled (true);
 
-  add_to_menu (menu_fm_file_infos, tr ("Full info"), SLOT(fm_full_info()));
+  //add_to_menu (menu_fm_file_infos, tr ("Full info"), SLOT(fm_full_info()));
 
   
   add_to_menu (menu_fm, tr ("Go to home dir"), SLOT(fman_home()));
@@ -1376,7 +1115,7 @@ void CWavylon::createMenus()
 
   add_to_menu (menu_view, tr ("Save profile"), SLOT(profile_save_as()));
 
-  add_to_menu (menu_view, tr ("Show/hide FX Rack"), SLOT(view_show_mixer()), "Alt+M");
+  //add_to_menu (menu_view, tr ("Show/hide FX Rack"), SLOT(view_show_mixer()), "Alt+M");
   
   add_to_menu (menu_view, tr ("Toggle fullscreen"), SLOT(view_toggle_fs()));
   add_to_menu (menu_view, tr ("Stay on top"), SLOT(view_stay_on_top()));
@@ -1416,9 +1155,7 @@ void CWavylon::createToolBars()
   cb_play_looped = new QCheckBox (tr ("looped")); 
   connect(cb_play_looped, SIGNAL(stateChanged (int )), this, SLOT(cb_play_looped_changed (int )));
   transportToolBar->addWidget (cb_play_looped);
-    
- // transportToolBar->addAction (transport_play);
-  //transportToolBar->addAction (transport_stop);
+   
     
   QLabel *lt = new QLabel (tr ("Current time: "));
   l_maintime = new QLabel; 
@@ -1443,14 +1180,14 @@ CWavylon::~CWavylon()
   delete text_file_browser;
   delete fman;
   delete log;
-  delete transport_control;
+ // delete transport_control;
 }
 
 
 void CWavylon::pageChanged (int index)
 {
   //qDebug() << "CEKO::pageChanged index = " << index;
-
+/*
   transport_state = STATE_STOP;
   
   if (pa_stream)
@@ -1479,22 +1216,21 @@ void CWavylon::pageChanged (int index)
       documents->current->update_title();
       cb_play_looped->setChecked (documents->current->wave_edit->waveform->play_looped);
      } 
-
+*/
   //qDebug() << "CEKO::pageChanged end" << index;
 }
 
 
 void CWavylon::close_current()
 {
-  transport_state = STATE_STOP;
+/*  transport_state = STATE_STOP;
   
   if (pa_stream)
      {
       Pa_CloseStream (pa_stream);	
       pa_stream = 0;
      }
-     
-  documents->close_current();
+  */   
 }
 
 
@@ -2374,20 +2110,20 @@ void CWavylon::createManual()
 
 
 void CWavylon::file_last_opened()
-{
+{/*
   if (documents->recent_files.size() > 0)
      {
       documents->open_file (documents->recent_files[0]);
       documents->recent_files.removeAt (0);
       documents->update_recent_menu();
       main_tab_widget->setCurrentIndex (idx_tab_edit); 
-     }
+     }*/
 }
 
 
 void CWavylon::file_save_version()
 {
-  CDocument *d = documents->get_current();
+  /*CDocument *d = documents->get_current();
   if (! d)
      return;
 
@@ -2411,7 +2147,7 @@ void CWavylon::file_save_version()
   if (d->save_with_name_plain (fname))
      log->log (tr ("%1 - saved").arg (fname));
   else
-     log->log (tr ("Cannot save %1").arg (fname));
+     log->log (tr ("Cannot save %1").arg (fname));*/
 }
 
 
@@ -2424,7 +2160,7 @@ void CWavylon::dragEnterEvent (QDragEnterEvent *event)
 
 void CWavylon::dropEvent (QDropEvent *event)
 {
-  QString fName;
+  /*QString fName;
   QFileInfo info;
   
   if (! event->mimeData()->hasUrls())
@@ -2437,7 +2173,7 @@ void CWavylon::dropEvent (QDropEvent *event)
            if (info.isFile())
                documents->open_file (fName);
            }
-              
+    */          
   event->acceptProposedAction();
 }
 
@@ -2634,7 +2370,7 @@ CAboutWindow::CAboutWindow()
 
 void CWavylon::cb_button_saves_as()
 {
-  CDocument *d = documents->get_current();
+/*  CDocument *d = documents->get_current();
   if (! d)
      return;
 
@@ -2661,7 +2397,7 @@ void CWavylon::cb_button_saves_as()
    dir_last = f.path();
    update_dyn_menus();
    fman->refresh();
-   main_tab_widget->setCurrentIndex (idx_tab_edit);
+   main_tab_widget->setCurrentIndex (idx_tab_edit);*/
 }
 
 
@@ -2820,9 +2556,9 @@ void CWavylon::fman_create_dir()
 
 void CWavylon::view_show_mixer()
 {
-  bool visibility = ! wnd_fxrack->isVisible();
+/*  bool visibility = ! wnd_fxrack->isVisible();
   wnd_fxrack->setVisible (visibility);
-  settings->setValue ("wnd_fxrack_visible", visibility);
+  settings->setValue ("wnd_fxrack_visible", visibility);*/
 }
 
 
@@ -2859,13 +2595,7 @@ void CWavylon::file_use_palette()
   fname_def_palette = fname;
   load_palette (fname);
   
-//  documents->def_palette = fname;
-//  documents->load_palette (fname);
   update_stylesheet (fname_stylesheet);
-  
-//  documents->apply_settings();
-
-  //update_logmemo_palette();
 }
 
 
@@ -3033,9 +2763,6 @@ void CWavylon::fman_file_activated (const QString &full_path)
 
   transport_state = STATE_STOP;
  
- /* CDocument *d = documents->open_file (full_path);
-  if (d)
-      dir_last = get_file_path (d->file_name);*/
       
      project_manager->project_open (full_path);
            
@@ -3309,7 +3036,7 @@ void CWavylon::fman_deselect_by_regexp()
   
 void CWavylon::idx_tab_edit_activate()
 {
-  fileMenu->menuAction()->setVisible (true);
+//  fileMenu->menuAction()->setVisible (true);
   editMenu->menuAction()->setVisible (true);
   //menu_functions->menuAction()->setVisible (true);
   menu_search->menuAction()->setVisible (false);
@@ -3322,7 +3049,7 @@ void CWavylon::idx_tab_edit_activate()
 
 void CWavylon::idx_tab_tune_activate()
 {
-  fileMenu->menuAction()->setVisible (true);
+//  fileMenu->menuAction()->setVisible (true);
   editMenu->menuAction()->setVisible (false);
   //menu_functions->menuAction()->setVisible (true);
   menu_search->menuAction()->setVisible (false);
@@ -3335,7 +3062,7 @@ void CWavylon::idx_tab_tune_activate()
 
 void CWavylon::idx_tab_fman_activate()
 {
-  fileMenu->menuAction()->setVisible (true);
+ // fileMenu->menuAction()->setVisible (true);
   editMenu->menuAction()->setVisible (false);
   //menu_functions->menuAction()->setVisible (false);
   menu_search->menuAction()->setVisible (true);
@@ -3348,7 +3075,7 @@ void CWavylon::idx_tab_fman_activate()
 
 void CWavylon::idx_tab_learn_activate()
 {
-  fileMenu->menuAction()->setVisible (true);
+  //fileMenu->menuAction()->setVisible (true);
   editMenu->menuAction()->setVisible (false);
   //menu_functions->menuAction()->setVisible (false);
   menu_search->menuAction()->setVisible (true);
@@ -3375,232 +3102,15 @@ void CWavylon::show_html_data (const QString &data)
 }
 
 
-void CWavylon::slot_transport_play()
-{
-  if (transport_state == STATE_RECORD)
-     return;
-
-  if (pa_stream)
-     {
-      Pa_CloseStream (pa_stream);	
-      pa_stream = 0;
-     }
-  
-  CDocument *d = documents->get_current(); 
-  
-  if (! d)
-     return;
- 
-  
-  if (transport_state != STATE_PLAY)
-     { 
-      PaStreamParameters outputParameters;
-
-      outputParameters.device = pa_device_id_out;
-      outputParameters.channelCount = documents->current->wave_edit->waveform->sound_buffer->channels;
-      outputParameters.sampleFormat = paFloat32;
-      outputParameters.suggestedLatency = Pa_GetDeviceInfo (outputParameters.device)->defaultLowOutputLatency;;
-      outputParameters.hostApiSpecificStreamInfo = NULL;
-
-      PaStreamParameters inputParameters;
-
-      inputParameters.device = pa_device_id_in;
-      inputParameters.channelCount = documents->current->wave_edit->waveform->sound_buffer->channels;
-      inputParameters.sampleFormat = paFloat32;
-      inputParameters.suggestedLatency = Pa_GetDeviceInfo (inputParameters.device)->defaultLowOutputLatency;;
-      inputParameters.hostApiSpecificStreamInfo = NULL;
-
-  
-      PaError err = Pa_OpenStream (&pa_stream,
-                                   NULL, //&inputParameters,
-                                   &outputParameters,
- 		                           documents->current->wave_edit->waveform->sound_buffer->samplerate,
-		                           buffer_size_frames,
-		                           paNoFlag,
-		                           pa_stream_callback,
-		                           NULL//&pe 
-	                              ); 	
-   
-      qDebug() << Pa_GetErrorText (err);
-       
-      if (err < 0)
-         {
-          log->log (Pa_GetErrorText (err));
-          pa_stream = 0;
-          return;
-         }
-     
-      
-      transport_play->setIcon (QIcon (":/icons/play.png"));
-   
-      if (d->wave_edit->waveform->play_looped && d->wave_edit->waveform->selected)
-          //set the buffer offset and cursor to the start of the selection
-          d->wave_edit->waveform->sound_buffer->buffer_offset = d->wave_edit->waveform->sample_start();
-    
-          
-      wnd_fxrack->fx_rack->set_state_all (FXS_RUN);
-      d->wave_edit->waveform->timer.start();
-      wnd_fxrack->level_meter->init_state = false;
-      wnd_fxrack->tm_level_meter.start();
-         
-      transport_state = STATE_PLAY;
-      err = Pa_StartStream (pa_stream);
-      qDebug() << Pa_GetErrorText (err);
-
-       if (err < 0)
-          {
-           log->log (Pa_GetErrorText (err));
-           pa_stream = 0;
-          }
-     
-       return;
-      }
-
-     
-  transport_state = STATE_PAUSE;
-  
-  wnd_fxrack->fx_rack->set_state_all (FXS_PAUSE);
-
-  if (d)
-     d->wave_edit->waveform->timer.stop();
-
-  wnd_fxrack->tm_level_meter.stop();
-
-  transport_play->setIcon (QIcon (":/icons/pause.png"));
-}
-
-
-void CWavylon::stop_recording()
-{
-  if (pa_stream)
-     {
-      Pa_AbortStream (pa_stream_in);	
-      Pa_CloseStream (pa_stream_in);	
-      pa_stream_in = 0;
-     }
-
-   sf_close  (file_temp_handle);
-       
-   if (! file_exists (settings->value ("temp_path", QDir::tempPath()).toString() + fname_tempfile))
-       qDebug() << "! fname_tempfile";
-      
-   CDocument *d = documents->open_file (settings->value ("temp_path", QDir::tempPath()).toString() + fname_tempfile, false);
-      
-   int sndfile_format = 0;
-   sndfile_format = sndfile_format | SF_FORMAT_WAV | SF_FORMAT_FLOAT;
-   
-   int format = settings->value ("def_sndfile_format", sndfile_format).toInt();
- 
-   d->wave_edit->waveform->sound_buffer->sndfile_format = format;
- 
-   if (file_exists (settings->value ("temp_path", QDir::tempPath()).toString() + fname_tempfile))
-      QFile::remove (settings->value ("temp_path", QDir::tempPath()).toString() + fname_tempfile);
-
-   transport_state = STATE_STOP;
-}
-
-
-void CWavylon::slot_transport_stop()
-{
-  wnd_fxrack->tm_level_meter.stop();
-  wnd_fxrack->fx_rack->set_state_all (FXS_STOP);
-  transport_play->setIcon (QIcon (":/icons/play.png"));
-  
-  if (transport_state == STATE_RECORD)
-     {
-      stop_recording();
-      return;
-     }
-  
-  transport_state = STATE_STOP;
-  
-  if (pa_stream)
-     {
-       Pa_CloseStream (pa_stream);	
-       pa_stream = 0;
-     }
-  
-  CDocument *d = documents->get_current(); 
-  
-  if (d)
-     {
-      d->wave_edit->waveform->timer.stop();
-      d->wave_edit->waveform->sound_buffer->buffer_offset = 0;
-      d->wave_edit->waveform->scrollbar->setValue (0);
-     }
-}
-
-
-void CWavylon::ed_copy_to_new()
-{
-  CDocument *d = documents->get_current(); 
-  if (! d)
-     return;
-  
-  if (! d->wave_edit->waveform->selected)
-     return;
-  
-  d->wave_edit->waveform->copy_selected();
-  
-  if (! sound_clipboard || ! sound_clipboard->buffer)
-     return;
-  
-  CDocument *new_document = documents->create_new();
-  main_tab_widget->setCurrentIndex (idx_tab_edit);
-
-  new_document->wave_edit->waveform->sound_buffer->copy_from (sound_clipboard); 
-  new_document->wave_edit->waveform->recalc_view();
-  new_document->wave_edit->waveform->prepare_image();
-  
-  new_document->wave_edit->waveform->init_state = false;
-  new_document->wave_edit->timeruler->init_state = false;
-  
-  new_document->wave_edit->waveform->update();
-}
-
-
-void CWavylon::ed_copy_to_new_fmt()
-{
-  CDocument *d = documents->get_current();
-  if (! d)
-     return;
-
-  if (! d->wave_edit->waveform->selected)
-     return;
-
-  d->wave_edit->waveform->copy_selected();
-
-  if (! sound_clipboard || ! sound_clipboard->buffer)
-     return;
-
-  CDocument *new_document = documents->create_new();
-  main_tab_widget->setCurrentIndex (idx_tab_edit);
-
-  new_document->wave_edit->waveform->sound_buffer->copy_from_w_resample (sound_clipboard);
-
-  new_document->wave_edit->waveform->recalc_view();
-  new_document->wave_edit->waveform->prepare_image();
-
-  new_document->wave_edit->waveform->init_state = false;
-  new_document->wave_edit->timeruler->init_state = false;
-
-  new_document->wave_edit->waveform->update();
-}
-
 
 void CWavylon::ed_delete()
 {
-  CDocument *d = documents->get_current(); 
-  if (! d)
-     return;
-  
-  d->wave_edit->waveform->delete_selected();   
-}
+  }
 
 
 void CWavylon::file_info()
 {
-  CDocument *d = documents->get_current(); 
+/*  CDocument *d = documents->get_current(); 
   if (! d)
      return;
   
@@ -3614,452 +3124,32 @@ void CWavylon::file_info()
   log->log (subtype);
   log->log (format);
 
-  log->log (d->file_name);
+  log->log (d->file_name);*/
 }
 
 
-CChangeFormatWindow::CChangeFormatWindow (QWidget *parent, CWaveform *waveform, int fm): QDialog (parent)
-{
-  setModal (true);
-  
-  wf = waveform;
-  
-  if (wf)
-     fmt = wf->sound_buffer->sndfile_format;
-  else
-      fmt = fm;   
-
-  cmb_format = new QComboBox;
-  cmb_subtype = new QComboBox;
-  cmb_samplerate = new QComboBox;
-  cmb_samplerate->setEditable (true);
-  
-  channels = new QSpinBox; 
-
-  if (wf)
-     channels->setValue (wf->sound_buffer->channels);
-
-  cmb_format->addItems (file_formats->hformatnames.values());
-  
-  int f = (fmt & SF_FORMAT_TYPEMASK);
-  QString sf = file_formats->hformatnames.value (f);
-  cmb_format->setCurrentIndex (cmb_format->findText (sf));
-  
-  connect (cmb_format, SIGNAL(currentIndexChanged (const QString &)),
-           this, SLOT(format_currentIndexChanged (const QString &)));
-
-  format_currentIndexChanged (sf);
-  
-  QStringList sl_samplerates;
-  sl_samplerates.append ("8000");
-  sl_samplerates.append ("11025");
-  sl_samplerates.append ("22050");
-  sl_samplerates.append ("32000");
-  sl_samplerates.append ("44100");
-  sl_samplerates.append ("48000");
-  sl_samplerates.append ("96000");
-  sl_samplerates.append ("176400");
-  sl_samplerates.append ("192000");
-  
-  cmb_samplerate->addItems (sl_samplerates);
-  
-  int i = 0;
-  
-  if (wf)
-     i = cmb_samplerate->findText (QString::number (wf->sound_buffer->samplerate));
-      
-  if (i == -1)
-     i = 0; 
-
-  cmb_samplerate->setCurrentIndex (i);
-  
-  QVBoxLayout *lt_v = new QVBoxLayout;
-
-
-  QHBoxLayout *lt_h = new QHBoxLayout;
-  QLabel * l = new QLabel (tr ("Format"));
-  lt_h->addWidget (l);
-  lt_h->addWidget (cmb_format);
-  lt_v->addLayout (lt_h);
-  
-  
-  lt_h = new QHBoxLayout;
-  l = new QLabel (tr ("Subtype"));
-  lt_h->addWidget (l);
-  lt_h->addWidget (cmb_subtype);
-  lt_v->addLayout (lt_h);
-  
-  
-  lt_h = new QHBoxLayout;
-  l = new QLabel (tr ("Samplerate"));
-  lt_h->addWidget (l);
-  lt_h->addWidget (cmb_samplerate);
-  lt_v->addLayout (lt_h);
-  
-  
-  lt_h = new QHBoxLayout;
-  l = new QLabel (tr ("Channels"));
-  lt_h->addWidget (l);
-  lt_h->addWidget (channels);
-  lt_v->addLayout (lt_h);
-
-
-  lt_h = new QHBoxLayout;
-  
-  QPushButton *bt_apply = new QPushButton (tr ("OK"));
-  QPushButton *bt_exit = new QPushButton (tr ("Exit"));
-
-  connect (bt_exit, SIGNAL(clicked()), this, SLOT(reject()));
-  connect (bt_apply, SIGNAL(clicked()), this, SLOT(accept()));
-
-  lt_h->addWidget (bt_apply);
-  lt_h->addWidget (bt_exit);
-
-  lt_v->addLayout (lt_h);
-
-  setLayout (lt_v);
-  setWindowTitle (tr ("Sound file format"));
-}
-
-
-void CChangeFormatWindow::format_currentIndexChanged (const QString &text)
-{
-  cmb_subtype->clear();
-  
-  int f = file_formats->hformatnames.key (text);
-  
-  QStringList sl;
-  QList <int> values = file_formats->hformat.values (f);
-  
-  for (int i = 0; i < values.size(); ++i)
-      {
-       sl.append (file_formats->hsubtype.value (values.at(i))); 
-      } 
-  
-  cmb_subtype->addItems (sl);
-    
-  int st = (fmt & SF_FORMAT_SUBMASK); 
-  QString ssubtype = file_formats->hsubtype.value (st);
-  
-  int i = cmb_subtype->findText (ssubtype);
-  if (i == -1)
-     i = 0;
-  
-  cmb_subtype->setCurrentIndex (i);
-}
-
-
-void CWavylon::file_change_format()
-{
-  CDocument *d = documents->get_current(); 
-  if (! d)
-     return;
-
-  CChangeFormatWindow *w = new CChangeFormatWindow (0, d->wave_edit->waveform, 0);
-  
-  int result = w->exec();
-  
-  if (result != QDialog::Accepted)
-     {
-      delete w;
-      return;
-     }
-  
-  d->wave_edit->waveform->undo_take_shot (UNDO_WHOLE);
-  
-  int f = file_formats->hformatnames.key (w->cmb_format->currentText());
-  int stype = file_formats->hsubtype.key (w->cmb_subtype->currentText());
-  
-  d->wave_edit->waveform->sound_buffer->sndfile_format = 0;
-  d->wave_edit->waveform->sound_buffer->sndfile_format = f | stype; 
-  
-  if (w->cmb_samplerate->currentText().toInt() != w->wf->sound_buffer->samplerate)
-     {
-      CSoundBuffer *b = d->wave_edit->waveform->sound_buffer->resample (w->cmb_samplerate->currentText().toInt());
-      delete d->wave_edit->waveform->sound_buffer;
-      d->wave_edit->waveform->sound_buffer = b;
-      d->wave_edit->waveform->magic_update();
-      //d->effects_update_params();
-     }
-
-  if (w->channels->value() != w->wf->sound_buffer->channels)
-     {
-      if (w->wf->sound_buffer->channels == 1)
-         {
-          CSoundBuffer *t = d->wave_edit->waveform->sound_buffer->convert_to_stereo (false);
-          if (! t)
-             return;
-     
-          delete d->wave_edit->waveform->sound_buffer;
-          d->wave_edit->waveform->sound_buffer = t;
-          d->wave_edit->waveform->magic_update();
-          //d->effects_update_params();
-         }
-      else
-          if (w->wf->sound_buffer->channels == 2)
-            {
-             CSoundBuffer *t = d->wave_edit->waveform->sound_buffer->convert_to_mono();
-             if (! t)
-                return;
-     
-             delete d->wave_edit->waveform->sound_buffer;
-             d->wave_edit->waveform->sound_buffer = t;
-             d->wave_edit->waveform->magic_update();
-            // d->effects_update_params();
-            }
-     }
-     
-  delete w;
-}
-  
-
-void CWavylon::fn_stereo_to_mono()
-{
-  CDocument *d = documents->get_current(); 
-  if (! d)
-     return; 
-
-  if (! d->wave_edit->waveform->sound_buffer->buffer)
-     return; 
-
-  if (d->wave_edit->waveform->sound_buffer->channels != 2)
-     return;
-
-  d->wave_edit->waveform->undo_take_shot (UNDO_WHOLE);
-  
-  CSoundBuffer *t = d->wave_edit->waveform->sound_buffer->convert_to_mono();
-  if (! t)
-     return;
-
-  delete d->wave_edit->waveform->sound_buffer;
-  d->wave_edit->waveform->sound_buffer = t;
-  
-  d->wave_edit->waveform->magic_update();
-  //d->effects_update_params();
-}
-
-
-void CWavylon::fun_51_to_stereo (int algo)
-{
-  CDocument *d = documents->get_current();
-  if (! d)
-     return;
-
-  if (! d->wave_edit->waveform->sound_buffer->buffer)
-     return;
-
-  if (d->wave_edit->waveform->sound_buffer->channels != 6)
-     return;
-
-  d->wave_edit->waveform->undo_take_shot (UNDO_WHOLE);
-
-  CSoundBuffer *t = d->wave_edit->waveform->sound_buffer->convert_ch6_to_stereo (algo);
-  if (! t)
-     return;
-
-  delete d->wave_edit->waveform->sound_buffer;
-  d->wave_edit->waveform->sound_buffer = t;
-
-  d->wave_edit->waveform->magic_update();
-  //d->effects_update_params();
-}
-
-
-void CWavylon::fn_51_to_stereo()
-{
-  fun_51_to_stereo (0);
-}
-
-
-void CWavylon::fn_51_to_stereo_dlike()
-{
-  fun_51_to_stereo (1);
-}
-
-
-void CWavylon::fn_ch_mono_to_stereo (bool full) 
-{
-  CDocument *d = documents->get_current(); 
-  if (! d)
-     return; 
-  
-  if (! d->wave_edit->waveform->sound_buffer->buffer)
-     return; 
-
-  if (d->wave_edit->waveform->sound_buffer->channels != 1)
-     return;
-
-  d->wave_edit->waveform->undo_take_shot (UNDO_WHOLE);
-  
-  CSoundBuffer *t = d->wave_edit->waveform->sound_buffer->convert_to_stereo (full);
-  if (! t)
-     return;
-     
-  delete d->wave_edit->waveform->sound_buffer;
-  d->wave_edit->waveform->sound_buffer = t;
-  
-  d->wave_edit->waveform->magic_update();
-  //d->effects_update_params();
-}
-
-
-void CWavylon::fn_mono_to_stereo_half()  
-{
-  fn_ch_mono_to_stereo (false);
-}
-
-
-void CWavylon::fn_mono_to_stereo_full()  
-{
-  fn_ch_mono_to_stereo (true);
-}
 
 
 void CWavylon::cb_show_meterbar_in_db_changed (int value)
 {
   settings->setValue ("meterbar_show_db", value);
-  documents->apply_settings();
+//  documents->apply_settings();
 }
 
-
-void CWavylon::fn_stat_rms()  
-{
-  CDocument *d = documents->get_current(); 
-  if (! d)
-     return; 
-
-  double sqr_sum = 0.0d;
-
-  size_t start = d->wave_edit->waveform->sample_start();
-  size_t end = d->wave_edit->waveform->sample_end();
-
-  for (size_t i = start; i < end; i++)
-      sqr_sum += (d->wave_edit->waveform->sound_buffer->buffer[i] * d->wave_edit->waveform->sound_buffer->buffer[i]);
-         
-  double srms = sqrt (sqr_sum / (end - start));
-  float rms = 20.0f * log10 (srms / 1.0f);
-
-  log->log (tr ("RMS is %1 dB").arg (rms));
-}
-
-
-void CWavylon::fn_fade_out()
-{
-  CDocument *d = documents->get_current(); 
-  if (! d)
-     return; 
-  
-  d->wave_edit->waveform->undo_take_shot (UNDO_MODIFY);
-  
-  size_t start = d->wave_edit->waveform->sample_start();
-  size_t end = d->wave_edit->waveform->sample_end();
-
-  size_t samples_per_step = (float) (end - start) / 100;
-  size_t c = 1;
-
-  size_t i = start;
-
-  while (i <= end)  
-        {
-         if (! (i % samples_per_step))
-            c++;
-        
-         for (int ch = 0; ch < d->wave_edit->waveform->sound_buffer->channels; ch++) 
-             {
-              i += ch;
-              d->wave_edit->waveform->sound_buffer->buffer[i] = d->wave_edit->waveform->sound_buffer->buffer[i] - 
-                                                                get_fvalue (d->wave_edit->waveform->sound_buffer->buffer[i],
-                                                                c);
-             }                                            
-          i++;                                           
-    
-        }
-  
-  d->wave_edit->waveform->magic_update();
-}  
-
-
-void CWavylon::fn_fade_in()
-{
-  CDocument *d = documents->get_current(); 
-  if (! d)
-     return; 
- 
-  d->wave_edit->waveform->undo_take_shot (UNDO_MODIFY);
-  
-  size_t start = d->wave_edit->waveform->sample_start();
-  size_t end = d->wave_edit->waveform->sample_end();
-
-  size_t samples_per_step = (float) (end - start) / 100;
-  size_t c = 100;
-  
-  size_t i = start;
-
-  while (i <= end)  
-        {
-         if (! (i % samples_per_step))
-            c--;
-        
-         for (int ch = 0; ch < d->wave_edit->waveform->sound_buffer->channels; ch++) 
-             {
-              i += ch;
-              d->wave_edit->waveform->sound_buffer->buffer[i] = d->wave_edit->waveform->sound_buffer->buffer[i] - 
-                                                                get_fvalue (d->wave_edit->waveform->sound_buffer->buffer[i],
-                                                                c);
-             }                                            
-          i++;                                           
-        }
-  
-  d->wave_edit->waveform->magic_update();
-}  
 
 
 void CWavylon::ed_deselect()
 {
-  CDocument *d = documents->get_current(); 
-  if (! d)
-     return; 
-
-  d->wave_edit->waveform->deselect();
-  d->wave_edit->waveform->update();
 }
 
 
 void CWavylon::ed_select_all()
 {
-  CDocument *d = documents->get_current(); 
-  if (! d)
-     return; 
-
-  d->wave_edit->waveform->select_all();
 }
 
 
 void CWavylon::ed_trim()
 {
-  CDocument *d = documents->get_current(); 
-  if (! d)
-     return; 
- 
-  if (! d->wave_edit->waveform->selected)
-     return;
- 
-  d->wave_edit->waveform->undo_take_shot (UNDO_WHOLE);
-
- //copy selection to temp buffer
-     
-  CSoundBuffer *sb = d->wave_edit->waveform->sound_buffer->copy_to (d->wave_edit->waveform->sample_start(), 
-                                                                    d->wave_edit->waveform->sample_end());
-
-  //delete source buffer
- 
-  delete d->wave_edit->waveform->sound_buffer;
-
- //replace it with temp buffer
-  
-  d->wave_edit->waveform->sound_buffer = sb;
-  d->wave_edit->waveform->select_all();
-  d->wave_edit->waveform->magic_update();
 }
 
 
@@ -4112,193 +3202,6 @@ void CWavylon::spb_def_channels_valueChanged (int i)
 }
 
 
-void CWavylon::fn_norm()
-{
-  CDocument *d = documents->get_current();
-  if (! d)
-     return; 
- 
- /*
-  QInputDialog idlg;
-  idlg.setInputMode (QInputDialog::DoubleInput);
-  idlg.setDoubleMaximum (0);
-  idlg.setDoubleMinimum (-96.0);
-  idlg.setDoubleValue (-3.0);
-  idlg.setLabelText (tr ("Normalize to dB"));
- */
- 
-  bool ok;
-  double db = QInputDialog::getDouble(this, tr("Normalize to dB"),
-                                       tr("dB:"), -3.0, -96.0, 0, 2, &ok);
-  if (! ok)
-     return; 
-     
-  float afactor = (float) pow (10.0, db / 20.0);
-   
- 
-  d->wave_edit->waveform->undo_take_shot (UNDO_MODIFY);
-
-  size_t start = d->wave_edit->waveform->sample_start();
-  size_t end = d->wave_edit->waveform->sample_end();
-
-//idea has been borrowed from Muse
-  float max_peak = 0.0f;
-  
-  for (size_t i = start; i < end; i++)
-      {
-       if (float_less_than (max_peak, d->wave_edit->waveform->sound_buffer->buffer[i]))
-          max_peak = d->wave_edit->waveform->sound_buffer->buffer[i]; 
-      }      
-
-  //float scale = 0.99f / max_peak;
-
-  float scale = afactor / max_peak;
-
-
-  for (size_t i = start; i < end; i++)
-      d->wave_edit->waveform->sound_buffer->buffer[i] = d->wave_edit->waveform->sound_buffer->buffer[i] * scale;
-  
-  d->wave_edit->waveform->magic_update();
-}  
-
-
-void CWavylon::fn_reverse()
-{
-  CDocument *d = documents->get_current(); 
-  if (! d)
-     return; 
-
-  d->wave_edit->waveform->undo_take_shot (UNDO_MODIFY);
-  
-  size_t start = d->wave_edit->waveform->sample_start();
-  size_t end = d->wave_edit->waveform->sample_end();
-  
-  size_t len = end - start;
-   
-  size_t c = len;
-      
-  CSoundBuffer *sb = new CSoundBuffer;
-  
-  sb->buffer = new float [len]; 
-    
-  for (size_t  i = start; i < end; i++)
-      sb->buffer [--c] = d->wave_edit->waveform->sound_buffer->buffer[i];
-      
-  sb->samples_total = len;    
-      
-  d->wave_edit->waveform->sound_buffer->overwrite_at (sb, start);
-  
-  delete sb;
-  
-  d->wave_edit->waveform->magic_update();
-}  
-
-
-void CWavylon::fn_swap_channels()  
-{
-  CDocument *d = documents->get_current(); 
-  if (! d)
-     return; 
-
-  if (d->wave_edit->waveform->sound_buffer->channels != 2)
-     return;
-
-  d->wave_edit->waveform->undo_take_shot (UNDO_WHOLE);
-  
-  size_t i = 0;
-  size_t end = d->wave_edit->waveform->sound_buffer->samples_total - 1;
-  
-  while (i < end)
-       {
-        float t = d->wave_edit->waveform->sound_buffer->buffer[i];
-        d->wave_edit->waveform->sound_buffer->buffer[i] = d->wave_edit->waveform->sound_buffer->buffer[i + 1]; 
-        d->wave_edit->waveform->sound_buffer->buffer[i + 1] = t;
-        i += 2;
-      }
-  
-  d->wave_edit->waveform->magic_update();
-}
-
-
-void CWavylon::fn_copy_channel()
-{
-  CDocument *d = documents->get_current(); 
-  if (! d)
-     return; 
-
-  bool ok;
-  int channel = QInputDialog::getInt (this, "?",
-                                      tr("Which channel?"), 1, 1, 2147483647, 1, &ok);
-                                          
-  if (! ok || channel < 0)
-     return;
-         
-  if (channel > d->wave_edit->waveform->sound_buffer->channels)
-     return;
-  
-  int bufsize = d->wave_edit->waveform->sound_buffer->samples_total / d->wave_edit->waveform->sound_buffer->channels;
-  float *buf = new float [bufsize + 1];
-  
-  size_t start = channel - 1;
-  size_t i = start;
-  size_t c = 0;
-
-   do
-     {
-      buf[c++] = d->wave_edit->waveform->sound_buffer->buffer[i];
-      if (channel == 1)
-          i++;
-      i += channel;
-     }
-  while (i < (d->wave_edit->waveform->sound_buffer->samples_total - d->wave_edit->waveform->sound_buffer->channels));
-
-  delete sound_clipboard;
-  sound_clipboard = new CSoundBuffer;
-  sound_clipboard->copy_params (d->wave_edit->waveform->sound_buffer);
-      
-  sound_clipboard->channels = 1;
-  sound_clipboard->frames = c;
-  sound_clipboard->buffer_size = c * sizeof (float);
-  sound_clipboard->samples_total = c;
-
-  sound_clipboard->buffer = buf;
-}
-
-
-void CWavylon::fn_mute_channel()
-{
-  CDocument *d = documents->get_current();
-  if (! d)
-     return;
-
-  bool ok;
-  int channel = QInputDialog::getInt (this, "?",
-                                     tr ("Which channel?"), 1, 1, 2147483647, 1, &ok);
-
-  if (! ok || channel < 0)
-     return;
-
-  if (channel > d->wave_edit->waveform->sound_buffer->channels)
-     return;
-
-  d->wave_edit->waveform->undo_take_shot (UNDO_WHOLE);
-
-  size_t start = channel - 1;
-  size_t i = start;
-
-  do
-    {
-     d->wave_edit->waveform->sound_buffer->buffer[i] = 0;
-     if (channel == 1)
-         i++;
-     i += channel;
-    }
-  while (i < (d->wave_edit->waveform->sound_buffer->samples_total - d->wave_edit->waveform->sound_buffer->channels));
-
-  d->wave_edit->waveform->magic_update();
-}
-
-
 void CWavylon::spb_max_undos_valueChanged (int i)
 {
   settings->setValue ("max_undos", i);
@@ -4309,383 +3212,14 @@ void CWavylon::spb_max_undos_valueChanged (int i)
 
 void CWavylon::cb_play_looped_changed (int value)
 {
-  CDocument *d = documents->get_current(); 
-  if (! d)
-     return; 
-
-  d->wave_edit->waveform->play_looped = value;
 }
 
 
 void CWavylon::nav_play_looped()
 {
-  CDocument *d = documents->get_current(); 
-  if (! d)
-     return; 
-
-  d->wave_edit->waveform->play_looped = ! d->wave_edit->waveform->play_looped;
-  cb_play_looped->setChecked (d->wave_edit->waveform->play_looped);
+//  cb_play_looped->setChecked (d->wave_edit->waveform->play_looped);
 }
 
-
-void CWavylon::generate_sine()
-{
-  QDialog w_sine_gen;
-  w_sine_gen.setWindowTitle (tr ("Sine wave parameters"));
-  
-  QVBoxLayout *v_box = new QVBoxLayout;
-  w_sine_gen.setLayout (v_box);
-  w_sine_gen.setModal (true);
- 
-  QHBoxLayout *h_box = new QHBoxLayout;
-
-  QLabel lf (tr ("Frequency"));  
-  QSpinBox sb_f;  
-  sb_f.setMaximum (9999999);
-  sb_f.setValue (440);
-
-  h_box->addWidget (&lf);
-  h_box->addWidget (&sb_f);
-
-  v_box->addLayout (h_box);
-
-  h_box = new QHBoxLayout;
-
-  QLabel ld (tr ("Duration in seconds"));  
-  QSpinBox sp_duration;
-  sp_duration.setMinimum (1);
-  sp_duration.setValue (1);
-  
-  h_box->addWidget (&ld);
-  h_box->addWidget (&sp_duration);
-
-  v_box->addLayout (h_box);
-
-  h_box = new QHBoxLayout;
-
-  QLabel la (tr ("Amplitude in dB"));
-  QDoubleSpinBox sp_amplitude;
-
-  sp_amplitude.setMinimum (-128.0d);
-  sp_amplitude.setSingleStep (0.1d);
-
-  sp_amplitude.setMaximum (0.0d);
-  sp_amplitude.setValue (-3.0d);
-
-
-  h_box->addWidget (&la);
-  h_box->addWidget (&sp_amplitude);
-
-  v_box->addLayout (h_box);
-
-  h_box = new QHBoxLayout;
-
-  QPushButton *bt_apply = new QPushButton (tr ("OK"));
-  QPushButton *bt_exit = new QPushButton (tr ("Cancel"));
-
-  connect (bt_exit, SIGNAL(clicked()), &w_sine_gen, SLOT(reject()));
-  connect (bt_apply, SIGNAL(clicked()), &w_sine_gen, SLOT(accept()));
-
-  h_box->addWidget (bt_apply);
-  h_box->addWidget (bt_exit);
-
-  v_box->addLayout (h_box);    
-  int result = w_sine_gen.exec();
-  
-  if (result != QDialog::Accepted)
-      return;
-
-  CDocument *new_document = documents->create_new();
-  main_tab_widget->setCurrentIndex (idx_tab_edit);
-
-  int frequency = sb_f.value();//440;
-  size_t len_seconds = sp_duration.value();//2;
-
-  float amplitude = db2lin((float) sp_amplitude.value());
-  
-  size_t samples_count = len_seconds * new_document->wave_edit->waveform->sound_buffer->samplerate * new_document->wave_edit->waveform->sound_buffer->channels;
-  size_t frames_count = len_seconds * new_document->wave_edit->waveform->sound_buffer->samplerate;
-
-  //qDebug() << "frames_count = " << frames_count; 
-  //qDebug() << "samples_count = " << samples_count; 
-
-  new_document->wave_edit->waveform->sound_buffer->buffer = new float [samples_count];
-  new_document->wave_edit->waveform->sound_buffer->samples_total = samples_count;
-  new_document->wave_edit->waveform->sound_buffer->buffer_size = samples_count * sizeof (float);
-  new_document->wave_edit->waveform->sound_buffer->frames = frames_count; 
-  
-  if (new_document->wave_edit->waveform->sound_buffer->channels == 1)        
-     for (size_t i = 0; i < frames_count ; i++)
-        {
-         new_document->wave_edit->waveform->sound_buffer->buffer[i] = amplitude * sin(( 2* M_PI * frequency / 
-                                                                      new_document->wave_edit->waveform->sound_buffer->samplerate) * i);
-        }          
-  else //suppose it is a stereo
-      {
-       size_t c = 0;
-       for (size_t i = 0; i < frames_count ; i++)
-           {
-            float s = amplitude * sin((2 * M_PI * frequency / new_document->wave_edit->waveform->sound_buffer->samplerate) * i);
-                                         
-            new_document->wave_edit->waveform->sound_buffer->buffer[c++] = s;
-            new_document->wave_edit->waveform->sound_buffer->buffer[c++] = s;
-           }          
-      } 
-                               
-  new_document->wave_edit->waveform->recalc_view();
-  new_document->wave_edit->waveform->prepare_image();
-  
-  new_document->wave_edit->waveform->init_state = false;
-  new_document->wave_edit->timeruler->init_state = false;
-  
-  new_document->wave_edit->waveform->update();
-}
-
-
-void CWavylon::fn_silence_selection()
-{
-  CDocument *d = documents->get_current(); 
-  if (! d)
-     return; 
-  
-  d->wave_edit->waveform->undo_take_shot (UNDO_MODIFY);
-  
-  size_t start = d->wave_edit->waveform->sample_start();
-  size_t end = d->wave_edit->waveform->sample_end();
-
-  for (size_t i = start; i < end; i++)
-      d->wave_edit->waveform->sound_buffer->buffer[i] = 0; 
-    
-  d->wave_edit->waveform->magic_update();
-}
-
-
-void CWavylon::fn_insert_silence()
-{
-  CDocument *d = documents->get_current(); 
-  if (! d)
-     return; 
-
-  bool ok;
-  int mseconds = QInputDialog::getInt (this, tr ("?"),
-                                             tr("How many milliseconds?"), 1000, 2, 2147483647, 1, &ok);
-                                          
-  if (! ok || mseconds <= 0)
-     return;
-  
-  size_t frames_count = d->wave_edit->waveform->sound_buffer->samplerate * mseconds / 1000;
-  size_t samples_count = frames_count * d->wave_edit->waveform->sound_buffer->channels;
-    
-  //d->wave_edit->waveform->undo_take_shot (UNDO_INSERT, d->wave_edit->waveform->cursor_pos_sample() + samples_count - 1);
-  //d->wave_edit->waveform->undo_take_shot (UNDO_INSERT, d->wave_edit->waveform->cursor_samples + samples_count - 1);
-  d->wave_edit->waveform->undo_take_shot (UNDO_INSERT, d->wave_edit->waveform->sound_buffer->buffer_offset + samples_count - 1);
- 
-  
-  CSoundBuffer *buf = new CSoundBuffer();
-  buf->buffer = new float [samples_count];
-  buf->samples_total = samples_count;
-  buf->samplerate = d->wave_edit->waveform->sound_buffer->samplerate; 
-  buf->buffer_size = samples_count * sizeof (float);
-  
-  for (size_t i = 0; i < samples_count; i++)
-      buf->buffer[i] = 0; 
-       
-  d->wave_edit->waveform->sound_buffer->paste_at (buf, d->wave_edit->waveform->sound_buffer->buffer_offset);
-                                                
-  delete buf;                        
-                           
-  d->wave_edit->waveform->deselect();
-  d->wave_edit->waveform->magic_update();
-}
-
-
-
-
-CDSP::CDSP (QObject *parent): QObject (parent)
-{
-  maxl = 0;
-  maxr = 0;
-  
-  gain = 1.0f;
-  pan = 0.5f;
-  panner = settings->value ("panner", 0).toInt();
-  
-        
-  
-  //qDebug() << "panner: " << panner;
-}
-
-
-
-//FIXME
-void CWavylon::file_import_raw()
-{
-
-/////////////////////
-
-  QFileDialog dialog (this);
-  QSize size = settings->value ("dialog_size", QSize (width(), height())).toSize();
-  dialog.resize (size);
-
-  dialog.setFilter (QDir::AllEntries | QDir::Hidden);
-
-  QList<QUrl> sidebarUrls = dialog.sidebarUrls();
-  QList<QUrl> sidebarUrls_old = dialog.sidebarUrls();
-
-#ifdef Q_QS_X11
-
-  QDir volDir("/mnt");
-  QStringList volumes (volDir.entryList (volDir.filter() | QDir::NoDotAndDotDot));
-
-  foreach (QString v, volumes)
-          sidebarUrls.append (QUrl::fromLocalFile ("/mnt/" + v));
-
-  QDir volDir2 ("/media");
-  QStringList volumes2 (volDir2.entryList (volDir2.filter() | QDir::NoDotAndDotDot));
-
-  foreach (QString v, volumes2)
-          sidebarUrls.append (QUrl::fromLocalFile ("/media/" + v));
-
-#endif
-
-  dialog.setSidebarUrls (sidebarUrls);
-
-  dialog.setFileMode (QFileDialog::ExistingFiles);
-  dialog.setAcceptMode (QFileDialog::AcceptOpen);
-
-  CDocument *d = documents->get_current();
-  if (d)
-     {
-      if (file_exists (d->file_name))
-          dialog.setDirectory (get_file_path (d->file_name));
-      else
-          dialog.setDirectory (dir_last);
-     }
-  else
-      dialog.setDirectory (dir_last);
-
-  
-  if (! dialog.exec())
-     {
-      dialog.setSidebarUrls (sidebarUrls_old);
-      return;
-     } 
-
-  dialog.setSidebarUrls (sidebarUrls_old);
-  settings->setValue ("dialog_size", dialog.size());
-///////////////////
-
-
-  int sndfile_format = 0;
-  sndfile_format = sndfile_format | SF_FORMAT_RAW | SF_FORMAT_PCM_16;
-
-  int t = sndfile_format; //settings->value ("def_sndfile_format", sndfile_format).toInt();
-
-  CChangeFormatWindow *w = new CChangeFormatWindow (0, 0, t);
-  w->channels->setValue (1);
-
-  int i = 0;
-  int sr = settings->value ("def_samplerate", 44100).toInt();
-  
-  i = w->cmb_samplerate->findText (QString::number (sr));
-      
-  if (i == -1)
-     i = 0; 
-
-  w->cmb_samplerate->setCurrentIndex (i);
-  
-  int result = w->exec();
-  
-  if (result != QDialog::Accepted)
-     {
-      delete w;
-      return;
-     }
-    
-  int f = file_formats->hformatnames.key (w->cmb_format->currentText());
-  int stype = file_formats->hsubtype.key (w->cmb_subtype->currentText());
-  
-  int raw_file_format = f | stype;    //new sound format
-      
-  int raw_srate = w->cmb_samplerate->currentText().toInt();
-
-  SF_INFO	sf;
-  sf.format = raw_file_format;
-  sf.samplerate = raw_srate;
-  sf.channels = w->channels->value();
-
-  delete w;
-
-///////
-
-  QStringList fileNames = dialog.selectedFiles();
-  if (fileNames.count() == 0)
-     return;
-
-  QString fname = fileNames[0];
-  
-  SNDFILE *file = sf_open (fname.toLatin1(), SFM_READ, &sf);
-  float *buffer = new float [sf.channels * sf.frames];
-  sf_count_t zzz = sf_readf_float (file, buffer, sf.frames);
-  
-  sf_close (file);
-
- // qDebug() << "zzz = " << zzz;
-
-  if (zzz == 0)
-     {
-      delete buffer;   
-      return;
-     }
-  
-  CSoundBuffer *sb = new CSoundBuffer;
-
-  sb->buffer = buffer;
-  sb->buffer_offset = 0;
-  sb->frames = sf.frames; 
-  
-  //qDebug() << "sb->frames = " << sb->frames; 
-  
-  sb->channels = sf.channels;
-  sb->samples_total = sf.frames * sf.channels;
-  sb->buffer_size = sb->samples_total * sizeof (float);
-  
-  sb->samplerate = sf.samplerate;
-  sb->sndfile_format = raw_file_format;
-  sb->use_sndfile_format = true;
-
-
-  CDocument *new_document = documents->create_new();
-  main_tab_widget->setCurrentIndex (idx_tab_edit);
-
-  new_document->wave_edit->waveform->sound_buffer = sb;
-      
-  new_document->wave_edit->waveform->recalc_view();
-  
-  new_document->wave_edit->waveform->prepare_image();
-  
-  new_document->wave_edit->waveform->init_state = false;
-  new_document->wave_edit->timeruler->init_state = false;
-  
-  new_document->wave_edit->waveform->update();
-}
-
-
-
-void CWavylon::file_export_raw()
-{
-
-
-}
-
-
-/*
-void CEKO::cmb_src_currentIndexChanged (int index)
-{
-  settings->setValue ("resampling_realtime_quality", index);
-  resampling_realtime_quality = index;
-}
-*/
 
 void CWavylon::spb_ogg_q_valueChanged (double d)
 {
@@ -4693,318 +3227,6 @@ void CWavylon::spb_ogg_q_valueChanged (double d)
   ogg_q = d;
 }
 
-
-void CWavylon::fn_detect_average_value()
-{
-  CDocument *d = documents->get_current();
-  if (! d)
-     return;
-
-  size_t start = d->wave_edit->waveform->sample_start();
-  size_t end = d->wave_edit->waveform->sample_end() - 1;
-
-  size_t i = start;
-
-  float minpeak = 0.0f;
-  float maxpeak = 0.0f;
-  float accum = 0.0f;
-  float t = 0.0f;
-
-  while (i++ <= end)
-        {
-         t = fabs (d->wave_edit->waveform->sound_buffer->buffer[i]);
-         accum += t;
-
-         if (! float_equal (t, 0.0f))
-            {
-             //if (float_less_than (maxpeak, t))
-               //  maxpeak = t;
-
-              maxpeak = std::max ((float)maxpeak, (float)t);
-
-             if (float_equal (minpeak, 0.0f))
-                minpeak = t;
-             else
-                 minpeak = std::min ((float)minpeak, (float)t);
-            }
-        }
-
-  QString maxp;
-  maxp.setNum (maxpeak);
-
-  QString minp;
-  minp.setNum (minpeak);
-  
-  QString dr;
-  dr.setNum ((float)minpeak / maxpeak);
-
-  float average = (float) accum / (float)(end - start);
-  
-  log->log (tr ("average level in samples = %1").arg (QString::number (average)));
-  log->log (tr ("average level in dB = %1").arg (QString::number (float2db (average))));
-  log->log (tr ("max level in samples = %1").arg (maxp));
-  log->log (tr ("max level in dB = %1").arg (QString::number (float2db (maxpeak))));
-  log->log (tr ("min level in samples = %1").arg (minp));
-  log->log (tr ("min level in dB = %1").arg (QString::number (float2db (minpeak))));
-  
- // log->log (tr ("Dynamic range = %1").arg (dr));
-}
-
-
-void CWavylon::fn_dc_offset_detect()
-{
-  CDocument *d = documents->get_current();
-  if (! d)
-     return;
-
-  size_t start = d->wave_edit->waveform->sample_start();
-  size_t end = d->wave_edit->waveform->sample_end() - 1;
-
-  size_t i = start;
-
-  float accum = 0.0f;
-
-  while (i++ <= end)
-        {
-         accum += /*fabs */(d->wave_edit->waveform->sound_buffer->buffer[i]);
-        }
-
-  float average = (float) accum / (float)(end - start);
-
-  log->log (tr ("DC offset in samples = %1").arg (QString::number (average)));
-}
-
-
-void CWavylon::fn_dc_offset_fix_manually()
-{
-  CDocument *d = documents->get_current();
-  if (! d)
-     return;
-
-  float offset = (float) input_double_value (tr ("fix DC offset"), tr ("Offset in samples:"),
-                                             -1.0d, 1.0d, 0.0d, 0.01d);
-
-  //qDebug() << "offset = " << offset;
-
-  d->wave_edit->waveform->undo_take_shot (UNDO_MODIFY);
-
-  size_t start = d->wave_edit->waveform->sample_start();
-  size_t end = d->wave_edit->waveform->sample_end();
-
-  size_t i = start;
-
-  while (i++ < end)
-        {
-         d->wave_edit->waveform->sound_buffer->buffer[i] -= offset;
-        }
-
-  d->wave_edit->waveform->magic_update();
-}
-
-
-void CWavylon::fn_dc_offset_fix_auto()
-{
-  CDocument *d = documents->get_current();
-  if (! d)
-     return;
-
-  d->wave_edit->waveform->undo_take_shot (UNDO_MODIFY);
-
-  size_t start = d->wave_edit->waveform->sample_start();
-  size_t end = d->wave_edit->waveform->sample_end() - 1;
-
-  size_t i = start;
-
-  float accum = 0.0f;
-
-  while (i++ <= end)
-        {
-//         accum += fabs (d->wave_edit->waveform->sound_buffer->buffer[i]);
-         accum += (d->wave_edit->waveform->sound_buffer->buffer[i]);
-        }
-
-  float average = (float) accum / (float)(end - start);
-
-  //qDebug() << "offset = " << average;
-
-  i = start;
-
-  end++;
-
-  while (i++ < end)
-        {
-         d->wave_edit->waveform->sound_buffer->buffer[i] -= average;
-        }
-
-
-  d->wave_edit->waveform->magic_update();
-}
-
-
-/*
-from:   Audacity: A Digital Audio Editor
-
-  Noise.cpp
-
-  Dominic Mazzoni
-*/
-bool MakeNoise (float *buffer, size_t len, float fs, float amplitude, int noiseType)
-{
-   float white, buf0, buf1, buf2, buf3, buf4, buf5;
-   float a0, b1, fc, y;
-   size_t i;
-   float div = ((float)RAND_MAX) / 2.0f;
-
-   switch (noiseType) {
-   default:
-   case 0: // white
-       for(i=0; i<len; i++)
-          buffer[i] = amplitude * ((rand() / div) - 1.0f);
-       break;
-
-   case 1: // pink
-       white=buf0=buf1=buf2=buf3=buf4=buf5=0;
-
-       // 0.55f is an experimental normalization factor: thanks to Martyn
-       amplitude *= 0.55f;
-       for(i=0; i<len; i++) {
-        white=(rand() / div) - 1.0f;
-        buf0=0.997f * buf0 + 0.029591f * white;
-        buf1=0.985f * buf1 + 0.032534f * white;
-        buf2=0.950f * buf2 + 0.048056f * white;
-        buf3=0.850f * buf3 + 0.090579f * white;
-        buf4=0.620f * buf4 + 0.108990f * white;
-        buf5=0.250f * buf5 + 0.255784f * white;
-        buffer[i] = amplitude * (buf0 + buf1 + buf2 + buf3 + buf4 + buf5);
-       };
-       break;
-
-   case 2: // brown
-       // fc=100 Hz,
-       // y[n]=a0*x[n] + b1*y[n-1];
-       white=a0=b1=fc=y=0;
-       fc=100; //fs=44100;
-       b1=exp(-2*M_PI*fc/fs);
-       a0=1.0f-b1;
-
-       // 6.2f is an experimental normalization factor: thanks to Martyn
-       amplitude *= 6.2f;
-       for(i=0; i<len; i++){
-         white=(rand() / div) - 1.0f;
-         y = (a0 * white + b1 * y);
-         buffer[i] = amplitude * y;
-       };
-       break;
-   }
-   return true;
-}
-
-
-void CWavylon::generate_noise()
-{
-  QDialog w_noise_gen;
-  w_noise_gen.setWindowTitle (tr ("Noise parameters"));
-
-  QVBoxLayout *v_box = new QVBoxLayout;
-  w_noise_gen.setLayout (v_box);
-  w_noise_gen.setModal (true);
-
-  QHBoxLayout *h_box = new QHBoxLayout;
-
-  QLabel ltype (tr ("Type"));
-  QComboBox cbm_type;
-  cbm_type.addItem (tr ("White"));
-  cbm_type.addItem (tr ("Pink"));
-  cbm_type.addItem (tr ("Brown"));
-
-  h_box->addWidget (&ltype);
-  h_box->addWidget (&cbm_type);
-
-  v_box->addLayout (h_box);
-
-  h_box = new QHBoxLayout;
-
-  QLabel ld (tr ("Duration in seconds"));
-  QSpinBox sp_duration;
-  sp_duration.setMinimum (1);
-  sp_duration.setValue (1);
-
-  h_box->addWidget (&ld);
-  h_box->addWidget (&sp_duration);
-
-  v_box->addLayout (h_box);
-
-  h_box = new QHBoxLayout;
-
-  QLabel la (tr ("Amplitude in dB"));
-  QDoubleSpinBox sp_amplitude;
-
-  sp_amplitude.setMinimum (-128.0d);
-  sp_amplitude.setSingleStep (0.1d);
-
-  sp_amplitude.setMaximum (0.0d);
-  sp_amplitude.setValue (-3.0d);
-
-
-  h_box->addWidget (&la);
-  h_box->addWidget (&sp_amplitude);
-
-  v_box->addLayout (h_box);
-
-  h_box = new QHBoxLayout;
-
-  QPushButton *bt_apply = new QPushButton (tr ("OK"));
-  QPushButton *bt_exit = new QPushButton (tr ("Cancel"));
-
-  connect (bt_exit, SIGNAL(clicked()), &w_noise_gen, SLOT(reject()));
-  connect (bt_apply, SIGNAL(clicked()), &w_noise_gen, SLOT(accept()));
-
-  h_box->addWidget (bt_apply);
-  h_box->addWidget (bt_exit);
-
-  v_box->addLayout (h_box);
-
-  int result = w_noise_gen.exec();
-
-  if (result != QDialog::Accepted)
-      return;
-
-  CDocument *new_document = documents->create_new();
-  main_tab_widget->setCurrentIndex (idx_tab_edit);
-
-  int ntype = cbm_type.currentIndex();
-  size_t len_seconds = sp_duration.value();//2;
-
-  float amplitude = db2lin((float) sp_amplitude.value());
-
-  size_t samples_count = len_seconds * new_document->wave_edit->waveform->sound_buffer->samplerate * new_document->wave_edit->waveform->sound_buffer->channels;
-  size_t frames_count = len_seconds * new_document->wave_edit->waveform->sound_buffer->samplerate;
-
-  //qDebug() << "frames_count = " << frames_count;
-  //qDebug() << "samples_count = " << samples_count;
-
-  new_document->wave_edit->waveform->sound_buffer->buffer = new float [samples_count];
-  new_document->wave_edit->waveform->sound_buffer->samples_total = samples_count;
-  new_document->wave_edit->waveform->sound_buffer->buffer_size = samples_count * sizeof (float);
-  new_document->wave_edit->waveform->sound_buffer->frames = frames_count;
-
-  if (! MakeNoise (new_document->wave_edit->waveform->sound_buffer->buffer,
-                   samples_count,
-                   new_document->wave_edit->waveform->sound_buffer->samplerate,
-                   amplitude,
-                   ntype))
-     qDebug() << "! MakeNoise";
-
-
-
-  new_document->wave_edit->waveform->recalc_view();
-  new_document->wave_edit->waveform->prepare_image();
-
-  new_document->wave_edit->waveform->init_state = false;
-  new_document->wave_edit->timeruler->init_state = false;
-
-  new_document->wave_edit->waveform->update();
-}
 
 
 void CWavylon::cmb_icon_sizes_currentIndexChanged (const QString &text)
@@ -5015,118 +3237,6 @@ void CWavylon::cmb_icon_sizes_currentIndexChanged (const QString &text)
   tb_fman_dir->setIconSize (QSize (text.toInt(), text.toInt()));
 
 }
-
-
-void CWavylon::file_record()
-{
-
-  transport_state = STATE_RECORD;
-  
-  if (pa_stream)
-     {
-       Pa_CloseStream (pa_stream);	
-       pa_stream = 0;
-     }
-
-  if (pa_stream_in)
-     {
-      Pa_AbortStream (pa_stream_in);	
-      Pa_CloseStream (pa_stream_in);	
-      pa_stream_in = 0;
-     }
-
-
-  int sndfile_format = 0;
-  sndfile_format = sndfile_format | SF_FORMAT_WAV | SF_FORMAT_FLOAT;
-
-  int channels = settings->value ("def_channels", 1).toInt();
-  int samplerate = settings->value ("def_samplerate", 44100).toInt();
-
-  rec_channels = channels;
-
-  SF_INFO sf;
-
-  sf.samplerate = samplerate;
-  sf.channels = channels;
-  sf.format = sndfile_format;
- 
-  
-  if (! sf_format_check (&sf))
-     {
-      qDebug() << "! sf_format_check (&sf)";
-      transport_state = STATE_STOP;
-      return;  
-     }    
-  
-  QString tf = settings->value ("temp_path", QDir::tempPath()).toString() + fname_tempfile;
-  
-  file_temp_handle = sf_open (tf.toUtf8().data(), SFM_WRITE, &sf);
-
-  
-
-      PaStreamParameters outputParameters;
-
-      outputParameters.device = pa_device_id_out;
-      outputParameters.channelCount = 2;
-      outputParameters.sampleFormat = paFloat32;
-      outputParameters.suggestedLatency = Pa_GetDeviceInfo (outputParameters.device)->defaultLowOutputLatency;;
-      outputParameters.hostApiSpecificStreamInfo = NULL;
-
-
-
-    
-
-      PaStreamParameters inputParameters;
-
-      inputParameters.device = pa_device_id_in;
-      inputParameters.channelCount = 2;
-      inputParameters.sampleFormat = paFloat32;
-      inputParameters.suggestedLatency = Pa_GetDeviceInfo (inputParameters.device)->defaultLowOutputLatency;;
-      inputParameters.hostApiSpecificStreamInfo = NULL;
-
-  
-      PaError err =  Pa_OpenStream 	(&pa_stream_in,
-		                         &inputParameters,
-		                         //NULL,
-                                 &outputParameters,
- 		                         samplerate,
-		                         buffer_size_frames,
-		                          paClipOff | paDitherOff,//paNoFlag,
-		                         pa_input_stream_callback,
-		                         NULL//&pe 
-	                           ); 	
-   
-       qDebug() << Pa_GetErrorText (err);
-       
-       if (err < 0)
-          {
-           log->log (Pa_GetErrorText (err));
-           pa_stream_in = 0;
-           transport_state == STATE_STOP;
-           return;
-          }
-     
-
-       err = Pa_StartStream (pa_stream_in);
-       qDebug() << Pa_GetErrorText (err);
-
-       if (err < 0)
-          {
-           log->log (Pa_GetErrorText (err));
-           pa_stream_in = 0;
-           transport_state == STATE_STOP;
-           return;
-          }
-      
-       wnd_fxrack->level_meter->init_state = false;
-       wnd_fxrack->tm_level_meter.start();
-  
-  log->log (tr("<b>Press Stop to stop recording!</b>"));      
-   //    transport_play->setIcon (QIcon (":/icons/play.png"));
-
-}
-
-
 
 
 void CWavylon::update_stylesheet (const QString &f)
@@ -5151,56 +3261,6 @@ void CWavylon::update_stylesheet (const QString &f)
   stylesheet += "CLogMemo, QTextEdit, QPlainTextEdit, QPlainTextEdit * {" + edfontfamily + fontsize + "}\n";
   
   
-  /*
-  QString text_color = hash_get_val (global_palette, "text", "black");
-  QString t_text_color = QColor (text_color).darker(darker_val).name(); 
-  
-  QString back_color = hash_get_val (global_palette, "background", "white");
-  QString t_back_color = QColor (back_color).darker(darker_val).name(); 
-  
-  QString sel_back_color = hash_get_val (global_palette, "sel-background", "black");
-  QString sel_text_color = hash_get_val (global_palette, "sel-text", "white");
-
-  QString t_sel_text_color = QColor (sel_text_color).darker(darker_val).name(); 
-  QString t_sel_back_color = QColor (sel_back_color).darker(darker_val).name(); 
-      
-  QString css_plain_text_edit = QString ("QPlainTextEdit {color: %1; background-color: %2; selection-color: %3; selection-background-color: %4;}\n").arg (
-                           t_text_color).arg (
-                           t_back_color).arg (
-                           t_sel_text_color).arg (
-                           t_sel_back_color);
-  
-  stylesheet += css_plain_text_edit;
-
-
-  QString css_tea_edit = QString ("CTEAEdit {color: %1; background-color: %2; selection-color: %3; selection-background-color: %4;}\n").arg (
-                           t_text_color).arg (
-                           t_back_color).arg (
-                           t_sel_text_color).arg (
-                           t_sel_back_color);
-  
-
-  stylesheet += css_tea_edit;
-
-  QString css_tea_man = QString ("QTextBrowser {color: %1; background-color: %2; selection-color: %3; selection-background-color: %4;}\n").arg (
-                           t_text_color).arg (
-                           t_back_color).arg (
-                           t_sel_text_color).arg (
-                           t_sel_back_color);
-  
-
-   stylesheet += css_tea_man;
-*/
-/*
-  QString css_fif = QString ("QComboBox#FIF { color: %1; background-color: %2; selection-color: %3; selection-background-color: %4;}\n").arg (
-                            t_text_color).arg (
-                            t_back_color).arg (
-                            t_sel_text_color).arg (
-                            t_sel_back_color);
-
-
-  stylesheet += css_fif;
-*/
 
 //Update themed
 
@@ -5336,117 +3396,6 @@ MyProxyStyle::MyProxyStyle (QStyle * style): QProxyStyle (style)
 
 void CWavylon::file_export_mp3()
 {
-  CDocument *d = documents->get_current();
-  if (! d)
-     return;
-
-  QFileDialog dialog (this);
-  QSize size = settings->value ("dialog_size", QSize (width(), height())).toSize();
-  dialog.resize (size);
-
-  dialog.setFilter(QDir::AllEntries | QDir::Hidden);
-  dialog.setOption (QFileDialog::DontUseNativeDialog, true);
-
-
-  QList<QUrl> sidebarUrls = dialog.sidebarUrls();
-  QList<QUrl> sidebarUrls_old = dialog.sidebarUrls();
-
-  sidebarUrls.append(QUrl::fromLocalFile(dir_sessions));
-
-#ifdef Q_QS_X11
-
-  QDir volDir("/mnt");
-  QStringList volumes (volDir.entryList (volDir.filter() | QDir::NoDotAndDotDot));
-
-  foreach (QString v, volumes)
-          sidebarUrls.append (QUrl::fromLocalFile ("/mnt/" + v));
-
-  QDir volDir2 ("/media");
-  QStringList volumes2 (volDir2.entryList (volDir2.filter() | QDir::NoDotAndDotDot));
-
-  foreach (QString v, volumes2)
-          sidebarUrls.append (QUrl::fromLocalFile ("/media/" + v));
-
-#endif
-
-  dialog.setSidebarUrls(sidebarUrls);
-
-  dialog.setFileMode (QFileDialog::AnyFile);
-  dialog.setAcceptMode (QFileDialog::AcceptSave);
-  dialog.setConfirmOverwrite (false);
-  dialog.setDirectory (dir_last);
-
-  if (dialog.exec())
-     {
-      dialog.setSidebarUrls (sidebarUrls_old);
-
-      QString fileName = dialog.selectedFiles().at(0);
-
-      if (file_exists (fileName))
-         {
-          int ret = QMessageBox::warning (this, "Wavylon",
-                                          tr ("%1 already exists\n"
-                                          "Do you want to overwrite?")
-                                           .arg (fileName),
-                                          QMessageBox::Yes | QMessageBox::Default,
-                                          QMessageBox::Cancel | QMessageBox::Escape);
-
-          if (ret == QMessageBox::Cancel)
-             return;
-         }
-
-
-      QString command = settings->value ("mp3_encode", "lame -b 320 -q 0 \"@FILEIN\" \"@FILEOUT\"").toString();
-
-      QString fname_input = settings->value ("temp_path", QDir::tempPath()).toString() + fname_tempfile;
-  
-      QString fname_output = fileName;
-      if (! fileName.endsWith (".mp3", Qt::CaseInsensitive))
-         fname_output = change_file_ext (fname_output, "mp3");
-  
-      command = command.replace ("@FILEIN", fname_input);
-      command = command.replace ("@FILEOUT", fname_output);
-      
-     // qDebug() << "fname_input = " << fname_input;
-      //qDebug() << "fname_output = " << fname_output;
-
-      //qDebug() << command;
-      
-      CTioPlainAudio tio_wav;
-      tio_wav.format = SF_FORMAT_WAV;
-      tio_wav.format = tio_wav.format | SF_FORMAT_PCM_16;
-      
-      tio_wav.channels = d->wave_edit->waveform->sound_buffer->channels;
-      tio_wav.samplerate = d->wave_edit->waveform->sound_buffer->samplerate;
-      tio_wav.input_data = d->wave_edit->waveform->sound_buffer->buffer;
-      tio_wav.total_samples = d->wave_edit->waveform->sound_buffer->buffer_size;
-      tio_wav.frames = d->wave_edit->waveform->sound_buffer->frames;
-  
-  
-      tio_wav.save_16bit_pcm (fname_input);
-      
-
-      int exit_code = QProcess::execute (command);
-       qDebug() << exit_code;
-  
-      if (exit_code < 0)
-         {
-          qDebug() << "cannot encode to MP3";
-          return;
-          
-         } 
-      
-      
-      update_dyn_menus();
-
-      QFileInfo f (fileName);
-      dir_last = f.path();
-     }
-   else
-       dialog.setSidebarUrls (sidebarUrls_old);
-
-  settings->setValue ("dialog_size", dialog.size());
-  return;
 }
 
 
