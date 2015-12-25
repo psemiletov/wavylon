@@ -69,49 +69,6 @@ bool comp_clips (CClip *c1, CClip *c2)
 }
 
 
-QString get_value_with_default (const QStringRef &val, const QString &def)
-{
-  QString s = val.toString();
-  if (! s.isEmpty())
-     return s.toString();
-  else
-      return def;   
-}
-
-
-int get_value_with_default (const QStringRef &val, int def)
-{
-  QString s = val.toString();
-
-  if (! s.isEmpty())
-     return s.toInt();
-  else
-      return def;   
-}
-
-
-size_t get_value_with_default (const QStringRef &val, size_t def)
-{
-  QString s = val.toString();
-
-  if (! s.isEmpty())
-     return (size_t) val.toInt();
-  else
-      return def;   
-}
-
-
-float get_value_with_default (const QStringRef &val, float def)
-{
-  QString s = val.toString();
-
-  if (! s.isEmpty())
-     return s.toFloat();
-  else
-      return def;   
-}
-
-
 size_t timestring_to_frames (const QString &val)
 {
   QTime t = QTime::fromString (val, TIME_FMT);
@@ -586,9 +543,9 @@ void CWAVSource::load (const QString &path)
       return;
      }
  
-  buffer = tio->load (path);
+  fb = tio->load (path);
   
-  if (! buffer)
+  if (! fb)
      {
       //holder->log->log (tr ("cannot open %1 because of: %2")
         //                   .arg (fileName)
@@ -596,11 +553,6 @@ void CWAVSource::load (const QString &path)
       return;
      }
 
-  
-  buffer_size_bytes = tio->total_samples * sizeof (float);
-  length_frames = tio->frames;
-  samplerate = tio->samplerate;
-  channels = tio->channels;
 }
 
 
@@ -1311,7 +1263,10 @@ CTrack::~CTrack()
      
 //  qDebug() << track_name;   
      
-  delete buffer;   
+  //delete buffer;   
+  
+  delete fbtrack;   
+      
      
   delete mixer_strip;   
      
@@ -1892,9 +1847,11 @@ CTrack::CTrack (CProject *prj, int nchannels)
   solo = false;
   arm = false;
   
-  buffer_length_frames = buffer_size_frames * buffer_size_frames_multiplier;
+  //buffer_length_frames = buffer_size_frames * buffer_size_frames_multiplier;
   
-  buffer = new float [buffer_length_frames * channels];
+  //buffer = new float [buffer_length_frames * channels];
+
+  fbtrack = new CFloatBuffer (buffer_length_frames, channels);
 
   track_name = tr ("Default");
   
@@ -2061,7 +2018,9 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
 
   int clips_count = clips.size();
  
-  memset (buffer, 0, buffer_length_frames * channels * sizeof (float));
+  fbtrack->settozero(); 
+ 
+  //memset (buffer, 0, buffer_length_frames * channels * sizeof (float));
 
   //if (mute)
     // return end_pos_frames;
@@ -2174,50 +2133,37 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
 //        qDebug() << "clip_data_length: " << clip_data_length;
   //      qDebug() << "clip_insertion_pos: " << clip_insertion_pos;
         
-        float *p_source_buffer = clip->file->buffer;
-
+        float *p_source_fb = clip->file->fb;
  
         size_t extoffs = (clip->offset_frames + clip_data_start) * clip->file->channels * clip->playback_rate;
-        p_source_buffer += extoffs;
+       
+       // p_source_buffer += extoffs;
 
-        float *p_dest_buffer = buffer;
-        p_dest_buffer += (clip_insertion_pos * channels);
+        //float *p_dest_buffer = buffer;
+        
+        //p_dest_buffer += (clip_insertion_pos * channels);
 
          qDebug() << "z2";
            //ошибка в вычислении clip_insertion_pos???     
            //тут может быть вылет!!!  
         
         if (clip->playback_rate == 1.0f)
-           memcpy (p_dest_buffer, p_source_buffer, clip_data_length * channels * sizeof (float));
-        else //ХРЕНОВО РАБОТАЕТ!!!!!!!!!!!!!!!!!!
+          {
+           //memcpy (p_dest_buffer, p_source_buffer, clip_data_length * channels * sizeof (float));
+           
+           for (size_t ch = 0; ch < channels; ch++)
+               {
+                 copy_to_pos (fbtrack, extoffs, clip_data_length, clip_insertion_pos);
+  
+               }
+           
+          } 
+        else 
             {
-             qDebug() << "clip->playback_rate != 1.0f";
+             p_source_fb->copy_to_pos_with_rate (fbtrack, extoffs, 
+                               clip_data_length, clip_insertion_pos, clip->playback_rate);
             
-             size_t clip_len_samples = clip_data_length * channels;
-             size_t c = 0;
-             size_t i = 0;
-             
-             if (channels == 1)
-                {
-                 qDebug() << "mono";
-                 while (i < clip_len_samples)
-                       {
-                        p_dest_buffer[c++] = p_source_buffer[(size_t)floor (i * clip->playback_rate)];
-                        i++;
-                       }
-                }
-             else
-                 {
-                  qDebug() << "stereo";
-
-                  while (i < clip_len_samples)
-                        {
-                         p_dest_buffer[c++] = p_source_buffer[(size_t)floor (i * clip->playback_rate)];
-                         i++;
-                         p_dest_buffer[c++] = p_source_buffer[(size_t)floor (i * clip->playback_rate)];
-                         i++;   
-                        }
-                 }   
+             qDebug() << "clip->playback_rate != 1.0f";
             }   
        }   
        
@@ -2624,7 +2570,11 @@ void CProject::mixbuf_play()
 
    inputParameters.device = pa_device_id_in;
    inputParameters.channelCount = 2;
-   inputParameters.sampleFormat = paFloat32;
+   
+    outputParameters.sampleFormat = paFloat32;
+    outputParameters.sampleFormat |= paNonInterleaved;
+ 
+   
    inputParameters.suggestedLatency = Pa_GetDeviceInfo (inputParameters.device)->defaultLowOutputLatency;;
    inputParameters.hostApiSpecificStreamInfo = NULL;
   
@@ -2632,7 +2582,10 @@ void CProject::mixbuf_play()
 
    outputParameters.device = pa_device_id_out;
    outputParameters.channelCount = 2;
+   
    outputParameters.sampleFormat = paFloat32;
+   outputParameters.sampleFormat |= paNonInterleaved;
+ 
    outputParameters.suggestedLatency = Pa_GetDeviceInfo (outputParameters.device)->defaultLowOutputLatency;;
    outputParameters.hostApiSpecificStreamInfo = NULL;
   
@@ -2880,13 +2833,13 @@ CMasterTrack::CMasterTrack (CProject *prj)
   qDebug() << "xxx2";  
   
   
-  buffer_length_frames = buffer_size_frames;
+  //buffer_length_frames = buffer_size_frames;
   
   qDebug() << "buffer_length_frames: " << buffer_length_frames;
-    
-  buffer = new float [buffer_length_frames * channels];
   
-  qDebug() << "xxx3";  
+  fb = CFloatBuffer (buffer_size_frames, 2);  
+  //buffer = new float [buffer_length_frames * channels];
+  
   
   
   mixer_strip = new CMixerMasterStrip (this);
@@ -2973,7 +2926,7 @@ void CMasterTrack::update_strip()
 
 CMasterTrack::~CMasterTrack()
 {
-  delete buffer;
+  delete fb;
 }
 
 

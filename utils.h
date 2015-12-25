@@ -241,6 +241,9 @@ inline float conv_to_db (float v, float v_min, float v_max, float range_negative
 QString str_from_locale (const char *s);
 
 
-
+float get_value_with_default (const QStringRef &val, float def);
+size_t get_value_with_default (const QStringRef &val, size_t def);
+int get_value_with_default (const QStringRef &val, int def);
+QString get_value_with_default (const QStringRef &val, const QString &def);
 
 #endif

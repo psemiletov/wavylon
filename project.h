@@ -59,7 +59,6 @@ class CMixerMasterStrip;
 
 
 
-
 class CMixerMasterStrip: public QGroupBox
 {
 Q_OBJECT
@@ -186,17 +185,8 @@ class CWAVSource: public CSoundSource
   Q_OBJECT
   
 public:
-
-  size_t buffer_offset_frames; //in frames
-  size_t buffer_size_bytes; //in bytes
   
-  int channels;
-  int samplerate;
-
-  size_t length_frames; //frames total
-  
-  float *buffer;  
-
+  CFloatBuffer *fb;
   void load (const QString &path);
 
 };
@@ -285,25 +275,19 @@ public:
   
   CMixerStrip *mixer_strip;
  
-  int channels;
+  size_t channels;
   
   float pan;  //0 - left, 0.5 - middle, 1 - right
   float volume;
 
   size_t record_insertion_pos_frames;
   
- /* float volume_left;
-  float volume_right;
-  bool linked_channels;
-  */
   bool mute;
   bool solo;
   bool arm;
   
   bool monitor_input;
   
-  //bool master;  
-
   QString track_type;
   QString track_name;
   QString track_comment;
@@ -311,11 +295,8 @@ public:
   QList <CClip*> clips; 
 
   void *table_widget;
-  
-  float *buffer; //clips will be rendered here
-  size_t buffer_length_frames;
-  size_t buffer_offset_frames; //current offset in buffer
 
+  CFloatBuffer *fbtrack; //clips will be rendered here
   
   //renders clips to buffer from pos 
   virtual size_t render_portion (size_t start_pos_, size_t window_length_frames) = 0;  
@@ -352,9 +333,8 @@ public:
   CTrack *p_track;
 
   void update_track_table (bool sort = true);
-
+  
   void keyPressEvent (QKeyEvent *event);
-
 };
 
 
@@ -369,7 +349,6 @@ public:
   CWavTrack (CProject *prj, int nchannels);
   size_t render_portion (size_t start_pos_frames, size_t window_length_frames);  
   SNDFILE *hrecfile;
-  
 };
 
 
@@ -378,7 +357,6 @@ class CMasterTrack: public QObject
   Q_OBJECT
 
 public:
-  
   
   CProject *p_project;
   
@@ -391,35 +369,21 @@ public:
   QString track_name;
   QString track_comment;
  
-  int channels;
+  size_t channels;
   
+  CFloatBuffer *fb;
+
+/*  
   float *buffer; //clips will be rendered here
   size_t buffer_length_frames;
   size_t buffer_offset_frames; //current offset in buffer
-  
+  */
   CMasterTrack (CProject *prj);
   ~CMasterTrack();
 
   void update_strip();
 };
 
-
-
-
-class CSheet: public QObject
-{
-  Q_OBJECT
-
-
-};
-
-
-class CSheetUI: public QObject
-{
-  Q_OBJECT
-
-
-};
 
 
 class CProjectSettings: public QObject
@@ -431,7 +395,6 @@ public:
   int samplerate;
   int bpm;
   int panner;
-
 
   QDialog *settings_window;
   QLineEdit *ed_samplerate;
@@ -466,7 +429,7 @@ public:
   size_t mixbuf_window_start_frames_one;
   size_t mixbuf_window_length_frames_one;
 
-  float *temp_mixbuf_one; 
+  CFloatBuffer *temp_mixbuf_fb; 
 
   size_t song_length_frames;
 
@@ -476,7 +439,7 @@ public:
   size_t tracks_window_inner_offset; //offset of mixbuf at tracks window
 
 
-  float *trackbuf; 
+  CFloatBuffer *fb_trackbuf; 
   
 //  float *mixbuf; 
 

@@ -304,9 +304,52 @@ size_t round_to (size_t value, size_t to, bool inc)
 
 QString str_from_locale (const char *s)
 {
-
   QTextCodec *cd = QTextCodec::codecForLocale();
   QByteArray encodedString = s;
   
   return cd->toUnicode(encodedString);
+}
+
+
+
+QString get_value_with_default (const QStringRef &val, const QString &def)
+{
+  QString s = val.toString();
+  if (! s.isEmpty())
+     return s.toString();
+  else
+      return def;   
+}
+
+
+int get_value_with_default (const QStringRef &val, int def)
+{
+  QString s = val.toString();
+
+  if (! s.isEmpty())
+     return s.toInt();
+  else
+      return def;   
+}
+
+
+size_t get_value_with_default (const QStringRef &val, size_t def)
+{
+  QString s = val.toString();
+
+  if (! s.isEmpty())
+     return (size_t) val.toInt();
+  else
+      return def;   
+}
+
+
+float get_value_with_default (const QStringRef &val, float def)
+{
+  QString s = val.toString();
+
+  if (! s.isEmpty())
+     return s.toFloat();
+  else
+      return def;   
 }
