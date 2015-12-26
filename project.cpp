@@ -58,9 +58,9 @@ PaStream *pa_stream_out;
 PaStream *mixbuf_stream;
 
 
-int global_samplerate;
-int buffer_size_frames;
-int buffer_size_frames_multiplier;
+size_t global_samplerate;
+size_t buffer_size_frames;
+size_t buffer_size_frames_multiplier;
 
 
 bool comp_clips (CClip *c1, CClip *c2)
@@ -2236,9 +2236,11 @@ int CProject::mixbuf_render_next (int rendering_mode, const float *inpbuf)
       }  
   
 
-  size_t dest_buffer_len = buffer_size_frames * 2; //stereo
+  master_track->fb->settozero();
+
+  //size_t dest_buffer_len = buffer_size_frames * 2; //stereo
   
-  memset (master_track->buffer, 0, dest_buffer_len * sizeof (float));
+//  memset (master_track->buffer, 0, dest_buffer_len * sizeof (float));
       
   for (int i = 0; i < tracks.size(); i++)
       {
@@ -2250,13 +2252,15 @@ int CProject::mixbuf_render_next (int rendering_mode, const float *inpbuf)
        if (has_solo && ! p_track->solo)
           continue;
   
-       memset (trackbuf, 0, dest_buffer_len * sizeof (float));
+       fb_trackbuf->settozero();
+       //memset (trackbuf, 0, dest_buffer_len * sizeof (float));
     
        size_t sample_source = 0;
-       size_t sample_dest = 0;
+       size_t frame_dest = 0;
        
-       float *p_track_buffer = p_track->buffer + (tracks_window_inner_offset * p_track->channels); 
-          
+      // float *p_track_buffer = p_track->buffer + (tracks_window_inner_offset * p_track->channels); 
+        
+        
        /*
        
        копируем часть буфера дорожки в промежуточный trackbuffer
@@ -2266,13 +2270,19 @@ int CProject::mixbuf_render_next (int rendering_mode, const float *inpbuf)
 
 
        if (p_track->channels == 1)        
-       while (sample_dest < dest_buffer_len)
+       while (frame_dest < buffer_size_frames)
              {
-              trackbuf[sample_dest++] += p_track_buffer[sample_source];
-              trackbuf[sample_dest++] += p_track_buffer[sample_source++];
+              
+              p_track->fbtrack->copy_channel_to_pos (fb_trackbuf, 0, 0, tracks_window_inner_offset, buffer_size_frames, 0);
+              p_track->fbtrack->copy_channel_to_pos (fb_trackbuf, 0, 1, tracks_window_inner_offset, buffer_size_frames, 0);
+              
+              //trackbuf[sample_dest++] += p_track_buffer[sample_source];
+              //trackbuf[sample_dest++] += p_track_buffer[sample_source++];
             }
         else //stereo    
-             memcpy (trackbuf, p_track_buffer, dest_buffer_len * sizeof (float));
+//             memcpy (trackbuf, p_track_buffer, dest_buffer_len * sizeof (float));
+         p_track->fbtrack->copy_to_pos (fb_trackbuf, tracks_window_inner_offset, buffer_size_frames, 0);
+              
           
      
        /*
@@ -2302,8 +2312,8 @@ int CProject::mixbuf_render_next (int rendering_mode, const float *inpbuf)
              put INSERTS, SENDS HERE
             */
             
-        sample_dest = 0;
-        sample_source = 0;
+        frame_dest = 0;
+        frame_source = 0;
              
              float maxl = 0.0f;
              float maxr = 0.0f;
@@ -2311,7 +2321,10 @@ int CProject::mixbuf_render_next (int rendering_mode, const float *inpbuf)
              float sqr_sum_l = 0.0f;
              float sqr_sum_r = 0.0f;
             
-             while (sample_dest < dest_buffer_len)
+            
+             size_t frame = 0;
+            
+             while (frame < buffer_size_frames)
                    {
                     float panl = 0.0;
                     float panr = 0.0;
@@ -2329,27 +2342,26 @@ int CProject::mixbuf_render_next (int rendering_mode, const float *inpbuf)
                            pan_sincos (panl, panr, p_track->pan);
 
                     
-                    trackbuf[sample_dest] = trackbuf[sample_dest] * panl * p_track->volume;
-                    master_track->buffer[sample_dest] += trackbuf[sample_dest];
+                    fb_trackbuf->buffer[0][frame] = fb_trackbuf->buffer[0][frame] * panl * p_track->volume;
+                    master_track->fb[0][frame] += fb_trackbuf->buffer[0][frame];
     
-                    if (float_less_than (maxl, trackbuf[sample_dest]))
-                        maxl = trackbuf[sample_dest];
+                    if (float_less_than (maxl, fb_trackbuf->buffer[0][frame]))
+                        maxl = fb_trackbuf->buffer[0][frame];
 
-                    sqr_sum_l += trackbuf[sample_dest] * trackbuf[sample_dest];
+                    sqr_sum_l += fb_trackbuf->buffer[0][frame] * fb_trackbuf->buffer[0][frame];
                      
-                    sample_dest++;
+                    //sample_dest++;
                     
-                    
-                    trackbuf[sample_dest] = trackbuf[sample_dest] * panr * p_track->volume;
-                    master_track->buffer[sample_dest] += trackbuf[sample_dest];
-                    
-                    
-                    if (float_less_than (maxr, trackbuf[sample_dest]))
-                        maxr = trackbuf[sample_dest];
+                    fb_trackbuf->buffer[1][frame] = fb_trackbuf->buffer[1][frame] * panl * p_track->volume;
+                    master_track->fb[1][frame] += fb_trackbuf->buffer[1][frame];
+    
+                    if (float_less_than (maxr, fb_trackbuf->buffer[1][frame]))
+                        maxr = fb_trackbuf->buffer[1][frame];
 
-                    sqr_sum_r += trackbuf[sample_dest] * trackbuf[sample_dest];
+                    sqr_sum_r += fb_trackbuf->buffer[1][frame] * fb_trackbuf->buffer[1][frame];
                     
-                    sample_dest++;
+                    //sample_dest++;
+                    frame++;
                    }
                    
           
@@ -2393,25 +2405,27 @@ int CProject::mixbuf_render_next (int rendering_mode, const float *inpbuf)
      float sqr_sum_l = 0.0f;
      float sqr_sum_r = 0.0f;
             
-     while (sample_dest < dest_buffer_len)
+      
+     frame = 0;      
+            
+     while (frame < buffer_size_frames)
            {
-            master_track->buffer[sample_dest] = master_track->buffer[sample_dest] * master_track->volume_left;  
+            master_track->fb->buffer[0][frame] = master_track->fb->buffer[0][frame] * master_track->volume_left;  
     
-            if (float_less_than (maxl, master_track->buffer[sample_dest]))
-               maxl = master_track->buffer[sample_dest];
+            if (float_less_than (maxl, master_track->fb->buffer[0][frame]))
+               maxl = master_track->fb->buffer[0][frame];
 
-            sqr_sum_l += master_track->buffer[sample_dest] * master_track->buffer[sample_dest];
+            sqr_sum_l += master_track->fb->buffer[0][frame] * master_track->fb->buffer[0][frame];
                      
-            sample_dest++;
                     
-            master_track->buffer[sample_dest] = master_track->buffer[sample_dest] * master_track->volume_right;  
-                    
-            if (float_less_than (maxr, master_track->buffer[sample_dest]))
-               maxr = master_track->buffer[sample_dest];
+            master_track->fb->buffer[1][frame] = master_track->fb->buffer[1][frame] * master_track->volume_right;  
+    
+            if (float_less_than (maxr, master_track->fb->buffer[1][frame]))
+               maxr = master_track->fb->buffer[1][frame];
 
-            sqr_sum_r += master_track->buffer[sample_dest] * master_track->buffer[sample_dest];
+            sqr_sum_r += master_track->fb->buffer[1][frame] * master_track->fb->buffer[1][frame];
                   
-            sample_dest++;
+            frame++;
            }
                    
           
@@ -2440,12 +2454,99 @@ int CProject::mixbuf_render_next (int rendering_mode, const float *inpbuf)
 }
 
 
+/*
+
+
+ float** pchannels = (float **)output;
+
+  if (d->wave_edit->waveform->play_looped)
+     {
+      if (! d->wave_edit->waveform->selected)
+         {
+          //qDebug() << "l1";
+           if (d->wave_edit->waveform->fb->offset >= 
+               d->wave_edit->waveform->fb->length_frames - frameCount) 
+              {
+               d->wave_edit->waveform->fb->offset = 0;
+              }                                          
+          }
+      else //looped, but selected
+           {
+           // qDebug() << "l2";
+
+            if (d->wave_edit->waveform->fb->offset >= d->wave_edit->waveform->frames_end()) 
+                d->wave_edit->waveform->fb->offset = d->wave_edit->waveform->frames_start();
+           }
+     }
+   else //not looped at all - НЕЯСНО, ДОХОДИТ ЛИ СЮДА УПРАВЛЕНИЕ
+   if (d->wave_edit->waveform->fb->offset + frameCount >= 
+       d->wave_edit->waveform->fb->length_frames)
+       {
+        qDebug() << "nl1";
+        
+        d->wave_edit->waveform->timer.stop();
+        wnd_fxrack->tm_level_meter.stop();
+
+        transport_state = STATE_STOP;
+        wnd_fxrack->fx_rack->set_state_all (FXS_STOP);
+
+//        qDebug() << "full stop";
+//        qDebug() << "buffer offset: " << d->wave_edit->waveform->sound_buffer->buffer_offset;
+//        qDebug() << "samples total: " << d->wave_edit->waveform->sound_buffer->samples_total;
+
+        d->wave_edit->waveform->fb->offset = 0;
+        d->wave_edit->waveform->scrollbar->setValue (0);
+        
+        return paAbort;
+       }
+ 
+  if (dsp->process (frameCount) == 0)
+     {
+      qDebug() << "return from process()";
+      transport_state = STATE_STOP;
+      
+      d->wave_edit->waveform->timer.stop();
+      wnd_fxrack->tm_level_meter.stop();
+
+      transport_state = STATE_STOP;
+      wnd_fxrack->fx_rack->set_state_all (FXS_STOP);
+
+      d->wave_edit->waveform->fb->offset = 0;
+      d->wave_edit->waveform->scrollbar->setValue (0);
+      return paAbort;
+     }
+  
+ // dsp->temp_float_buffer->fill_interleved();
+  
+  //memcpy (output, dsp->temp_float_buffer->buffer_interleaved, 
+    //      nframes * dsp->temp_float_buffer->channels * sizeof (float));
+  
+  if (play_l)  
+      memcpy (pchannels[0], dsp->temp_float_buffer->buffer[0], 
+              frameCount * sizeof (float));
+  else         
+      memset (pchannels[0], 0, frameCount * sizeof (float));
+
+  if (play_r)  
+     {
+      if (dsp->temp_float_buffer->channels == 2)
+         memcpy (pchannels[1], dsp->temp_float_buffer->buffer[1], frameCount * sizeof (float));
+      }      
+  else
+      memset (pchannels[1], 0, frameCount * sizeof (float));
+   
+ 
+*/
+
 
 int mixbuf_pa_stream_callback (const void *input, void *output, unsigned long frameCount, const PaStreamCallbackTimeInfo *timeInfo, PaStreamCallbackFlags statusFlags, void *userData)
 {
 //  qDebug() << "mixbuf_pa_stream_callback  -1";   
      
   CProject *p_project = (CProject*) userData;
+
+  float** pchannels = (float **)output;
+
 
   int r = p_project->mixbuf_render_next (0, (float*)input);
   
@@ -2467,7 +2568,15 @@ int mixbuf_pa_stream_callback (const void *input, void *output, unsigned long fr
   
   //buffer_size_frames == frameCount?
   
-  memcpy (output, p_project->master_track->buffer, buffer_size_frames * 2 * sizeof (float));
+//  memcpy (output, p_project->master_track->buffer, buffer_size_frames * 2 * sizeof (float));
+
+  memcpy (pchannels[0], master_track->fb->buffer[0], 
+          frameCount * sizeof (float));
+ 
+  memcpy (pchannels[1], master_track->fb->buffer[1], 
+          frameCount * sizeof (float));
+
+
 
   //qDebug() << "mixbuf_pa_stream_callback  -2";   
     
@@ -2547,7 +2656,6 @@ void CProject::mixbuf_record()
       }
   
   
-
   mixbuf_play();
 }
 
@@ -2644,7 +2752,7 @@ void CProject::mixbuf_stop()
        recording = false;
        //close file[s], add to wavs, create clips, place the clips
        
-      for (int i = 0; i < tracks.size(); i++)
+       for (int i = 0; i < tracks.size(); i++)
           {       
            CWavTrack *p_track = (CWavTrack*) tracks[i];
            if (p_track->arm)
@@ -2716,9 +2824,7 @@ CMixerWindow::CMixerWindow (CProject *ptr)
 }
 
 
-
-
-
+/*
 int pan_float_to_int (float floatpan)
 {  
   if (floatpan == 0.5)
@@ -2732,7 +2838,6 @@ int pan_float_to_int (float floatpan)
      
   return 0;   
 }
-
 
 
 float pan_int_to_float (int value) //ok
@@ -2753,10 +2858,7 @@ float pan_int_to_float (int value) //ok
   //if (value == 0)
    return 0.5f;
 }
-
-
-
-
+*/
 
 void CProject::gui_updater_timer_timeout()
 {
@@ -2840,8 +2942,6 @@ CMasterTrack::CMasterTrack (CProject *prj)
   fb = CFloatBuffer (buffer_size_frames, 2);  
   //buffer = new float [buffer_length_frames * channels];
   
-  
-  
   mixer_strip = new CMixerMasterStrip (this);
 
   qDebug() << "xxx4";  
@@ -2882,10 +2982,14 @@ void CProject::mixdown_to_default()
          {
           if (mixbuf_render_next (RENDER_MODE_OFFLINE) == -1)
              break;
-          
+         
+         
+          master_track->fb->allocate_interleaved();
+          master_track->fb->fill_interleaved();             
+                    
           qDebug() << "01";
          
-          sf_writef_float (file_mixdown_handle, (float *)master_track->buffer, buffer_size_frames);
+          sf_writef_float (file_mixdown_handle, (float *)master_track->fb->buffer_interleaved, buffer_size_frames);
           
           qDebug() << "02";
          
@@ -2928,8 +3032,6 @@ CMasterTrack::~CMasterTrack()
 {
   delete fb;
 }
-
-
 
 
 
@@ -2990,8 +3092,6 @@ void CMixerStrip::cb_arm_toggled (bool checked)
      
   p_track->arm = checked;
   p_track->update_strip();
-     
-  
 }
 
 
@@ -3241,7 +3341,6 @@ void CMixerMasterStrip::dsb_vol_r_valueChanged (double d)
        dsb_vol_l->setValue (d);
        update_strip_controls = false;
       }
-
 }
 
 
@@ -3327,9 +3426,6 @@ CMixerMasterStrip::CMixerMasterStrip (CMasterTrack *ptrk, QWidget *parent): QGro
         
         v_vol->addLayout (h_vol);
         v_vol->addWidget (cb_linked_channels);
-
-     
-  
   
 
   QGroupBox *gb_meter = new QGroupBox (tr ("Meter"));

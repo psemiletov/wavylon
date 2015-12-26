@@ -95,8 +95,8 @@ extern QSettings *settings;
 extern int meter_cps;
 extern int meter_msecs_delay;
 
-extern int buffer_size_frames;
-extern int buffer_size_frames_multiplier;
+extern size_t buffer_size_frames;
+extern size_t buffer_size_frames_multiplier;
 
 
 extern int proxy_video_decoder;
@@ -127,8 +127,8 @@ extern int pa_device_id_out;
 QStringList lpa_apis;
 QStringList lpa_devices;
 
-PaStream *pa_stream;
-PaStream *pa_stream_in;
+//PaStream *pa_stream;
+//PaStream *pa_stream_in;
 
 
 
@@ -166,7 +166,6 @@ QStringList get_sound_devices()
 }
 
 
-
 void CWavylon::init_styles()
 {
 #if QT_VERSION >= 0x050000
@@ -195,19 +194,18 @@ void CWavylon::init_styles()
 }
 
 
-
 void pa_init (CWavylon *pe)
 {
   PaError err = Pa_Initialize();
   qDebug() << Pa_GetErrorText (err);
-  pa_stream = 0;
-  pa_stream_in = 0;
+  //pa_stream = 0;
+  //pa_stream_in = 0;
 }
 
 
 void pa_done()
 {
-  if (pa_stream)
+ /* if (pa_stream)
      {
       Pa_AbortStream (pa_stream);
       Pa_CloseStream (pa_stream);
@@ -218,7 +216,7 @@ void pa_done()
       Pa_AbortStream (pa_stream_in);
       Pa_CloseStream (pa_stream_in);
      } 
-
+*/
   Pa_Terminate(); 	
 }
 
@@ -689,7 +687,7 @@ void CWavylon::open()
   transport_state = STATE_STOP;
   //wnd_fxrack->fx_rack->set_state_all (FXS_STOP);
 
-  if (pa_stream)
+/*  if (pa_stream)
      {
       Pa_AbortStream (pa_stream);	
       pa_stream = 0;
@@ -700,7 +698,7 @@ void CWavylon::open()
        Pa_AbortStream (pa_stream_in);	
        pa_stream_in = 0;
      }
-
+*/
 
   if (! settings->value ("use_trad_dialogs", "0").toBool())
      {

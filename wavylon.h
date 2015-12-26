@@ -219,19 +219,10 @@ main window callbacks
 
   void leaving_tune();
 
-  void file_import_raw();
-
-  void file_export_raw();
-
-
+  
   void project_mixdown();
 
-  void fn_insert_silence();
-  void fn_silence_selection();
-
-  void generate_sine();
-  void generate_noise();
-
+  
   void nav_play_looped();
 
   void view_show_mixer();
@@ -252,13 +243,12 @@ main window callbacks
 
   void cb_monitor_input_changed (int state);
 
-
   void cmb_panner_currentIndexChanged (int index);
 
 
   void stop_recording();
   
-  void fm_full_info();
+  //void fm_full_info();
 
   void prj_clip_props();
 
@@ -294,14 +284,14 @@ main window callbacks
 
   void file_reload();
   
-  void file_export_mp3();
+  //void file_export_mp3();
   
   
   void file_last_opened();
   void file_use_palette();
-  void file_open_session();
+  //void file_open_session();
   void file_save_version();
-  void file_change_format();
+  //void file_change_format();
  
 
   void cb_altmenu_stateChanged (int state);
@@ -317,9 +307,7 @@ main window callbacks
   void close_current();
 
   void ed_copy();
-  void ed_copy_to_new();
-  void ed_copy_to_new_fmt();
-
+  
   void ed_delete();
 
   void ed_paste();
@@ -330,40 +318,8 @@ main window callbacks
   
   void ed_deselect();
   void ed_select_all();
-  void ed_trim();
+  //void ed_trim();
  
-
-  void edit_copy_current_fname();
-
-  void fn_stereo_to_mono();
-
-  void fun_51_to_stereo (int algo);
-  void fn_51_to_stereo_dlike();
-
-  void fn_51_to_stereo();
-
-  void fn_mono_to_stereo_half(); 
-  void fn_mono_to_stereo_full(); 
-  void fn_swap_channels();
-  
-  void fn_copy_channel();
-  void fn_mute_channel();
-
-
-  void fn_fade_out();
-  void fn_fade_in();
-
-
-  void fn_stat_rms();  
-  void fn_norm();  
-  void fn_reverse();
-
-  void fn_detect_average_value();
-
-
-  void fn_dc_offset_detect();
-  void fn_dc_offset_fix_manually();
-  void fn_dc_offset_fix_auto();
 
   void search_find();
   void search_find_next();
@@ -371,12 +327,6 @@ main window callbacks
   
   void view_toggle_fs();
   void view_stay_on_top();
-
-  void nav_goto_right_tab();
-  void nav_goto_left_tab();
-
-  void nav_save_pos();
-  void nav_goto_pos();
 
   void nav_focus_to_fif();
   void nav_focus_to_editor();
@@ -386,12 +336,12 @@ main window callbacks
   void help_show_changelog();
   void help_show_todo();
 
-  void session_save_as();
+//  void session_save_as();
 
   void main_tab_page_changed (int index);
   void profile_save_as();
 
-  void file_info();
+//  void file_info();
 
   void man_find_find();
   void man_find_next();
@@ -400,8 +350,6 @@ main window callbacks
 
   void fman_project_files();
 
-
-  
 
 /*************************
 prefs window callbacks
@@ -494,15 +442,15 @@ main window widgets
   QMenu *editMenu;
 
   QMenu *menu_file_configs;
-  QMenu *menu_file_sessions;
+//  QMenu *menu_file_sessions;
   QMenu *menu_file_actions;
   
   QMenu *menu_view_palettes;
   QMenu *menu_view_profiles;
 
-  QMenu *menu_fn_sessions;
+//  QMenu *menu_fn_sessions;
   
-  QMenu *menu_functions;
+//  QMenu *menu_functions;
   QMenu *menu_project;
   QMenu *menu_track;
   QMenu *menu_clip;
