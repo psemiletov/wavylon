@@ -855,22 +855,35 @@ void CWAVPlayer::link (CFloatBuffer *a_p_buffer)
 
 int wavplayer_pa_stream_callback (const void *input, void *output, unsigned long frameCount, const PaStreamCallbackTimeInfo *timeInfo, PaStreamCallbackFlags statusFlags, void *userData)
 {
+  qDebug() << "wavplayer_pa_stream_callback - 1";   
+
+
   if (! wav_player)   
      return paAbort;
      
   if (wav_player->offset_frames >= wav_player->p_buffer->length_frames)   
      return paAbort;
+    
+  qDebug() << "wav_player->offset_frames: " << wav_player->offset_frames;   
+  qDebug() << "wav_player->p_buffer->length_frames: " << wav_player->p_buffer->length_frames;   
  
-  //float **inb = (float **)input;
   float **outb = (float **)output;
  
-//  float *buf = wav_player->p_buffer + wav_player->offset_frames * wav_player->channels;
+  size_t tail = wav_player->p_buffer->length_frames - wav_player->offset_frames;
+  size_t sz = frameCount;
   
+  if (sz > tail)
+      sz = tail;
+ 
   for (size_t ch = 0; ch < wav_player->p_buffer->channels; ch++)
+      {
        memcpy (outb[ch], wav_player->p_buffer->buffer[ch] + wav_player->offset_frames,
-       wav_player->p_buffer->channels * frameCount * sizeof (float));
+       sz * sizeof (float));
+      }
   
   wav_player->offset_frames += frameCount;
+
+  qDebug() << "wavplayer_pa_stream_callback - 2";   
   
   return paContinue; 	
 }
@@ -902,8 +915,6 @@ void CWAVPlayer::play()
   
   outputParameters.suggestedLatency = Pa_GetDeviceInfo (outputParameters.device)->defaultLowOutputLatency;;
   outputParameters.hostApiSpecificStreamInfo = NULL;
-
-     
   
   PaError err = Pa_OpenStream (&pa_stream_out,
                                NULL,
