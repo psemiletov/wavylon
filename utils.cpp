@@ -316,7 +316,7 @@ QString get_value_with_default (const QStringRef &val, const QString &def)
 {
   QString s = val.toString();
   if (! s.isEmpty())
-     return s.toString();
+     return s;
   else
       return def;   
 }

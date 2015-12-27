@@ -36,17 +36,16 @@
 #include <QTextBrowser>
 #include <QFontComboBox>
 #include <QSettings>
-
+#include <QMainWindow>
 
 #include "project.h"
 
-#include "document.h"
 #include "logmemo.h"
 #include "fman.h"
 #include "shortcuts.h"
 
 
-
+/*
 class CChangeFormatWindow: public QDialog
 {
   Q_OBJECT
@@ -70,7 +69,7 @@ public slots:
 
   void format_currentIndexChanged (const QString &text);
 };
-
+*/
 
 class CAboutWindow: public QWidget
 {
@@ -116,10 +115,6 @@ public:
 
   CLogMemo *log;
 
-  
-
-  CTransportControl *transport_control;  
-    
     
   QString fname_stylesheet; 
 
@@ -232,8 +227,8 @@ main window callbacks
   void cb_show_meterbar_in_db_changed (int value);
   void spb_max_undos_valueChanged (int i);
 
-  void slot_transport_play();
-  void slot_transport_stop();
+//  void slot_transport_play();
+//  void slot_transport_stop();
 
   void cmb_icon_sizes_currentIndexChanged (const QString &text);
 
@@ -246,7 +241,7 @@ main window callbacks
   void cmb_panner_currentIndexChanged (int index);
 
 
-  void stop_recording();
+ // void stop_recording();
   
   //void fm_full_info();
 
@@ -275,14 +270,14 @@ main window callbacks
   void pageChanged (int index);
 
 
-  void file_record();
+  //void file_record();
   
   void newFile();
   void open();
   
   void fman_items_select_by_regexp (bool mode);
 
-  void file_reload();
+//  void file_reload();
   
   //void file_export_mp3();
   
@@ -329,7 +324,7 @@ main window callbacks
   void view_stay_on_top();
 
   void nav_focus_to_fif();
-  void nav_focus_to_editor();
+ // void nav_focus_to_editor();
 
   void help_show_gpl();
   void help_show_news();
@@ -363,7 +358,7 @@ prefs window callbacks
 
   void spb_def_channels_valueChanged (int i);
   
-  void bt_set_def_format_clicked();
+ // void bt_set_def_format_clicked();
   void pb_choose_temp_path_clicked();
 
   void cb_locale_override (int state);
@@ -438,7 +433,7 @@ main window widgets
   
   QLineEdit *fif;
 
-  QMenu *fileMenu;
+ // QMenu *fileMenu;
   QMenu *editMenu;
 
   QMenu *menu_file_configs;

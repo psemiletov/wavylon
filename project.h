@@ -373,9 +373,10 @@ public:
   
   CFloatBuffer *fb;
 
+  //size_t buffer_length_frames;
+ 
 /*  
   float *buffer; //clips will be rendered here
-  size_t buffer_length_frames;
   size_t buffer_offset_frames; //current offset in buffer
   */
   CMasterTrack (CProject *prj);
@@ -491,10 +492,10 @@ public:
   void save_project();
   void load_project();
 
-  void mixbuf_one(); 
+  //void mixbuf_one(); 
   
   size_t tracks_render_next();
-  int mixbuf_render_next (int rendering_mode = 0, const float *inpbuf = 0);
+  int mixbuf_render_next (int rendering_mode = 0, const void *inpbuf = 0);
 
   void mixbuf_record();
   void mixbuf_play();

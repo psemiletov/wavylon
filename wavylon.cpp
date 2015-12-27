@@ -29,6 +29,8 @@ started at 25 July 2010
 #include <limits>
 
 #include <QDebug>
+#include <QStatusBar>
+
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 
@@ -55,6 +57,7 @@ started at 25 July 2010
 
 #include "logmemo.h"
 
+#include "tio.h"
 #include "project.h"
 
 
@@ -90,8 +93,9 @@ public:
 };
 
 
-extern QHash <QString, QString> global_palette;
-extern QSettings *settings;
+QSettings *settings;
+
+QHash <QString, QString> global_palette;
 extern int meter_cps;
 extern int meter_msecs_delay;
 
@@ -410,20 +414,20 @@ CWavylon::CWavylon()
 {
   pa_init (this);
 
-  play_r = true;
-  play_l = true;
+ // play_r = true;
+  //play_l = true;
   
   b_monitor_input = false;
   
-  bypass_mixer = false;    
+  //bypass_mixer = false;    
   
   temp_mp3_fname = QDir::tempPath() + "/wavylon-temp-from-mp3.wav";
      
   file_temp_handle = 0;
   
 
-  meter_cps = C_METER_CPS;
-  meter_msecs_delay = 1000 / meter_cps;
+//  meter_cps = C_METER_CPS;
+//  meter_msecs_delay = 1000 / meter_cps;
 
 //  qDebug() << "meter_msecs_delay = " << meter_msecs_delay;
 
@@ -439,12 +443,6 @@ CWavylon::CWavylon()
   idx_tab_fman = 0;
   idx_tab_learn = 0;
   
-  transport_state = STATE_STOP;
- /* 
-  transport_control = new CTransportControl;
-  connect(transport_control, SIGNAL(play_pause()), this, SLOT(slot_transport_play()));
-  connect(transport_control, SIGNAL(stop()), this, SLOT(slot_transport_stop()));
-  */
   create_paths();
   
   QString sfilename = dir_config + "/wavylon.conf";
@@ -480,7 +478,7 @@ CWavylon::CWavylon()
 
   init_styles();
   
-  update_sessions();
+  //update_sessions();
   update_palettes();
   update_themes();
   update_profiles();
@@ -496,20 +494,8 @@ CWavylon::CWavylon()
 
   readSettings();
   
+   
   
-  
-  documents = new CDocumentHolder;
-  documents->parent_wnd = this;
-  //documents->tab_widget = tab_widget;
-  documents->recent_menu = menu_file_recent;
-  documents->recent_list_fname.append (dir_config).append ("/wavylon_recent");
-  documents->reload_recent_list();
-  documents->update_recent_menu();
-  documents->log = log;
-  documents->status_bar = statusBar();
-  documents->dir_config = dir_config;
-  documents->load_palette (fname_def_palette);
-
   load_palette (fname_def_palette);
 
   
@@ -536,9 +522,7 @@ CWavylon::CWavylon()
   statusBar()->insertPermanentWidget (1, l_status);
 
   pb_status->hide();
-  documents->l_status_bar = l_status;
-  documents->l_maintime = l_maintime;
-
+  
   restoreState (settings->value ("state", QByteArray()).toByteArray());
 
   text_file_browser = new QTextBrowser;
@@ -601,15 +585,14 @@ void CWavylon::leaving_tune()
   
   buffer_size_frames_multiplier = sp_buffer_size_frames_multiplier->value();
   
-  settings->setValue ("buffer_size_frames_multiplier", buffer_size_frames_multiplier);
+  settings->setValue ("buffer_size_frames_multiplier", (int) buffer_size_frames_multiplier);
   settings->setValue ("mp3_encode", ed_mp3_encode->text());
 }
 
 
 void CWavylon::closeEvent (QCloseEvent *event)
 {
-  transport_state = STATE_EXIT;
-
+  
   pa_done();
 
   QString tfn = settings->value ("temp_path", QDir::tempPath()).toString() + fname_tempfile;
@@ -649,20 +632,7 @@ void CWavylon::closeEvent (QCloseEvent *event)
 
 void CWavylon::newFile()
 {
-  transport_state = STATE_STOP;
   
-  if (pa_stream)
-     {
-       Pa_CloseStream (pa_stream);	
-       pa_stream = 0;
-     }
-
-  if (pa_stream_in)
-     {
-       Pa_AbortStream (pa_stream_in);	
-       pa_stream_in = 0;
-     }
-
   //CREATE NEW PROJECT
   
   QString fileName = QFileDialog::getSaveFileName (this, tr ("New project"),
@@ -684,7 +654,6 @@ void CWavylon::open()
 {
   qDebug() << "CEKO::open() - start";
 
-  transport_state = STATE_STOP;
   //wnd_fxrack->fx_rack->set_state_all (FXS_STOP);
 
 /*  if (pa_stream)
@@ -779,8 +748,6 @@ void CWavylon::open()
   else
       dialog.setSidebarUrls (sidebarUrls_old);
 
-
-  transport_state = STATE_STOP;
 
   settings->setValue ("dialog_size", dialog.size());
   update_dyn_menus();
@@ -967,11 +934,11 @@ void CWavylon::createActions()
     
   transport_play = new QAction (QIcon (":/icons/play.png"), tr ("Play/Pause (Space)"), this);
   transport_play->setStatusTip (tr ("Play/Pause"));
-  connect (transport_play, SIGNAL(triggered()), this, SLOT(slot_transport_play()));
+  //connect (transport_play, SIGNAL(triggered()), this, SLOT(slot_transport_play()));
 
   transport_stop = new QAction (QIcon (":/icons/stop.png"), tr ("Stop"), this);
   transport_stop->setStatusTip (tr ("Stop"));
-  connect (transport_stop, SIGNAL(triggered()), this, SLOT(slot_transport_stop()));
+ // connect (transport_stop, SIGNAL(triggered()), this, SLOT(slot_transport_stop()));
 }
 
 
@@ -985,12 +952,12 @@ void CWavylon::createMenus()
 
   menu_project->addAction (newAct);
   
-  add_to_menu (menu_project, tr ("Record"), SLOT(file_record()));
+  //add_to_menu (menu_project, tr ("Record"), SLOT(file_record()));
   add_to_menu (menu_project, tr ("Open"), SLOT(open()), "Ctrl+O", ":/icons/file-open.png");
   add_to_menu (menu_project, tr ("Last closed file"), SLOT(file_last_opened()));
   menu_file_recent = menu_project->addMenu (tr ("Recent files"));
   
-  fileMenu->addSeparator();
+  //fileMenu->addSeparator();
   
 
   add_to_menu (menu_project, tr ("WAVs"), SLOT(project_call_wavs_wnd()));
@@ -1480,7 +1447,7 @@ void CWavylon::cmb_sound_dev_in_currentIndexChanged (int index)
 void CWavylon::cmb_panner_currentIndexChanged (int index)
 {
   settings->setValue ("panner", index);
-  dsp->panner = index;
+  //dsp->panner = index;
 }
 
 
@@ -1824,7 +1791,6 @@ void CWavylon::createOptions()
   
   QStringList lmrm;
   
-  lmrm.append (tr ("Mix both channels"));
   lmrm.append (tr ("Use left channel"));
   lmrm.append (tr ("Use right channel"));
   
@@ -2002,16 +1968,6 @@ void CWavylon::cb_monitor_input_changed (int state)
 }
 
 
-void CWavylon::nav_save_pos()
-{
-}
-
-
-void CWavylon::nav_goto_pos()
-{
-}
-
-
 void CWavylon::slot_app_fontname_changed (const QString &text)
 {
   settings->setValue ("app_font_name", text);
@@ -2028,7 +1984,7 @@ void CWavylon::slot_app_font_size_changed (int i)
 
 void CWavylon::updateFonts()
 {
-  documents->apply_settings();
+  //documents->apply_settings();
 
   QFont fapp;
   QFontInfo fi = QFontInfo (qApp->font());
@@ -2759,8 +2715,6 @@ void CWavylon::fman_file_activated (const QString &full_path)
 {
   main_tab_widget->setCurrentIndex (idx_tab_edit);
 
-  transport_state = STATE_STOP;
- 
       
      project_manager->project_open (full_path);
            
@@ -2888,9 +2842,6 @@ void CWavylon::handle_args()
        else
            ;//documents->open_file (l.at(i));
       }
-      
-   transport_state = STATE_STOP;
-   
 }
 
 
@@ -2960,8 +2911,6 @@ void CWavylon::view_use_profile()
   mainSplitter->restoreState (s.value ("splitterSizes").toByteArray());
   resize (size);
   move (pos);
-  
-  documents->apply_settings();  
 }
 
 
@@ -3105,10 +3054,10 @@ void CWavylon::ed_delete()
 {
   }
 
-
+/* 
 void CWavylon::file_info()
 {
-/*  CDocument *d = documents->get_current(); 
+ CDocument *d = documents->get_current(); 
   if (! d)
      return;
   
@@ -3122,9 +3071,9 @@ void CWavylon::file_info()
   log->log (subtype);
   log->log (format);
 
-  log->log (d->file_name);*/
+  log->log (d->file_name);
 }
-
+*/
 
 
 
@@ -3146,11 +3095,7 @@ void CWavylon::ed_select_all()
 }
 
 
-void CWavylon::ed_trim()
-{
-}
-
-
+/*
 void CWavylon::bt_set_def_format_clicked()
 {
   int sndfile_format = 0;
@@ -3192,7 +3137,7 @@ void CWavylon::bt_set_def_format_clicked()
 
   delete w;
 }
-
+*/
 
 void CWavylon::spb_def_channels_valueChanged (int i)
 {
@@ -3387,13 +3332,6 @@ void CWavylon::cb_altmenu_stateChanged (int state)
 MyProxyStyle::MyProxyStyle (QStyle * style): QProxyStyle (style)
 {
      
-}
-
-
-
-
-void CWavylon::file_export_mp3()
-{
 }
 
 

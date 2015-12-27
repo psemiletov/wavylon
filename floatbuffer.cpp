@@ -194,7 +194,7 @@ void CFloatBuffer::copy_to_pos (CFloatBuffer *other, size_t offset_from, size_t 
 }
 
 
-void copy_channel_to_pos (CFloatBuffer *other, size_t ch_from, size_t ch_to,
+void CFloatBuffer::copy_channel_to_pos (CFloatBuffer *other, size_t ch_from, size_t ch_to,
                             size_t offset_from, size_t size, size_t offset_to)
 {
   if (size > length_frames)
