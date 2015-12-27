@@ -954,6 +954,9 @@ void CWavylon::createMenus()
   
   //add_to_menu (menu_project, tr ("Record"), SLOT(file_record()));
   add_to_menu (menu_project, tr ("Open"), SLOT(open()), "Ctrl+O", ":/icons/file-open.png");
+  
+  menu_project->addAction (saveAct);
+  
   add_to_menu (menu_project, tr ("Last closed file"), SLOT(file_last_opened()));
   menu_file_recent = menu_project->addMenu (tr ("Recent files"));
   

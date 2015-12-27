@@ -855,17 +855,15 @@ void CWAVPlayer::link (CFloatBuffer *a_p_buffer)
 
 int wavplayer_pa_stream_callback (const void *input, void *output, unsigned long frameCount, const PaStreamCallbackTimeInfo *timeInfo, PaStreamCallbackFlags statusFlags, void *userData)
 {
-  qDebug() << "wavplayer_pa_stream_callback - 1";   
-
-
+  
   if (! wav_player)   
      return paAbort;
      
   if (wav_player->offset_frames >= wav_player->p_buffer->length_frames)   
      return paAbort;
     
-  qDebug() << "wav_player->offset_frames: " << wav_player->offset_frames;   
-  qDebug() << "wav_player->p_buffer->length_frames: " << wav_player->p_buffer->length_frames;   
+//  qDebug() << "wav_player->offset_frames: " << wav_player->offset_frames;   
+//  qDebug() << "wav_player->p_buffer->length_frames: " << wav_player->p_buffer->length_frames;   
  
   float **outb = (float **)output;
  
@@ -883,8 +881,6 @@ int wavplayer_pa_stream_callback (const void *input, void *output, unsigned long
   
   wav_player->offset_frames += frameCount;
 
-  qDebug() << "wavplayer_pa_stream_callback - 2";   
-  
   return paContinue; 	
 }
 
@@ -2161,11 +2157,11 @@ size_t CProject::tracks_render_next()
 {
   qDebug() << "CProject::tracks_render_next()  - 1";
  
- /* 
+  
   qDebug() << "tracks_window_start_frames: " << tracks_window_start_frames << " tracks_window_length_frames: " << tracks_window_length_frames;
   qDebug() << "tracks_window_start time: " << frames_to_time_str (tracks_window_start_frames, global_samplerate) <<
               "tracks_window_length time: " << frames_to_time_str (tracks_window_length_frames, global_samplerate);
- */
+ 
   if (tracks_window_start_frames >= song_length_frames - tracks_window_length_frames)
      {
       qDebug() << "tracks_window_start_frames >= song_length_frames";
@@ -2196,7 +2192,7 @@ size_t CProject::tracks_render_next()
 
 int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
 {
-  //qDebug() << "CProject::mixbuf_render_next() - 1";
+  qDebug() << "CProject::mixbuf_render_next() - 1";
 
   float **p_input_buf = (float **)inpbuf;
 
@@ -2222,7 +2218,8 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
           } 
       }  
   
-
+qDebug() << "x1";
+  
   master_track->fb->settozero();
 
   //size_t dest_buffer_len = buffer_size_frames * 2; //stereo
@@ -2243,10 +2240,12 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
        //memset (trackbuf, 0, dest_buffer_len * sizeof (float));
     
    //    size_t sample_source = 0;
-       size_t frame_dest = 0;
+      // size_t frame_dest = 0;
+
+
+qDebug() << "x2";
        
       // float *p_track_buffer = p_track->buffer + (tracks_window_inner_offset * p_track->channels); 
-        
         
        /*
        
@@ -2255,21 +2254,17 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
        
        */   
 
-
        if (p_track->channels == 1)        
-       while (frame_dest < buffer_size_frames)
-             {
-              
-              p_track->fbtrack->copy_channel_to_pos (fb_trackbuf, 0, 0, tracks_window_inner_offset, buffer_size_frames, 0);
-              p_track->fbtrack->copy_channel_to_pos (fb_trackbuf, 0, 1, tracks_window_inner_offset, buffer_size_frames, 0);
-              
-              //trackbuf[sample_dest++] += p_track_buffer[sample_source];
-              //trackbuf[sample_dest++] += p_track_buffer[sample_source++];
+           {
+            p_track->fbtrack->copy_channel_to_pos (fb_trackbuf, 0, 0, tracks_window_inner_offset, buffer_size_frames, 0);
+            p_track->fbtrack->copy_channel_to_pos (fb_trackbuf, 0, 1, tracks_window_inner_offset, buffer_size_frames, 0);
             }
         else //stereo    
 //             memcpy (trackbuf, p_track_buffer, dest_buffer_len * sizeof (float));
          p_track->fbtrack->copy_to_pos (fb_trackbuf, tracks_window_inner_offset, buffer_size_frames, 0);
               
+              qDebug() << "x3";
+
           
      
        /*
@@ -2294,6 +2289,8 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
            }
      
            
+           qDebug() << "x4";
+
 
             /*
              put INSERTS, SENDS HERE
@@ -2351,6 +2348,9 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
                     frame++;
                    }
                    
+                   qDebug() << "x5";
+
+                   
           
       float srms_l = sqrt (sqr_sum_l / buffer_size_frames);             
       float srms_r = sqrt (sqr_sum_r / buffer_size_frames);             
@@ -2384,8 +2384,6 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
   //DSP, then
    
   
-     size_t sample_dest = 0;
-             
      float maxl = 0.0f;
      float maxr = 0.0f;
             
@@ -2435,7 +2433,7 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
   if (tracks_window_inner_offset >= tracks_window_length_frames)
      tracks_window_inner_offset = 0;
 
-  //qDebug() << "CProject::mixbuf_render_next() - 2";
+  qDebug() << "CProject::mixbuf_render_next() - 2";
 
   return tracks_window_inner_offset;
 }
