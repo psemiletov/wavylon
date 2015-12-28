@@ -34,7 +34,7 @@
 #include "tio.h"
 #include "project.h"
 #include "utils.h"
-#include "fx.h"
+#include "fx-panners.h"
 
 #define TIME_FMT "hh:mm:ss.zzz"
 
@@ -2000,8 +2000,6 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
   int clips_count = clips.size();
  
   fbtrack->settozero(); 
- 
-  //memset (buffer, 0, buffer_length_frames * channels * sizeof (float));
 
   //if (mute)
     // return end_pos_frames;
@@ -2049,7 +2047,6 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
        //теперь вычислить отрезок клипа, входящий в окно
        // именно смещение клипа относительно начала клипа и смещение относительно конца клипа
         
-        
        size_t clip_data_start = 0;  //где в клипе начало попадающего в окно отрезка? относительно начала клипа
        size_t clip_insertion_pos = 0; //куда вставлять в буфер дорожки?
        size_t clip_data_length = 0;
@@ -2060,7 +2057,6 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
   //         qDebug() << "clip_in_window == 1";
            if (start_pos_frames <= clip_start)
              {
-              
               clip_insertion_pos = clip_start - start_pos_frames;
               clip_data_start = 0;
               clip_data_length = end_pos_frames - clip_start;
@@ -2075,7 +2071,6 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
                        clip_data_length = window_length_frames;
                    else   
                        clip_data_length = end_pos_frames - clip_start;
-               
                  }
            }
         
@@ -2085,7 +2080,6 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
           
             if (start_pos_frames <= clip_start)
                {
-       
                 clip_insertion_pos = clip_start - start_pos_frames;
                 clip_data_start = 0;
                 
@@ -2093,7 +2087,6 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
                    clip_data_length = clip->length_frames;
                 else   
                    clip_data_length = end_pos_frames - clip_start;
-                   
                }
             else   
                 if (start_pos_frames > clip_start)
@@ -2116,7 +2109,7 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
         
         //CFloatBuffer *p_source_fb = clip->file->fb;
  
-        size_t extoffs = (clip->offset_frames + clip_data_start) * clip->file->fb->channels * clip->playback_rate;
+        size_t extoffs = (clip->offset_frames + clip_data_start) * clip->playback_rate;
        
        // p_source_buffer += extoffs;
 
@@ -2124,25 +2117,21 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
         
         //p_dest_buffer += (clip_insertion_pos * channels);
 
-         qDebug() << "z2";
            //ошибка в вычислении clip_insertion_pos???     
            //тут может быть вылет!!!  
         
         if (clip->playback_rate == 1.0f)
           {
            //memcpy (p_dest_buffer, p_source_buffer, clip_data_length * channels * sizeof (float));
-           
-           for (size_t ch = 0; ch < channels; ch++)
-               {
-                clip->file->fb->copy_to_pos (fbtrack, extoffs, clip_data_length, clip_insertion_pos);
-  
-               }
-           
+           clip->file->fb->copy_to_pos (fbtrack, extoffs, clip_data_length, clip_insertion_pos);
           } 
         else 
             {
+             qDebug() << "clip->playback_rate != 1.0f";
+
+            
              clip->file->fb->copy_to_pos_with_rate (fbtrack, extoffs, 
-                               clip_data_length, clip_insertion_pos, clip->playback_rate);
+                             clip_data_length, clip_insertion_pos, clip->playback_rate);
             
              qDebug() << "clip->playback_rate != 1.0f";
             }   
@@ -2156,7 +2145,6 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
 size_t CProject::tracks_render_next()
 {
   qDebug() << "CProject::tracks_render_next()  - 1";
- 
   
   qDebug() << "tracks_window_start_frames: " << tracks_window_start_frames << " tracks_window_length_frames: " << tracks_window_length_frames;
   qDebug() << "tracks_window_start time: " << frames_to_time_str (tracks_window_start_frames, global_samplerate) <<
@@ -2192,7 +2180,7 @@ size_t CProject::tracks_render_next()
 
 int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
 {
-  qDebug() << "CProject::mixbuf_render_next() - 1";
+  //qDebug() << "CProject::mixbuf_render_next() - 1";
 
   float **p_input_buf = (float **)inpbuf;
 
@@ -2218,8 +2206,6 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
           } 
       }  
   
-qDebug() << "x1";
-  
   master_track->fb->settozero();
 
   //size_t dest_buffer_len = buffer_size_frames * 2; //stereo
@@ -2243,7 +2229,6 @@ qDebug() << "x1";
       // size_t frame_dest = 0;
 
 
-qDebug() << "x2";
        
       // float *p_track_buffer = p_track->buffer + (tracks_window_inner_offset * p_track->channels); 
         
@@ -2263,8 +2248,6 @@ qDebug() << "x2";
 //             memcpy (trackbuf, p_track_buffer, dest_buffer_len * sizeof (float));
          p_track->fbtrack->copy_to_pos (fb_trackbuf, tracks_window_inner_offset, buffer_size_frames, 0);
               
-              qDebug() << "x3";
-
           
      
        /*
@@ -2289,8 +2272,6 @@ qDebug() << "x2";
            }
      
            
-           qDebug() << "x4";
-
 
             /*
              put INSERTS, SENDS HERE
@@ -2348,7 +2329,6 @@ qDebug() << "x2";
                     frame++;
                    }
                    
-                   qDebug() << "x5";
 
                    
           
@@ -2433,7 +2413,7 @@ qDebug() << "x2";
   if (tracks_window_inner_offset >= tracks_window_length_frames)
      tracks_window_inner_offset = 0;
 
-  qDebug() << "CProject::mixbuf_render_next() - 2";
+  //qDebug() << "CProject::mixbuf_render_next() - 2";
 
   return tracks_window_inner_offset;
 }
@@ -2448,7 +2428,6 @@ int mixbuf_pa_stream_callback (const void *input, void *output, unsigned long fr
   CProject *p_project = (CProject*) userData;
 
   float** pchannels = (float **)output;
-
 
   int r = p_project->mixbuf_render_next (0, input);
   

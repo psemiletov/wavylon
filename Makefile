@@ -59,6 +59,8 @@ SOURCES       = wavylon.cpp \
 		gui_utils.cpp \
 		project.cpp \
 		libretta_interpolator.cpp \
+		fx-panners.cpp \
+		fx-iir-filter.cpp \
 		levelmeter.cpp qrc_wavylon.cpp \
 		moc_wavylon.cpp \
 		moc_envelope.cpp \
@@ -84,6 +86,8 @@ OBJECTS       = wavylon.o \
 		gui_utils.o \
 		project.o \
 		libretta_interpolator.o \
+		fx-panners.o \
+		fx-iir-filter.o \
 		levelmeter.o \
 		qrc_wavylon.o \
 		moc_wavylon.o \
@@ -358,7 +362,7 @@ qmake_all: FORCE
 
 dist: 
 	@test -d .tmp/wavylon0.0.1 || mkdir -p .tmp/wavylon0.0.1
-	$(COPY_FILE) --parents $(SOURCES) $(DIST) .tmp/wavylon0.0.1/ && $(COPY_FILE) --parents wavylon.qrc .tmp/wavylon0.0.1/ && $(COPY_FILE) --parents wavylon.h utils.h floatbuffer.h envelope.h fman.h shortcuts.h logmemo.h tio.h fx.h 3pass_eq.h gui_utils.h project.h libretta_interpolator.h levelmeter.h .tmp/wavylon0.0.1/ && $(COPY_FILE) --parents wavylon.cpp main.cpp floatbuffer.cpp envelope.cpp utils.cpp fman.cpp shortcuts.cpp logmemo.cpp tio.cpp fx.cpp 3pass_eq.cpp gui_utils.cpp project.cpp libretta_interpolator.cpp levelmeter.cpp .tmp/wavylon0.0.1/ && $(COPY_FILE) --parents translations/wavylon_ru.ts .tmp/wavylon0.0.1/ && (cd `dirname .tmp/wavylon0.0.1` && $(TAR) wavylon0.0.1.tar wavylon0.0.1 && $(COMPRESS) wavylon0.0.1.tar) && $(MOVE) `dirname .tmp/wavylon0.0.1`/wavylon0.0.1.tar.gz . && $(DEL_FILE) -r .tmp/wavylon0.0.1
+	$(COPY_FILE) --parents $(SOURCES) $(DIST) .tmp/wavylon0.0.1/ && $(COPY_FILE) --parents wavylon.qrc .tmp/wavylon0.0.1/ && $(COPY_FILE) --parents wavylon.h utils.h floatbuffer.h envelope.h fman.h shortcuts.h logmemo.h tio.h fx.h 3pass_eq.h gui_utils.h project.h libretta_interpolator.h fx-panners.h fx-iir-filter.h levelmeter.h .tmp/wavylon0.0.1/ && $(COPY_FILE) --parents wavylon.cpp main.cpp floatbuffer.cpp envelope.cpp utils.cpp fman.cpp shortcuts.cpp logmemo.cpp tio.cpp fx.cpp 3pass_eq.cpp gui_utils.cpp project.cpp libretta_interpolator.cpp fx-panners.cpp fx-iir-filter.cpp levelmeter.cpp .tmp/wavylon0.0.1/ && $(COPY_FILE) --parents translations/wavylon_ru.ts .tmp/wavylon0.0.1/ && (cd `dirname .tmp/wavylon0.0.1` && $(TAR) wavylon0.0.1.tar wavylon0.0.1 && $(COMPRESS) wavylon0.0.1.tar) && $(MOVE) `dirname .tmp/wavylon0.0.1`/wavylon0.0.1.tar.gz . && $(DEL_FILE) -r .tmp/wavylon0.0.1
 
 
 clean:compiler_clean 
@@ -384,48 +388,48 @@ compiler_rcc_clean:
 	-$(DEL_FILE) qrc_wavylon.cpp
 qrc_wavylon.cpp: wavylon.qrc \
 		ChangeLog \
-		INSTALL \
-		TODO \
-		NEWS \
 		NEWS-RU \
 		AUTHORS \
 		README \
+		TODO \
 		COPYING \
-		palettes/Winter \
-		palettes/Spring \
-		palettes/EKO \
-		palettes/Vinyl \
-		palettes/Grey \
-		manuals/en.html \
-		manuals/ru.html \
-		translations/wavylon_ru.qm \
+		NEWS \
+		INSTALL \
+		icons/search_find.png \
+		icons/home.png \
+		icons/stop.png \
+		icons/edit-cut-active.png \
+		icons/file-save.png \
+		icons/edit-cut.png \
+		icons/play.png \
+		icons/refresh.png \
+		icons/file-save-active.png \
+		icons/wavylon_icon.png \
+		icons/edit-copy.png \
+		icons/file-open.png \
+		icons/file-open-active.png \
+		icons/file-save-as.png \
+		icons/pause.png \
+		icons/edit-paste.png \
+		icons/file-new.png \
+		icons/edit-paste-active.png \
+		icons/go.png \
+		icons/edit-copy-active.png \
+		icons/create-dir.png \
 		themes/TEA/stylesheet.css \
 		themes/Vegan/stylesheet.css \
+		themes/Turbo/stylesheet.css \
 		themes/Plum/stylesheet.css \
 		themes/Smaragd/stylesheet.css \
-		themes/Turbo/stylesheet.css \
 		themes/Cotton/stylesheet.css \
-		icons/file-save-as.png \
-		icons/edit-cut.png \
-		icons/edit-copy.png \
-		icons/file-save-active.png \
-		icons/file-open.png \
-		icons/edit-paste-active.png \
-		icons/edit-paste.png \
-		icons/create-dir.png \
-		icons/edit-cut-active.png \
-		icons/file-open-active.png \
-		icons/home.png \
-		icons/refresh.png \
-		icons/file-new.png \
-		icons/search_find.png \
-		icons/go.png \
-		icons/stop.png \
-		icons/play.png \
-		icons/pause.png \
-		icons/edit-copy-active.png \
-		icons/file-save.png \
-		icons/wavylon_icon.png
+		manuals/ru.html \
+		manuals/en.html \
+		palettes/Winter \
+		palettes/Spring \
+		palettes/Grey \
+		palettes/EKO \
+		palettes/Vinyl \
+		translations/wavylon_ru.qm
 	/usr/lib64/qt5/bin/rcc -name wavylon wavylon.qrc -o qrc_wavylon.cpp
 
 compiler_moc_header_make_all: moc_wavylon.cpp moc_envelope.cpp moc_fman.cpp moc_shortcuts.cpp moc_logmemo.cpp moc_tio.cpp moc_fx.cpp moc_gui_utils.cpp moc_project.cpp moc_levelmeter.cpp
@@ -3736,17 +3740,17 @@ project.o: project.cpp /usr/lib64/qt5/include/QtCore/QDir \
 		/usr/lib64/qt5/include/QtGui/QImage \
 		utils.h \
 		/usr/lib64/qt5/include/QtCore/QTime \
-		fx.h \
-		/usr/lib64/qt5/include/QtGui/QStandardItemModel \
-		/usr/lib64/qt5/include/QtGui/qstandarditemmodel.h \
-		/usr/lib64/qt5/include/QtCore/QModelIndex \
-		/usr/lib64/qt5/include/QtWidgets/QTreeView \
-		/usr/lib64/qt5/include/QtWidgets/qtreeview.h \
-		3pass_eq.h
+		fx-panners.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o project.o project.cpp
 
 libretta_interpolator.o: libretta_interpolator.cpp libretta_interpolator.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o libretta_interpolator.o libretta_interpolator.cpp
+
+fx-panners.o: fx-panners.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o fx-panners.o fx-panners.cpp
+
+fx-iir-filter.o: fx-iir-filter.cpp fx-iir-filter.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o fx-iir-filter.o fx-iir-filter.cpp
 
 levelmeter.o: levelmeter.cpp /usr/lib64/qt5/include/QtGui/QPainter \
 		/usr/lib64/qt5/include/QtGui/qpainter.h \

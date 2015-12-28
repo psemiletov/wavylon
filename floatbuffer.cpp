@@ -1,4 +1,4 @@
-//VER 3
+//VER 5
 
 #include <iostream>
 
@@ -183,13 +183,15 @@ void CFloatBuffer::copy_to_pos (CFloatBuffer *other, size_t offset_from, size_t 
   if (offset_from > length_frames)
      return;
 
+
+  size_t copysize = size;
   size_t reminder = length_frames - offset_from;
   if (reminder < size)
-     return;
+     copysize = reminder;
   
   for (size_t ch = 0; ch < channels; ch++) 
       {
-       memcpy (other->buffer[ch] + offset_to, buffer[ch] + offset_from, size * sizeof (float));
+       memcpy (other->buffer[ch] + offset_to, buffer[ch] + offset_from, copysize * sizeof (float));
       }     
 }
 
@@ -211,11 +213,11 @@ void CFloatBuffer::copy_channel_to_pos (CFloatBuffer *other, size_t ch_from, siz
 }
 
 
-void CFloatBuffer::copy_to_pos_with_rate (CFloatBuffer *other, size_t offset_from, size_t size, size_t offset_to, size_t rate)
+void CFloatBuffer::copy_to_pos_with_rate (CFloatBuffer *other, size_t offset_from, size_t size, size_t offset_to, float rate)
 {
   if (size > length_frames)
      return;
-      
+
   if (offset_from > length_frames)
      return;
 
