@@ -10,10 +10,10 @@ by Paul Kellett http://www.musicdsp.org/showone.php?id=29
 
 #include <cstring>
 
-enum IIR_filter_mode {
-        IIR_FILTER_MODE_LOWPASS = 0,
-        IIR_FILTER_MODE_HIGHPASS,
-        IIR_FILTER_MODE_BANDPASS
+enum filter_mode {
+        FILTER_MODE_LOWPASS = 0,
+        FILTER_MODE_HIGHPASS,
+        FILTER_MODE_BANDPASS
       };
 
 class CIIRFilter 
