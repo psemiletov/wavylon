@@ -36,9 +36,10 @@ public:
     
    CIIRFilter();
     
+   void reset(); 
    float process (float sample, size_t channel);
-   inline void set_cutoff (float v) {  cutoff = v;  calc_feedback_amount(); };
-   inline void set_resonance (float v) {  resonance = v;  calc_feedback_amount(); };
+   inline void set_cutoff (float v) {cutoff = v;  calc_feedback_amount();};
+   inline void set_resonance (float v) {resonance = v;  calc_feedback_amount();};
    inline void calc_feedback_amount() {feedback_amount = resonance + resonance / (1.0 - cutoff);}; 
 
 };

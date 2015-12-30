@@ -29,7 +29,7 @@ SOURCES += wavylon.cpp \
     project.cpp \
     libretta_interpolator.cpp \
     fx-panners.cpp \
-    fx-iir-filter.cpp \
+    fx-filter.cpp \
     levelmeter.cpp 
 #    tinyplayer.cpp
 
@@ -47,7 +47,7 @@ HEADERS += wavylon.h \
     project.h \
     libretta_interpolator.h \
     fx-panners.h \
-    fx-iir-filter.h \
+    fx-filter.h \
     levelmeter.h 
 #    tinyplayer.h
 

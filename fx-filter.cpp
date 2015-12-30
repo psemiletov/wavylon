@@ -73,3 +73,16 @@ CIIRFilter::CIIRFilter()
   calc_feedback_amount();
 }
 
+void CIIRFilter::reset()
+{
+ bufl0 = 0.0f;
+  bufl1 = 0.0f;
+  bufl2 = 0.0f;
+  bufl3 = 0.0f;
+  bufr0 = 0.0f;
+  bufr1 = 0.0f;
+  bufr2 = 0.0f;
+  bufr3 = 0.0f;
+  
+  calc_feedback_amount();
+} 
