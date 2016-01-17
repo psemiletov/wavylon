@@ -15,16 +15,19 @@ useclang{
 
 
 SOURCES += wavylon.cpp \
+    afx.cpp \
+    db.cpp \
     main.cpp \
     floatbuffer.cpp \
+    fxset.cpp \
+    fxrack.cpp \
+    fxlist.cpp \
     envelope.cpp \
     utils.cpp \
     fman.cpp \
     shortcuts.cpp \
     logmemo.cpp \
     tio.cpp \
-    fx.cpp \
-    3pass_eq.cpp \
     gui_utils.cpp \
     project.cpp \
     libretta_interpolator.cpp \
@@ -34,6 +37,8 @@ SOURCES += wavylon.cpp \
 #    tinyplayer.cpp
 
 HEADERS += wavylon.h \
+    afx.h \
+    db.h \
     utils.h \
     floatbuffer.h\
     envelope.h \
@@ -41,10 +46,11 @@ HEADERS += wavylon.h \
     shortcuts.h \
     logmemo.h \
     tio.h \
-    fx.h \
-    3pass_eq.h \
     gui_utils.h \
+    fxrack.h \
     project.h \
+    fxlist.h \
+    fxset.h \
     libretta_interpolator.h \
     fx-panners.h \
     fx-filter.h \
