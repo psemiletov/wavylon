@@ -6,6 +6,8 @@
 #include <QPoint>
 
 
+#include "db.h"
+
 #include "utils.h"
 #include "levelmeter.h"
 

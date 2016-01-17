@@ -10,6 +10,7 @@ Peter Semiletov
 #include <QHash>
 #include <QFileInfo>
 #include <QStringList>
+#include <QTime>
 
 #include <cmath>
 #include <limits>
@@ -168,5 +169,42 @@ inline float scale_val (float val, float from_min, float from_max, float to_min,
   return (val - from_min) * (to_max - to_min) / 
           (from_max - from_min) + to_min;
 }
+
+
+inline size_t msecs_to_frames (size_t msecs, size_t samplerate)
+{
+ return samplerate * msecs / 1000;
+}
+
+
+inline QTime frames_to_time (size_t frames, size_t samplerate)
+{
+ size_t msecs = (float) frames / samplerate * 1000;
+ QTime a (0, 0);
+ a = a.addMSecs ((int) msecs);
+ return a;
+}
+
+
+inline QString frames_to_time_str (size_t frames, size_t samplerate)
+{
+ //qDebug() << "frames: " << frames << " samplerate: " << samplerate;
+
+ size_t msecs = (float) frames / samplerate * 1000;
+
+ QTime a (0, 0);
+ a = a.addMSecs ((int) msecs);
+
+ return a.toString ("hh:mm:ss.zzz");
+}
+
+QStringList read_dir_files (const QString &path);
+
+float get_value_with_default (const QStringRef &val, float def);
+size_t get_value_with_default (const QStringRef &val, size_t def);
+int get_value_with_default (const QStringRef &val, int def);
+QString get_value_with_default (const QStringRef &val, const QString &def);
+
+
 
 #endif

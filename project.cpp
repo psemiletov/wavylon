@@ -31,6 +31,9 @@
 #include <portaudio.h>
 #include <string.h>
 
+
+#include "db.h"
+
 #include "tio.h"
 #include "project.h"
 #include "utils.h"
@@ -2760,13 +2763,13 @@ void CProject::gui_updater_timer_timeout()
 void CTrack::update_strip()
 {
  qDebug() << "CTrack::update_strip(): " << track_name;
- qDebug() << "CTrack::volume: " << lin2db (volume);
+ qDebug() << "CTrack::volume: " << float2db (volume);
 
   mixer_strip->update_strip_controls = true;
   
   mixer_strip->setTitle (track_name);
   
-      mixer_strip->dsb_vol->setValue (lin2db (volume));
+      mixer_strip->dsb_vol->setValue (float2db (volume));
       mixer_strip->dsb_pan->setValue (pan);
       mixer_strip->cb_mute->setChecked (mute);
       mixer_strip->cb_solo->setChecked (solo);
@@ -2891,8 +2894,8 @@ void CMasterTrack::update_strip()
   
   mixer_strip->setTitle (track_name);
   
-  mixer_strip->dsb_vol_l->setValue (lin2db (volume_left));
-  mixer_strip->dsb_vol_r->setValue (lin2db (volume_right));
+  mixer_strip->dsb_vol_l->setValue (float2db (volume_left));
+  mixer_strip->dsb_vol_r->setValue (float2db (volume_right));
   mixer_strip->cb_linked_channels->setChecked (linked_channels);
   
   mixer_strip->update_strip_controls = false;
@@ -3031,7 +3034,7 @@ CMixerStrip::CMixerStrip (CTrack *ptrk, QWidget *parent): QGroupBox (parent)
       dsb_vol->setDecimals (2); 
       dsb_vol->setRange (-90, 6.0);
       dsb_vol->setSingleStep (0.01);
-      dsb_vol->setValue (lin2db (p_track->volume));
+      dsb_vol->setValue (float2db (p_track->volume));
     
       connect (dsb_vol, SIGNAL(valueChanged(double)), this, SLOT(dsb_vol_valueChanged(double)));
  
@@ -3277,7 +3280,7 @@ CMixerMasterStrip::CMixerMasterStrip (CMasterTrack *ptrk, QWidget *parent): QGro
         dsb_vol_l->setDecimals (2); 
         dsb_vol_l->setRange (-90, 6.0);
         dsb_vol_l->setSingleStep (0.01);
-        dsb_vol_l->setValue (lin2db (p_track->volume_left));
+        dsb_vol_l->setValue (float2db (p_track->volume_left));
     
         connect (dsb_vol_l, SIGNAL(valueChanged(double)), this, SLOT(dsb_vol_l_valueChanged(double)));
  
@@ -3285,7 +3288,7 @@ CMixerMasterStrip::CMixerMasterStrip (CMasterTrack *ptrk, QWidget *parent): QGro
         dsb_vol_r->setDecimals (2); 
         dsb_vol_r->setRange (-90, 6.0);
         dsb_vol_r->setSingleStep (0.01);
-        dsb_vol_r->setValue (lin2db (p_track->volume_right));
+        dsb_vol_r->setValue (float2db (p_track->volume_right));
     
         connect (dsb_vol_r, SIGNAL(valueChanged(double)), this, SLOT(dsb_vol_r_valueChanged(double)));
        

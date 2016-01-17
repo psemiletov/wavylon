@@ -7,7 +7,7 @@ extern double db_scale;
 
 inline float db2lin (float db)
 {
-  return (float) exp (db * db_scale);
+ return (float) exp (db * db_scale);
 }
 
 /*
