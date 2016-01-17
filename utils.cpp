@@ -12,6 +12,7 @@ Peter Semiletov
 #include <QTextCodec>
 #include <QByteArray>
 
+#include "gui_utils.h"
 #include "utils.h"
 
 
@@ -63,13 +64,6 @@ QStringList read_dir_entries (const QString &path)
 {
   QDir dir (path);
   return dir.entryList (QDir::AllEntries | QDir::NoDotAndDotDot);
-}
-
-
-QStringList read_dir_files (const QString &path)
-{
-  QDir dir (path);
-  return dir.entryList (QDir::Files | QDir::NoDotAndDotDot);
 }
 
 
@@ -284,7 +278,6 @@ bool CFTypeChecker::check (const QString &fname)
 }
 
 
-
 size_t round_to (size_t value, size_t to, bool inc)
 {
    int i = value;
@@ -304,52 +297,9 @@ size_t round_to (size_t value, size_t to, bool inc)
 
 QString str_from_locale (const char *s)
 {
+
   QTextCodec *cd = QTextCodec::codecForLocale();
   QByteArray encodedString = s;
   
   return cd->toUnicode(encodedString);
-}
-
-
-
-QString get_value_with_default (const QStringRef &val, const QString &def)
-{
-  QString s = val.toString();
-  if (! s.isEmpty())
-     return s;
-  else
-      return def;   
-}
-
-
-int get_value_with_default (const QStringRef &val, int def)
-{
-  QString s = val.toString();
-
-  if (! s.isEmpty())
-     return s.toInt();
-  else
-      return def;   
-}
-
-
-size_t get_value_with_default (const QStringRef &val, size_t def)
-{
-  QString s = val.toString();
-
-  if (! s.isEmpty())
-     return (size_t) val.toInt();
-  else
-      return def;   
-}
-
-
-float get_value_with_default (const QStringRef &val, float def)
-{
-  QString s = val.toString();
-
-  if (! s.isEmpty())
-     return s.toFloat();
-  else
-      return def;   
 }

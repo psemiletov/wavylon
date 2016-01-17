@@ -10,8 +10,6 @@ Peter Semiletov
 #include <QHash>
 #include <QFileInfo>
 #include <QStringList>
-#include <QTime>
-#include <QDebug>
 
 #include <cmath>
 #include <limits>
@@ -51,9 +49,6 @@ bool qstring_save (const QString &fileName, const QString &data, const char *enc
 QString qstring_load (const QString &fileName, const char *enc = "UTF-8");
 
 QStringList read_dir_entries (const QString &path);
-
-QStringList read_dir_files (const QString &path);
-
 QHash<QString, QString> hash_load (const QString &fname);
 QHash<QString, QString> hash_load_keyval (const QString &fname);
 QHash<QString, QString> stringlist_to_hash (const QStringList &l);
@@ -64,6 +59,7 @@ QByteArray file_load (const QString &fileName);
 
 
 QString change_file_ext (const QString &s, const QString &ext);
+//QString get_insert_image (const QString &file_name, const QString &full_path, const QString &markup_mode);
 
 
 
@@ -102,49 +98,6 @@ inline QString get_file_path (const QString &fileName)
   return QFileInfo (fileName).absolutePath();
 }
 
-inline float float2db (float v)
-{
-  if (v == 0)
-     return 0;
-         
-  if (v > 0)
-     return (float) 20 * log10 (v / 1.0);
-
-  return (float) 20 * log10 (v / -1.0);
-}
-
-
-/* from 
- *  db.h
- *
- *  Copyright (C) 2003,2005 Steve Harris, Nicholas Humfrey
- *
- */
-static inline float
-db2lin2( float db )
-{
-        if (db <= -90.0f) return 0.0f;
-        else {
-                return powf(10.0f, db * 0.05f);
-        }
-}
-
-
-static inline float
-lin2db( float lin )
-{
-        if (lin == 0.0f) return -90.0f;
-        else return (20.0f * log10f(lin));
-}
-
-
-static inline float
-db2lin( float db )
-{
-  return powf(10.0f, db / 20);
-
-}
-
 
 double input_double_value (const QString &caption, const QString &lbl,
                            double minval, double maxval, double defval, double step);
@@ -170,34 +123,6 @@ inline bool float_less_than (float a, float b)
 inline bool float_equal (float x, float y)
 {
   return std::abs(x - y) <= std::numeric_limits<double>::epsilon() * std::abs(x);
-}
-
-
-inline size_t msecs_to_frames (size_t msecs, size_t samplerate)
-{
-  return samplerate * msecs / 1000;
-}
-
-
-inline QTime frames_to_time (size_t frames, size_t samplerate)
-{
-  size_t msecs = (float) frames / samplerate * 1000;
-  QTime a (0, 0);
-  a = a.addMSecs ((int) msecs);       
-  return a;
-}
-
-
-inline QString frames_to_time_str (size_t frames, size_t samplerate)
-{
-  //qDebug() << "frames: " << frames << " samplerate: " << samplerate;
-
-  size_t msecs = (float) frames / samplerate * 1000;
- 
-  QTime a (0, 0);
-  a = a.addMSecs ((int) msecs);       
-
-  return a.toString ("hh:mm:ss.zzz");  
 }
 
 
@@ -227,12 +152,9 @@ inline float conv_to_db (float v, float v_min, float v_max, float range_negative
     }
   else
       {
-      // float x = v_max / range_negative;
-       //float y = v_max / v;
-     
-      float x = v_min / range_negative;
-      float y = v_min / v;
-     
+       float x = v_min / range_negative;
+       float y = v_min / v;
+   
        return v / (y * x);
       }
 }
@@ -241,9 +163,10 @@ inline float conv_to_db (float v, float v_min, float v_max, float range_negative
 QString str_from_locale (const char *s);
 
 
-float get_value_with_default (const QStringRef &val, float def);
-size_t get_value_with_default (const QStringRef &val, size_t def);
-int get_value_with_default (const QStringRef &val, int def);
-QString get_value_with_default (const QStringRef &val, const QString &def);
+inline float scale_val (float val, float from_min, float from_max, float to_min, float to_max)
+{
+  return (val - from_min) * (to_max - to_min) / 
+          (from_max - from_min) + to_min;
+}
 
 #endif

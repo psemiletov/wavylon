@@ -1,17 +1,21 @@
-//VER 5
+//VER 8
 
 #include <iostream>
+#include <math.h>
 
 #include <sndfile.h>
 #include <samplerate.h>
-
-#include <QDebug>
 
 #include "floatbuffer.h"
 
 
 CFloatBuffer::CFloatBuffer (size_t len, size_t channels_count)
 {
+  head = 1;
+  tail = 0;
+  
+  ringbuffer_length = len;
+
   pbuffer = 0;
   channels = channels_count;
   length_frames = len;
@@ -33,6 +37,10 @@ CFloatBuffer::CFloatBuffer (size_t len, size_t channels_count)
 
 CFloatBuffer::CFloatBuffer (float *interleaved_buffer, size_t len)
 {
+  head = 1;
+  tail = 0;
+  ringbuffer_length = len;
+
   pbuffer = 0;
   
   channels = 1;
@@ -47,7 +55,9 @@ CFloatBuffer::CFloatBuffer (float *interleaved_buffer, size_t len)
  
 CFloatBuffer::CFloatBuffer (float *interleaved_buffer, size_t len, size_t channels_count)
 {
-//  qDebug() << "CFloatBuffer (float *interleaved_buffer, size_t len, size_t channels_count)  -1";
+  head = 1;
+  tail = 0;
+  ringbuffer_length = len;
 
   pbuffer = 0;
   
@@ -63,7 +73,6 @@ CFloatBuffer::CFloatBuffer (float *interleaved_buffer, size_t len, size_t channe
   
   for (size_t ch = 0; ch < channels; ch++)
       {
-       qDebug() << "alloc channel: " << ch;
        buffer[ch] = new float [length_frames];
        memset (buffer[ch], 0, length_frames * sizeof (float));
       } 
@@ -78,7 +87,6 @@ CFloatBuffer::CFloatBuffer (float *interleaved_buffer, size_t len, size_t channe
            }     
       }
       
-  qDebug() << "CFloatBuffer (float *interleaved_buffer, size_t len, size_t channels_count)  -2";
 }
   
 
@@ -129,8 +137,6 @@ CFloatBuffer* CFloatBuffer::clone()
 
 CFloatBuffer* CFloatBuffer::copy (size_t offset_from, size_t size)
 {
-  qDebug() << "CFloatBuffer::copy - start";
-
   if (size > length_frames)
      return 0;
 
@@ -150,30 +156,8 @@ CFloatBuffer* CFloatBuffer::copy (size_t offset_from, size_t size)
        memcpy (fb->buffer[ch], buffer[ch] + offset_from, size * sizeof (float));
       }     
 
-  qDebug() << "CFloatBuffer::copy - end";
-
   return fb;
 }
-
-/*
-void CFloatBuffer::copy_to (CFloatBuffer *other, size_t offset_from, size_t size)
-{
-  if (size > length_frames)
-     return;
-      
-  if (offset_from > length_frames)
-     return;
-
-  size_t reminder = length_frames - offset_from;
-  if (reminder < size)
-     return;
-  
-  for (size_t ch = 0; ch < channels; ch++) 
-      {
-       memcpy (other->buffer[ch], buffer[ch] + offset_from, size * sizeof (float));
-      }     
-}
-*/
 
 void CFloatBuffer::copy_to_pos (CFloatBuffer *other, size_t offset_from, size_t size, size_t offset_to)
 {
@@ -183,9 +167,9 @@ void CFloatBuffer::copy_to_pos (CFloatBuffer *other, size_t offset_from, size_t 
   if (offset_from > length_frames)
      return;
 
-
   size_t copysize = size;
   size_t reminder = length_frames - offset_from;
+
   if (reminder < size)
      copysize = reminder;
   
@@ -245,17 +229,16 @@ void CFloatBuffer::copy_to_pos_with_rate (CFloatBuffer *other, size_t offset_fro
 void CFloatBuffer::pbuffer_reset()
 {
   offset = 0;
-//  pbuffer = buffer;
   
   if (pbuffer)
      delete pbuffer;
   
-   pbuffer = new float* [channels];
+  pbuffer = new float* [channels];
   
    for (size_t ch = 0; ch < channels; ch++)
-      {
-       pbuffer[ch] = buffer[ch];
-      }
+       {
+        pbuffer[ch] = buffer[ch];
+       }
 
 }
 
@@ -306,7 +289,6 @@ void CFloatBuffer::fill_interleaved()
  
 //function to overwrite data in this soundbuffer from the other one,
 //from the pos position
-
 void CFloatBuffer::overwrite_at (CFloatBuffer *other, size_t pos_frames)
 {
   if (! other)
@@ -399,7 +381,6 @@ CFloatBuffer* CFloatBuffer::resample (size_t new_rate)
        int error = src_simple (&data, SRC_SINC_BEST_QUALITY, 1);
        if (error)
           {
-           qDebug() << src_strerror (error);
            delete tfb;
            return 0;
           }
@@ -482,8 +463,6 @@ void CFloatBuffer::copy_from_w_resample (CFloatBuffer  *other)
   if (! other || ! other->buffer[0])
     return;
 
-  int f = sndfile_format;
-
   if (samplerate != other->samplerate) //TEST IT!
      {
       CFloatBuffer *fb = other->resample (samplerate);
@@ -501,31 +480,19 @@ void CFloatBuffer::copy_from_w_resample (CFloatBuffer  *other)
 
 void CFloatBuffer::paste_at (CFloatBuffer *other, size_t pos_frames)
 {
-  qDebug() << " CFloatBuffer::paste_at start";
-
-  qDebug() << "samplerate: " << samplerate;
-  qDebug() << "other->samplerate: " << other->samplerate;
-
   if (! other)
      return;
-  
-  qDebug() << "1";
 
   if (samplerate != other->samplerate) //TEST IT!
      {
-      qDebug() << "TEST IT!";
+      //qDebug() << "TEST IT!";
       CFloatBuffer *fb = other->resample (samplerate);
       paste_at (fb, pos_frames);
       delete fb;
       return;
      }
-
-  qDebug() << "2";
-
+ 
   CFloatBuffer *temp_buffer = 0;
-    
-  qDebug() << "channels: " << channels;  
-  qDebug() << "other->channels: " << other->channels;  
     
   if (channels == 1 && other->channels == 2)
      temp_buffer = other->convert_to_mono();
@@ -540,11 +507,10 @@ void CFloatBuffer::paste_at (CFloatBuffer *other, size_t pos_frames)
   size_t new_buffer_frames_count = temp_buffer->length_frames + length_frames;
   
   //создаем новый буфер, размером равный текущему со вставляемым
-  //CFloatBuffer *tfb = new CFloatBuffer (new_buffer_frames_count, default_channels_count);
   CFloatBuffer *sum = new CFloatBuffer (new_buffer_frames_count, channels);
   sum->samplerate = samplerate;  
+
   //из старого буфера в новый, копируем все по позицию position_in_frames 
-  
   for (size_t ch = 0; ch < channels; ch++)
       {
        memcpy (sum->buffer[ch], buffer[ch], pos_frames * sizeof (float));
@@ -577,7 +543,30 @@ void CFloatBuffer::paste_at (CFloatBuffer *other, size_t pos_frames)
   delete temp_buffer;
   
   offset = pos_frames;
-  
-  qDebug() << " CFloatBuffer::paste_at end";
+}
 
+
+void CFloatBuffer::ringbuffer_head_inc()
+{
+  head++;
+  
+  if (head >= ringbuffer_length)
+     head = 0;
+}
+
+void CFloatBuffer::ringbuffer_tail_inc()
+{
+  tail++;
+  
+  if (tail >= ringbuffer_length)
+     tail = 0;
+}
+
+
+void CFloatBuffer::ringbuffer_set_length (size_t len)
+{
+  ringbuffer_length = len;
+  
+  if (ringbuffer_length > length_frames)
+     ringbuffer_length = length_frames;   
 }

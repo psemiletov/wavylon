@@ -1,7 +1,7 @@
 #ifndef FLOATBUFFER_H
 #define FLOATBUFFER_H
 
-//VER 5
+//VER 8
 
 using namespace std;
 
@@ -27,6 +27,11 @@ public:
   size_t length_frames;
   size_t offset; //of pbuffer or for some puproses
   
+  //ringbuffer: tail index = head - 1
+  size_t head; //read from here
+  size_t tail; //write to here
+  size_t ringbuffer_length; //in the range of length_frames
+  
   int sndfile_format;
   
   CFloatBuffer (size_t len, size_t channels_count);
@@ -38,6 +43,10 @@ public:
   void pbuffer_reset();
   void pbuffer_inc (size_t val);
   void settozero();
+  
+  void ringbuffer_head_inc();
+  void ringbuffer_tail_inc();
+  void ringbuffer_set_length (size_t len);
 
   void allocate_interleaved();
   void fill_interleaved();

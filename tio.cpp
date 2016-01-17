@@ -15,7 +15,6 @@
 using namespace std;
 
 
-
 int proxy_video_decoder;
 double ogg_q;
 CFileFormats *file_formats;
@@ -126,9 +125,18 @@ bool CTioPlainAudio::save (const QString &fname)
 
   //qDebug() << "ogg_q = " << ogg_q;
 
-  float *interleavedbuf = float_input_buffer->to_interleaved();
-
-  sf_count_t zzz = sf_writef_float (hfile, interleavedbuf, float_input_buffer->length_frames);
+  if (float_input_buffer->channels == 1)
+     {
+      sf_writef_float (hfile, float_input_buffer->buffer[0], float_input_buffer->length_frames);
+     }
+  else
+      {
+       float *interleavedbuf = float_input_buffer->to_interleaved();
+       sf_writef_float (hfile, interleavedbuf, float_input_buffer->length_frames);
+       delete [] interleavedbuf;
+      } 
+  
+  
   sf_close (hfile);
 
   return true;
@@ -473,14 +481,20 @@ bool CTioPlainAudio::save_16bit_pcm (const QString &fname)
 
   size_t buflen = float_input_buffer->length_frames * sf.channels;
   
-  float *interleavedbuf = float_input_buffer->to_interleaved();
+  float *flbuf;
+    
+  if (float_input_buffer->channels == 1) 
+     {
+      flbuf = float_input_buffer->buffer[0];
+     }
+  else  
+      flbuf = float_input_buffer->to_interleaved();
   
   short int *buf = new short int [buflen];
-  
-  
+    
   for (size_t i = 0; i < buflen; i++)
       {
-       float f = interleavedbuf[i];
+       float f = flbuf[i];
 
        if (f >= 1.0)
           buf[i] = f * 32767;
@@ -490,12 +504,14 @@ bool CTioPlainAudio::save_16bit_pcm (const QString &fname)
    
   SNDFILE *file = sf_open (fname.toUtf8(), SFM_WRITE, &sf);
   
-  sf_count_t zzz = sf_writef_short (file, buf, float_input_buffer->length_frames);
+  sf_writef_short (file, buf, float_input_buffer->length_frames);
   
   sf_close (file);
 
   delete [] buf;
-  delete [] interleavedbuf;
+  
+  if (float_input_buffer->channels != 1) 
+     delete [] flbuf;
 
   return true;
 }
@@ -524,7 +540,7 @@ CTioProxy::CTioProxy()
  // proxies[exts_mp3] = "lame --decode \"@FILEIN\" \"@FILEOUT\"";
   //extensions += exts_mp3;
   
-  QString exts_videos = "mp3,avi,mp4,mpeg2,flv,mkv,aac,vob,wmv,3gp,3ga,m2t,mov,mpeg,h264,ts,webm,asf,wma,ogm,rm,qt,nut,smi,ac3,divx,dv,fli,flc,cpk";
+  QString exts_videos = "mp3,avi,mp4,mpeg2,flv,mkv,aac,vob,wmv,3gp,3ga,m2t,mov,mpeg,h264,ts,webm,asf,wma,ogm,wv,wvc,rm,qt,nut,smi,ac3,divx,dv,fli,flc,cpk";
     
   //QString exts_videos = "avi,mp4";
   
