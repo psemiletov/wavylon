@@ -160,6 +160,9 @@ void CProject::project_new (const QString &fname)
   //settings.save (paths.fname_project);
    
   tab_project_ui->addTab (table_container, tr ("table"));
+  tab_project_ui->addTab (mixer_window, tr ("mixer"));
+  
+  
 }
 
 
@@ -245,6 +248,8 @@ bool CProject::project_open (const QString &fname)
   paths.fname_project = paths.project_dir + "/" + f.baseName() + ".wvn";
 
   tab_project_ui->addTab (table_container, tr ("table"));
+  tab_project_ui->addTab (mixer_window, tr ("mixer"));
+
      
   files.load_all_from_dir (paths.wav_dir); 
 
@@ -1288,7 +1293,7 @@ CProject::CProject()
    
   create_widgets();
   
-  mixer_window->show();
+  //mixer_window->show();
   
   connect (&gui_updater_timer, SIGNAL(timeout()), this, SLOT(gui_updater_timer_timeout()));
   gui_updater_timer.setInterval (100);
