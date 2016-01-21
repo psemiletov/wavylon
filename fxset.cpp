@@ -76,9 +76,10 @@ void CFxSimpleAmp::load_params_from_string (const QString &s)
 
 CFxSimpleAmp::CFxSimpleAmp()
 {
-  name = tr ("Simple amplifier");
+  modulename = tr ("Simple amplifier");
+  classname = "CFxSimpleAmp";
   
-  wnd_ui->setWindowTitle (tr ("Simple Amp"));
+  wnd_ui->setWindowTitle (modulename);
 
   set_caption (tr ("<b>Simple amplifier</b>"), tr ("<i>Simple amplifier module</i>"));
 
@@ -196,9 +197,10 @@ void CFxSimpleOverdrive::load_params_from_string (const QString &s)
 
 CFxSimpleOverdrive::CFxSimpleOverdrive()
 {
-  name = tr ("Simple Overdrive");  
-  
-  wnd_ui->setWindowTitle (tr ("Simple Overdrive"));
+  modulename = tr ("Simple Overdrive");  
+  classname = "CFxSimpleOverdrive";
+    
+  wnd_ui->setWindowTitle (modulename);
 
   set_caption (tr ("Simple Overdrive"), tr ("Simple overdrive module"));
 
@@ -296,12 +298,12 @@ size_t CFxSimpleOverdrive::execute (float **input, float **output, size_t frames
 
 CFxDelay::CFxDelay()
 {
-  name = "CFxDelay";
+  classname = "CFxDelay";
+  modulename = tr ("Simple Delay");
   
-  fb = new CFloatBuffer (96000, 2);
+  fb = new CFloatBuffer (196000, 2);
 
-
-  wnd_ui->setWindowTitle (tr ("Simple Delay"));
+  wnd_ui->setWindowTitle (modulename);
   set_caption (tr ("Delay"), tr ("Delay module"));
 
   mixlevel = 1.0f;
@@ -426,9 +428,10 @@ void CFxSimpleFilter::dsb_reso_valueChanged (double d)
 
 CFxSimpleFilter::CFxSimpleFilter()
 {
-  name = "CFxSimpleFilter";
+  classname = "CFxSimpleFilter";
+  modulename = tr ("Simple Filter");
   
-  wnd_ui->setWindowTitle (tr ("Simple Filter"));
+  wnd_ui->setWindowTitle (modulename);
   set_caption (tr ("Filter"), tr ("Multi-mode filter module"));
 
   
@@ -492,25 +495,6 @@ AFx* CFxSimpleFilter::self_create()
 }
 
 
-/* C function implementing the simplest lowpass:
- *
- *      y(n) = x(n) + x(n-1)
- *
- */
-float simplp (float *x, float *y,
-              size_t M, float xm1)
-{
-  y[0] = x[0] + xm1;
-  
-  for (size_t n = 1; n < M ; n++) 
-       {
-        y[n] =  x[n]  + x[n-1];
-       } 
-       
-  return x[M-1];
-}
-
-
 size_t CFxSimpleFilter::execute (float **input, float **output, size_t frames)
 {
   for (size_t ch = 0; ch < channels; ch++)
@@ -522,65 +506,7 @@ size_t CFxSimpleFilter::execute (float **input, float **output, size_t frames)
       }
 
   return frames;
-
 }
-
-
-/*
-
-
-One pole LP and HP
-
-References : Posted by Bram
-Code :
-LP:
-recursion: tmp = (1-p)*in + p*tmp with output = tmp
-coefficient: p = (2-cos(x)) - sqrt((2-cos(x))^2 - 1) with x = 2*pi*cutoff/samplerate
-coeficient approximation: p = (1 - 2*cutoff/samplerate)^2
-
-HP:
-recursion: tmp = (p-1)*in - p*tmp with output = tmp
-coefficient: p = (2+cos(x)) - sqrt((2+cos(x))^2 - 1) with x = 2*pi*cutoff/samplerate
-coeficient approximation: p = (2*cutoff/samplerate)^2
-
-
-*/
-
-
-/*
-
-LP and HP filter
-
-Type : biquad, tweaked butterworth
-References : Posted by Patrice Tarrabia
-Code :
-r  = rez amount, from sqrt(2) to ~ 0.1
-f  = cutoff frequency
-(from ~0 Hz to SampleRate/2 - though many
-synths seem to filter only  up to SampleRate/4)
-
-The filter algo:
-out(n) = a1 * in + a2 * in(n-1) + a3 * in(n-2) - b1*out(n-1) - b2*out(n-2)
-
-Lowpass:
-      c = 1.0 / tan(pi * f / sample_rate);
-
-      a1 = 1.0 / ( 1.0 + r * c + c * c);
-      a2 = 2* a1;
-      a3 = a1;
-      b1 = 2.0 * ( 1.0 - c*c) * a1;
-      b2 = ( 1.0 - r * c + c * c) * a1;
-
-Hipass:
-      c = tan(pi * f / sample_rate);
-
-      a1 = 1.0 / ( 1.0 + r * c + c * c);
-      a2 = -2*a1;
-      a3 = a1;
-      b1 = 2.0 * ( c*c - 1.0) * a1;
-      b2 = ( 1.0 - r * c + c * c) * a1;
-
-*/
 
 
 void CFxSimpleFilter::reset_params (size_t srate, size_t ch)
@@ -594,7 +520,8 @@ void CFxSimpleFilter::reset_params (size_t srate, size_t ch)
 
 CFxMetaluga::CFxMetaluga()
 {
-  name = tr ("Metaluga (overdrive/dist pedal)");
+  modulename = tr ("Metaluga (overdrive/dist pedal)");
+  classname = "CFxMetaluga";
   
   wnd_ui->setWindowTitle (tr ("Metaluga"));
 
@@ -685,9 +612,6 @@ CFxMetaluga::CFxMetaluga()
     "border-radius: 15px;"
     "background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
                 "stop:0 #000000, stop:1 #363636);}";
-  
-
-
   
   w_caption->setStyleSheet (qstl);  
   l_caption->setStyleSheet ("color: white;");  
@@ -782,7 +706,8 @@ void CFxMetaluga::dial_level_valueChanged (int value)
 
 CFxJest::CFxJest()
 {
-  name = tr ("Jest' (overdrive/dist)");
+  modulename = tr ("Jest' (overdrive/dist)");
+  classname = "CFxJest";
   
   wnd_ui->setWindowTitle (tr ("Jest'"));
 
@@ -890,7 +815,6 @@ void CFxJest::dial_gain_valueChanged (int value)
 
 void CFxJest::dial_drive_valueChanged (int value)
 {
-  
   filter.set_resonance (scale_val (value, 1, 26, 0.001, 0.999f));
 }
 
@@ -955,9 +879,10 @@ void CFxVynil::dial_scratches_amount_valueChanged (int value)
 
 CFxVynil::CFxVynil()
 {
-  name = tr ("Vynil Taste");
+  modulename = tr ("Vynil Taste");
+  classname = "CFxVynil";
   
-  wnd_ui->setWindowTitle (tr ("Vynil Taste"));
+  wnd_ui->setWindowTitle (modulename);
   set_caption (tr ("Vynil Taste"), tr ("Scratches generator module"));
 
   QHBoxLayout *hbl_scratches = new QHBoxLayout;

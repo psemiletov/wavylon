@@ -26,6 +26,7 @@
 
 #include <QMessageBox>
 
+#include <typeinfo>
 #include <limits>
 
 #include <sndfile.h>
@@ -1059,9 +1060,22 @@ void CProject::save_project()
                         stream.writeAttribute ("playback_rate", QString::number (pc->playback_rate));
                         
                         stream.writeEndElement(); 
-                  
                        }
-              }  
+              }
+              
+           
+                   foreach (AFx *fx, t->fxrack.effects) 
+                       {
+                        
+                        stream.writeStartElement ("fx");
+           
+                        stream.writeAttribute ("classname", typeid(fx).name());
+                        
+                        //stream.writeAttribute ("filename", pc->filename);
+                        
+                        stream.writeEndElement(); 
+                       }   
+                
         
            stream.writeEndElement(); 
           }

@@ -38,7 +38,7 @@ void CFxRack::add_entry (AFx *f, bool checked)
 
 void CFxRack::ins_entry (AFx *f)
 {
-  QStandardItem *item = new QStandardItem (f->name);
+  QStandardItem *item = new QStandardItem (f->modulename);
   item->setCheckable (true);
   item->setCheckState (Qt::Checked);
 
@@ -211,6 +211,8 @@ CFxRack::~CFxRack()
          }
  
   delete avail_fx;
+  
+  inserts->close();
 }
 
 
@@ -276,7 +278,7 @@ void CFxTreeView::mouseMoveEvent (QMouseEvent *event)
 void CFxRack::print_fx_list()
 {
   foreach (AFx *f, effects)
-          qDebug() << f->name;
+          qDebug() << f->modulename;
 }
 
 

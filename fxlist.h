@@ -16,7 +16,8 @@ public:
 
 // QList < AFx *> list;
 
- QHash <QString, t_fx_creator> hash;
+ QHash <QString, t_fx_creator> modulenames;
+ QHash <QString, t_fx_creator> classnames;
 
  
  CFxList();
