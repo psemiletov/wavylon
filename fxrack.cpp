@@ -135,6 +135,8 @@ CFxRack::CFxRack (QObject *parent): QObject (parent)
 
 
   inserts = new QWidget;
+  
+  inserts->setWindowTitle (tr ("Inserts"));
 
   QVBoxLayout *v_box = new QVBoxLayout;
   inserts->setLayout (v_box);

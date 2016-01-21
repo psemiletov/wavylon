@@ -2982,6 +2982,12 @@ void CMixerStrip::call_track_properties()
 }
 
 
+void CMixerStrip::call_track_inserts()
+{
+  p_track->fxrack.inserts->show(); 
+}
+
+
 CMixerStrip::CMixerStrip (CTrack *ptrk, QWidget *parent): QGroupBox (parent)
 {
   p_track = ptrk;
@@ -3034,6 +3040,8 @@ CMixerStrip::CMixerStrip (CTrack *ptrk, QWidget *parent): QGroupBox (parent)
   gb_fx->setLayout (v_fx);
   
   QPushButton *bt_inserts = new QPushButton (tr ("Inserts"));
+  connect (bt_inserts, SIGNAL(clicked()), this, SLOT(call_track_inserts()));
+  
   v_fx->addWidget (bt_inserts);
   
   QPushButton *bt_sends = new QPushButton (tr ("Sends"));

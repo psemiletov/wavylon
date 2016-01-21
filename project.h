@@ -46,6 +46,7 @@
 
 #include "levelmeter.h"
 #include "floatbuffer.h"
+#include "fxrack.h"
 
 
 
@@ -130,8 +131,10 @@ public slots:
   void cb_arm_toggled (bool checked);
 
   void call_track_properties();
- 
+  void call_track_inserts();
+
 };
+
 
 class CWAVPlayer: public QObject
 {
@@ -297,6 +300,8 @@ public:
   QList <CClip*> clips; 
 
   void *table_widget;
+
+  CFxRack fxrack;
 
   CFloatBuffer *fbtrack; //clips will be rendered here
   

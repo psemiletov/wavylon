@@ -14,7 +14,7 @@ class CFxList: public QObject
 {
 public:
 
- QList < AFx *> list;
+// QList < AFx *> list;
 
  QHash <QString, t_fx_creator> hash;
 
