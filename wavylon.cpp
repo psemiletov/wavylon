@@ -1000,7 +1000,7 @@ void CWavylon::createMenus()
   editMenu->addAction (pasteAct);
 
   add_to_menu (editMenu, tr ("Delete (Del)"), SLOT(ed_delete()));
-  add_to_menu (editMenu, tr ("Trim"), SLOT(ed_trim()));
+  //add_to_menu (editMenu, tr ("Trim"), SLOT(ed_trim()));
   
   editMenu->addSeparator();
   
@@ -1576,7 +1576,6 @@ void CWavylon::createOptions()
   page_interface_layout->addWidget (cb_altmenu);
  
  
- 
   page_interface->setLayout (page_interface_layout);
   page_interface->show();
 
@@ -1610,7 +1609,7 @@ void CWavylon::createOptions()
   
 
   QPushButton *bt_set_def_format = new QPushButton (tr ("Set default format for new files"));
-  connect (bt_set_def_format, SIGNAL(clicked()), this, SLOT(bt_set_def_format_clicked()));
+  //connect (bt_set_def_format, SIGNAL(clicked()), this, SLOT(bt_set_def_format_clicked()));
 
   QHBoxLayout *hb_mp3_encode = new QHBoxLayout;
   QLabel *l_mp3_encode = new QLabel (tr ("MP3 encode command"));

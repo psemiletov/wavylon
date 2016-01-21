@@ -129,6 +129,8 @@ public slots:
   void cb_solo_toggled (bool checked);
   void cb_arm_toggled (bool checked);
 
+  void call_track_properties();
+ 
 };
 
 class CWAVPlayer: public QObject
@@ -301,6 +303,7 @@ public:
   //renders clips to buffer from pos 
   virtual size_t render_portion (size_t start_pos_, size_t window_length_frames) = 0;  
 
+  virtual void call_properties_wnd() = 0;
   void update_strip();
 
   CTrack (CProject *prj, int nchannels);
@@ -345,10 +348,12 @@ class CWavTrack: public CTrack
 public:
 
   QString fname_rec_fullpath;
+  SNDFILE *hrecfile;
   
   CWavTrack (CProject *prj, int nchannels);
   size_t render_portion (size_t start_pos_frames, size_t window_length_frames);  
-  SNDFILE *hrecfile;
+  
+  void call_properties_wnd();
 };
 
 

@@ -22,6 +22,8 @@
 #include <QInputDialog>
 #include <QDial>
 #include <QDoubleSpinBox>
+#include <QPlainTextEdit>
+
 #include <QMessageBox>
 
 #include <limits>
@@ -2974,6 +2976,12 @@ void CMixerStrip::cb_arm_toggled (bool checked)
 }
 
 
+void CMixerStrip::call_track_properties()
+{
+  p_track->call_properties_wnd(); 
+}
+
+
 CMixerStrip::CMixerStrip (CTrack *ptrk, QWidget *parent): QGroupBox (parent)
 {
   p_track = ptrk;
@@ -2998,6 +3006,7 @@ CMixerStrip::CMixerStrip (CTrack *ptrk, QWidget *parent): QGroupBox (parent)
   setLayout (v_main);
 
   QPushButton *bt_properties = new QPushButton (tr ("Properties"));
+  connect (bt_properties, SIGNAL(clicked()), this, SLOT(call_track_properties()));
   v_main->addWidget (bt_properties);
   
  
@@ -3018,8 +3027,7 @@ CMixerStrip::CMixerStrip (CTrack *ptrk, QWidget *parent): QGroupBox (parent)
    cb_monitor_input->setChecked (p_track->monitor_input);
    connect (cb_monitor_input, SIGNAL(toggled(bool)), this, SLOT(cb_monitor_input_toggled(bool)));
   
-    
-  
+   
   
   QGroupBox *gb_fx = new QGroupBox (tr ("FX"));
   QVBoxLayout *v_fx = new QVBoxLayout;
@@ -3341,4 +3349,63 @@ CMixerMasterStrip::CMixerMasterStrip (CMasterTrack *ptrk, QWidget *parent): QGro
   
   v_main->addWidget (gb_meter);
   
+}
+
+
+void CWavTrack::call_properties_wnd()
+{
+//track name
+
+//track commnents
+
+  QDialog dialog;
+  
+  dialog.setWindowTitle (tr ("Track properties"));
+
+  
+  QVBoxLayout *v_box = new QVBoxLayout;
+  dialog.setLayout (v_box);
+
+  QHBoxLayout *h_trackname = new QHBoxLayout;
+  v_box->addLayout (h_trackname);
+
+  QLabel *l_trackname = new QLabel (tr ("Track name:"));
+  QLineEdit *ed_trackname = new QLineEdit;
+  ed_trackname->setText (track_name);
+  
+  h_trackname->addWidget (l_trackname);
+  h_trackname->addWidget (ed_trackname);
+  
+  QGroupBox *gb_comments = new QGroupBox (tr ("Comments"));
+  QVBoxLayout *v_comments = new QVBoxLayout;
+  gb_comments->setLayout (v_comments);
+  
+  QPlainTextEdit *pte_comments = new QPlainTextEdit;
+  v_comments->addWidget (pte_comments);
+  pte_comments->setPlainText (track_comment);
+  
+  v_box->addWidget (gb_comments);
+ 
+   
+  QPushButton *bt_done = new QPushButton (tr ("Done"), &dialog);
+  bt_done->setDefault (true);
+  v_box->addWidget (bt_done);
+
+  //QVBoxLayout *h_trackname = new QHBoxLayout;
+  //v_box->addLayout (h_trackname);
+
+  
+   
+  connect (bt_done, SIGNAL(clicked()), &dialog, SLOT(accept()));
+
+   if (dialog.exec())
+      {
+       track_comment = pte_comments->toPlainText();
+       track_name = ed_trackname->text();
+      
+      }   
+      
+  dialog.close();   
+
+  update_strip();
 }
