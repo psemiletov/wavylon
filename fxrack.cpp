@@ -36,6 +36,36 @@ void CFxRack::add_entry (AFx *f, bool checked)
 }
 */
 
+
+void CFxRack::add_entry_silent (AFx *f, bool bypass)
+{
+  QStandardItem *item = new QStandardItem (f->modulename);
+  item->setCheckable (true);
+  
+  if (f->bypass)
+     item->setCheckState (Qt::Unchecked);
+  else   
+     item->setCheckState (Qt::Checked);
+
+  item->setFlags (Qt::ItemIsSelectable | Qt::ItemIsEnabled |
+                  Qt::ItemIsDragEnabled | Qt::ItemIsUserCheckable |
+                  Qt::ItemIsDropEnabled);
+
+  AFx *tfx = f;
+
+  int i = get_sel_index();
+  if (i == -1)
+     {
+      model->appendRow (item);
+      effects.append (tfx);
+     }
+  else
+      {
+       model->insertRow (i, item);
+       effects.insert (i, tfx);
+      }
+}
+
 void CFxRack::ins_entry (AFx *f)
 {
   QStandardItem *item = new QStandardItem (f->modulename);
@@ -181,7 +211,7 @@ void CFxRack::add_fx()
 
   ins_entry (f);
 
-  print_fx_list();
+//  print_fx_list();
 }
 
 

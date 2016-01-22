@@ -62,7 +62,7 @@ QStringList CFxList::names()
           l.append (f->name);
   return l;        */
   
-  QStringList l = modulenames-.keys();
+  QStringList l = modulenames.keys();
   l.sort();
   return l;
 }

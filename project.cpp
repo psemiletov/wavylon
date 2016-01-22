@@ -1066,13 +1066,10 @@ void CProject::save_project()
            
                    foreach (AFx *fx, t->fxrack.effects) 
                        {
-                        
                         stream.writeStartElement ("fx");
-           
-                        stream.writeAttribute ("classname", typeid(fx).name());
-                        
-                        //stream.writeAttribute ("filename", pc->filename);
-                        
+                        stream.writeAttribute ("classname", fx->classname);
+                        stream.writeAttribute ("bypass", QString::number (fx->bypass));
+                        stream.writeCharacters (fx->save_params_to_string());
                         stream.writeEndElement(); 
                        }   
                 
@@ -1181,13 +1178,33 @@ void CProject::load_project()
                 }
 
 
+          if (tag_name == "fx" && xml.isStartElement())
+             {
+              if (! t)
+                  continue;
+                  
+             QString attr_classname = xml.attributes().value ("classname").toString();
+                  
+             AFx *fx = t->fxrack.avail_fx->classnames[attr_classname]();     
+             
+             if (fx)     
+                {
+                 fx->bypass = get_value_with_default (xml.attributes().value ("bypass"), 0.0f);
+
+                 t->fxrack.add_entry_silent (fx, fx->bypass);
+
+                 qDebug() << fx->modulename << " added";
+                } 
+
+             }
+
           if (tag_name == "clip" && xml.isStartElement())
              {
-                 if (! t)
-                    continue;
+              if (! t)
+                 continue;
                     
                     
-                 QString attr_type = xml.attributes().value ("type").toString();
+             QString attr_type = xml.attributes().value ("type").toString();
                                   
                  if (attr_type != t->track_type)
                     continue; //тип текущей дорожки должен быть равен типу текущего клипа!

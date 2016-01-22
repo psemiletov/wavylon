@@ -220,7 +220,7 @@ public:
   
   AFx* self_create();
 
-  static QString get_moudlename() {return QString (tr ("Jest' (overdrive/dist)"));};
+  static QString get_modulename() {return QString (tr ("Jest' (overdrive/dist)"));};
   static AFx* create_self() {return new CFxJest;}
 
 

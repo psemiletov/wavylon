@@ -38,7 +38,8 @@ public:
 
 //  void add_entry (AFx *f, bool checked = true);
   void ins_entry (AFx *f);
-
+  void add_entry_silent (AFx *f, bool bypass);
+  
   //const QModelIndex index_from_name (const QString &name);
   const QModelIndex index_from_idx (int idx);
   int get_sel_index();
