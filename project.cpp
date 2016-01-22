@@ -1190,6 +1190,9 @@ void CProject::load_project()
              if (fx)     
                 {
                  fx->bypass = get_value_with_default (xml.attributes().value ("bypass"), 0.0f);
+                 
+                 //qDebug() << "XXXXXXXXXXXXXXXXXXX: " << xml.readElementText();
+                 fx->load_params_from_string (xml.readElementText()); 
 
                  t->fxrack.add_entry_silent (fx, fx->bypass);
 

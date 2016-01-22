@@ -56,11 +56,14 @@ QString CFxSimpleAmp::save_params_to_string()
 
 void CFxSimpleAmp::load_params_from_string (const QString &s)
 {
+  qDebug() << "CFxSimpleAmp::load_params_from_string - 1";
+
   QStringList ls = s.split (";");
   QHash <QString, QString> h;
   //parsing
 
-  for (int i = 0; i < ls.size(); i++)
+//почему ls.size() - 1? почему так парсится ls? если одно ; то два элемента - странно
+  for (int i = 0; i < ls.size() - 1; i++)
       {
        QStringList lt = ls[i].split ("=");
        h[lt[0]] = lt[1];
@@ -71,6 +74,9 @@ void CFxSimpleAmp::load_params_from_string (const QString &s)
   QStringList lt2 = lt[0].split (":");    
       
   dial_gain->setValue (lt2[1].toDouble());    
+  
+  qDebug() << "CFxSimpleAmp::load_params_from_string - 2";
+
 }
 
 
