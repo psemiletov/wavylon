@@ -2252,10 +2252,6 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
   
   master_track->fb->settozero();
 
-  //size_t dest_buffer_len = buffer_size_frames * 2; //stereo
-  
-//  memset (master_track->buffer, 0, dest_buffer_len * sizeof (float));
-      
   for (int i = 0; i < tracks.size(); i++)
       {
        CTrack *p_track = tracks[i];
@@ -2267,40 +2263,26 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
           continue;
   
        fb_trackbuf->settozero();
-       //memset (trackbuf, 0, dest_buffer_len * sizeof (float));
     
-   //    size_t sample_source = 0;
-      // size_t frame_dest = 0;
-
-
-       
-      // float *p_track_buffer = p_track->buffer + (tracks_window_inner_offset * p_track->channels); 
         
        /*
        
        копируем часть буфера дорожки в промежуточный trackbuffer
-       если стерео, копируем память, если моно, то по одному сэмплу
-       
+         
        */   
 
        if (p_track->channels == 1)        
            {
             p_track->fbtrack->copy_channel_to_pos (fb_trackbuf, 0, 0, tracks_window_inner_offset, buffer_size_frames, 0);
             p_track->fbtrack->copy_channel_to_pos (fb_trackbuf, 0, 1, tracks_window_inner_offset, buffer_size_frames, 0);
-            }
+           }
         else //stereo    
-//             memcpy (trackbuf, p_track_buffer, dest_buffer_len * sizeof (float));
-         p_track->fbtrack->copy_to_pos (fb_trackbuf, tracks_window_inner_offset, buffer_size_frames, 0);
-              
-          
+            p_track->fbtrack->copy_to_pos (fb_trackbuf, tracks_window_inner_offset, buffer_size_frames, 0);
      
        /*
         if monitoring, mix with input:
-       
-       
        */
 
- 
         if (p_track->monitor_input) //учесть специфику при записи в моно!
            {
             size_t frame = 0;
@@ -2320,9 +2302,22 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
             /*
              put INSERTS, SENDS HERE
             */
-            
-        //frame_dest = 0;
-        //frame_source = 0;
+
+//ЧАСТЬ ЭФФЕКТОВ НЕ ПАШЕТ ИЛИ ПАШУТ СТРАННО            
+            for (int i = 0; i < p_track->fxrack.effects.size(); i++)
+                {
+                 if (! p_track->fxrack.effects[i]->bypass)
+                    {
+                     p_track->fxrack.effects[i]->channels = 2;//p_track->channels;
+                     p_track->fxrack.effects[i]->samplerate = settings.samplerate;
+                     
+                     p_track->fxrack.effects[i]->execute (fb_trackbuf->buffer, fb_trackbuf->buffer, buffer_size_frames);
+                    }
+                
+                }
+
+
+ ////
              
              float maxl = 0.0f;
              float maxr = 0.0f;
@@ -2359,8 +2354,7 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
 
                     sqr_sum_l += fb_trackbuf->buffer[0][frame] * fb_trackbuf->buffer[0][frame];
                      
-                    //sample_dest++;
-                    
+                 
                     fb_trackbuf->buffer[1][frame] = fb_trackbuf->buffer[1][frame] * panl * p_track->volume;
                     master_track->fb->buffer[1][frame] += fb_trackbuf->buffer[1][frame];
     
@@ -2369,7 +2363,6 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
 
                     sqr_sum_r += fb_trackbuf->buffer[1][frame] * fb_trackbuf->buffer[1][frame];
                     
-                    //sample_dest++;
                     frame++;
                    }
                    
@@ -2588,6 +2581,12 @@ void CProject::mixbuf_play()
       mixbuf_stream = 0;
      }
 
+
+   for (int i = 0; i < tracks.size(); i++)
+        {
+         tracks[i]->fxrack.reset_all_fx (settings.samplerate, 2/*tracks[i]->channels*/);
+        }
+    
 
    PaStreamParameters inputParameters;
 
@@ -2898,28 +2897,16 @@ void CProject::mixdown_to_default()
           if (mixbuf_render_next (RENDER_MODE_OFFLINE) == -1)
              break;
          
-         
           master_track->fb->allocate_interleaved();
           master_track->fb->fill_interleaved();             
-                    
-          qDebug() << "01";
-         
           sf_writef_float (file_mixdown_handle, (float *)master_track->fb->buffer_interleaved, buffer_size_frames);
-          
-          qDebug() << "02";
-         
-        }
+         }
  
-    
+   
   slider_position->setValue (0); 
-
-qDebug() << "03";
-         
 
   sf_close  (file_mixdown_handle);
   
-  qDebug() << "04";
-         
   qDebug() << "RENDERED";
  
 }
@@ -3018,7 +3005,10 @@ void CMixerStrip::call_track_properties()
 
 void CMixerStrip::call_track_inserts()
 {
-  p_track->fxrack.inserts->show(); 
+  if (! p_track->fxrack.inserts->isVisible())
+     p_track->fxrack.inserts->show(); 
+  else   
+      p_track->fxrack.inserts->hide(); 
 }
 
 

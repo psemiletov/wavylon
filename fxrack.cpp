@@ -66,6 +66,7 @@ void CFxRack::add_entry_silent (AFx *f, bool bypass)
       }
 }
 
+
 void CFxRack::ins_entry (AFx *f)
 {
   QStandardItem *item = new QStandardItem (f->modulename);
@@ -167,6 +168,7 @@ CFxRack::CFxRack (QObject *parent): QObject (parent)
   inserts = new QWidget;
   
   inserts->setWindowTitle (tr ("Inserts"));
+  //inserts->setWindowFlags (Qt::Window | Qt::Tool);
 
   QVBoxLayout *v_box = new QVBoxLayout;
   inserts->setLayout (v_box);

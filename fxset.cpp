@@ -56,27 +56,26 @@ QString CFxSimpleAmp::save_params_to_string()
 
 void CFxSimpleAmp::load_params_from_string (const QString &s)
 {
-  qDebug() << "CFxSimpleAmp::load_params_from_string - 1";
+//  qDebug() << "CFxSimpleAmp::load_params_from_string - 1";
 
   QStringList ls = s.split (";");
   QHash <QString, QString> h;
   //parsing
 
-//почему ls.size() - 1? почему так парсится ls? если одно ; то два элемента - странно
+//почему ls.size() - 1? почему так парсится ls? 
+//последний элемент пустой!
   for (int i = 0; i < ls.size() - 1; i++)
       {
        QStringList lt = ls[i].split ("=");
        h[lt[0]] = lt[1];
       }  
-      
-      
+            
   QStringList lt = h["dial_gain"].split (",");    
   QStringList lt2 = lt[0].split (":");    
       
   dial_gain->setValue (lt2[1].toDouble());    
   
-  qDebug() << "CFxSimpleAmp::load_params_from_string - 2";
-
+//  qDebug() << "CFxSimpleAmp::load_params_from_string - 2";
 }
 
 
@@ -182,7 +181,7 @@ void CFxSimpleOverdrive::load_params_from_string (const QString &s)
   QHash <QString, QString> h;
   //parsing
 
-  for (int i = 0; i < ls.size(); i++)
+  for (int i = 0; i < ls.size() - 1; i++)
       {
        QStringList lt = ls[i].split ("=");
        h[lt[0]] = lt[1];
@@ -349,6 +348,42 @@ CFxDelay::CFxDelay()
 }
 
 
+QString CFxDelay::save_params_to_string()
+{
+  QString result;
+  //format is: paramname=frame_number1:value,frame_numberN:valueN;
+  //it is designed to save automation pairs time:value
+  result += ("spb_mixlevel=0:" + QString::number (spb_mixlevel->value()) + ";");
+  result += ("spb_time=0:" + QString::number (spb_time->value()) + ";");
+  
+  return result;
+}
+
+
+void CFxDelay::load_params_from_string (const QString &s)
+{
+  QStringList ls = s.split (";");
+  QHash <QString, QString> h;
+  //parsing
+
+  for (int i = 0; i < ls.size() - 1; i++)
+      {
+       QStringList lt = ls[i].split ("=");
+       h[lt[0]] = lt[1];
+      }  
+      
+  QStringList lt = h["spb_mixlevel"].split (",");    
+  QStringList lt2 = lt[0].split (":");    
+      
+  spb_mixlevel->setValue (lt2[1].toDouble());    
+  
+  lt = h["spb_time"].split (",");    
+  lt2 = lt[0].split (":");    
+  
+  spb_time->setValue (lt2[1].toDouble());    
+}
+
+
 void CFxDelay::spb_mixlevel_changed (double value)
 {
   mixlevel = db2lin (value);
@@ -495,6 +530,48 @@ CFxSimpleFilter::CFxSimpleFilter()
 }
 
 
+QString CFxSimpleFilter::save_params_to_string()
+{
+  QString result;
+  //format is: paramname=frame_number1:value,frame_numberN:valueN;
+  //it is designed to save automation pairs time:value
+  result += ("dsb_cutoff_freq=0:" + QString::number (dsb_cutoff_freq->value()) + ";");
+  result += ("dsb_reso=0:" + QString::number (dsb_reso->value()) + ";");
+  result += ("cmb_filter_mode=0:" + QString::number (cmb_filter_mode->currentIndex()) + ";");
+  
+  return result;
+}
+
+
+void CFxSimpleFilter::load_params_from_string (const QString &s)
+{
+  QStringList ls = s.split (";");
+  QHash <QString, QString> h;
+  //parsing
+
+  for (int i = 0; i < ls.size() - 1; i++)
+      {
+       QStringList lt = ls[i].split ("=");
+       h[lt[0]] = lt[1];
+      }  
+      
+  QStringList lt = h["dsb_cutoff_freq"].split (",");    
+  QStringList lt2 = lt[0].split (":");    
+      
+  dsb_cutoff_freq->setValue (lt2[1].toDouble());    
+  
+  lt = h["dsb_reso"].split (",");    
+  lt2 = lt[0].split (":");    
+  
+  dsb_reso->setValue (lt2[1].toDouble());    
+  
+  lt = h["cmb_filter_mode"].split (",");    
+  lt2 = lt[0].split (":");    
+  
+  cmb_filter_mode->setCurrentIndex (lt2[1].toInt());
+}
+
+
 AFx* CFxSimpleFilter::self_create()
 {
   return new CFxSimpleFilter;
@@ -544,7 +621,7 @@ CFxMetaluga::CFxMetaluga()
   QHBoxLayout *hbl_gain = new QHBoxLayout;
   
   QLabel *l = new QLabel (tr ("Gain"));
-  QDial *dial_gain = new QDial;
+  dial_gain = new QDial;
   dial_gain->setNotchesVisible (true);
 
   dial_gain->setWrapping (false);
@@ -562,7 +639,7 @@ CFxMetaluga::CFxMetaluga()
   QHBoxLayout *hbl_drive = new QHBoxLayout;
   
   l = new QLabel (tr ("Drive"));
-  QDial *dial_drive = new QDial;
+  dial_drive = new QDial;
   dial_drive->setNotchesVisible (true);
 
   dial_drive->setWrapping (false);
@@ -589,7 +666,6 @@ CFxMetaluga::CFxMetaluga()
   dial_tone->setRange (1, 100);
   dial_tone->setValue (50);
 
-
   hbl_tone->addWidget (l);
   hbl_tone->addWidget (dial_tone);
   
@@ -600,7 +676,7 @@ CFxMetaluga::CFxMetaluga()
 
   QLabel *l_level = new QLabel (tr ("Output level"));
 
-  QDial *dial_level = new QDial;
+  dial_level = new QDial;
   dial_level->setWrapping (false);
   connect (dial_level, SIGNAL(valueChanged(int)), this, SLOT(dial_level_valueChanged(int)));
   dial_level->setRange (-90, 0);
@@ -622,6 +698,50 @@ CFxMetaluga::CFxMetaluga()
   w_caption->setStyleSheet (qstl);  
   l_caption->setStyleSheet ("color: white;");  
   l_subcaption->setStyleSheet ("color: white;");  
+}
+
+
+QString CFxMetaluga::save_params_to_string()
+{
+  QString result;
+  //format is: paramname=frame_number1:value,frame_numberN:valueN;
+  //it is designed to save automation pairs time:value
+  result += ("dial_gain=0:" + QString::number (dial_gain->value()) + ";");
+  result += ("dial_drive=0:" + QString::number (dial_drive->value()) + ";");
+  result += ("dial_tone=0:" + QString::number (dial_tone->value()) + ";");
+  result += ("dial_level=0:" + QString::number (dial_level->value()) + ";");
+  
+  return result;
+}
+
+
+void CFxMetaluga::load_params_from_string (const QString &s)
+{
+  QStringList ls = s.split (";");
+  QHash <QString, QString> h;
+  //parsing
+
+  for (int i = 0; i < ls.size() - 1; i++)
+      {
+       QStringList lt = ls[i].split ("=");
+       h[lt[0]] = lt[1];
+      }  
+      
+  QStringList lt = h["dial_gain"].split (",");    
+  QStringList lt2 = lt[0].split (":");    
+  dial_gain->setValue (lt2[1].toDouble());    
+  
+  lt = h["dial_drive"].split (",");    
+  lt2 = lt[0].split (":");    
+  dial_drive->setValue (lt2[1].toDouble());    
+  
+  lt = h["dial_tone"].split (",");    
+  lt2 = lt[0].split (":");    
+  dial_tone->setValue (lt2[1].toDouble());    
+
+  lt = h["dial_level"].split (",");    
+  lt2 = lt[0].split (":");    
+  dial_level->setValue (lt2[1].toDouble());    
 }
 
 
@@ -730,7 +850,7 @@ CFxJest::CFxJest()
   QHBoxLayout *hbl_gain = new QHBoxLayout;
   
   QLabel *l = new QLabel (tr ("Gain"));
-  QDial *dial_gain = new QDial;
+  dial_gain = new QDial;
   dial_gain->setNotchesVisible (true);
 
   dial_gain->setWrapping (false);
@@ -748,7 +868,7 @@ CFxJest::CFxJest()
   QHBoxLayout *hbl_drive = new QHBoxLayout;
   
   l = new QLabel (tr ("Drive"));
-  QDial *dial_drive = new QDial;
+  dial_drive = new QDial;
   dial_drive->setNotchesVisible (true);
 
   dial_drive->setWrapping (false);
@@ -785,7 +905,7 @@ CFxJest::CFxJest()
 
   QLabel *l_level = new QLabel (tr ("Output level"));
 
-  QDial *dial_level = new QDial;
+  dial_level = new QDial;
   dial_level->setWrapping (false);
   connect (dial_level, SIGNAL(valueChanged(int)), this, SLOT(dial_level_valueChanged(int)));
   dial_level->setRange (-90, 0);
@@ -806,8 +926,52 @@ CFxJest::CFxJest()
   
   
   w_caption->setStyleSheet (qstl);  
-  
 }
+
+
+QString CFxJest::save_params_to_string()
+{
+  QString result;
+  //format is: paramname=frame_number1:value,frame_numberN:valueN;
+  //it is designed to save automation pairs time:value
+  result += ("dial_gain=0:" + QString::number (dial_gain->value()) + ";");
+  result += ("dial_drive=0:" + QString::number (dial_drive->value()) + ";");
+  result += ("dial_tone=0:" + QString::number (dial_tone->value()) + ";");
+  result += ("dial_level=0:" + QString::number (dial_level->value()) + ";");
+  
+  return result;
+}
+
+
+void CFxJest::load_params_from_string (const QString &s)
+{
+  QStringList ls = s.split (";");
+  QHash <QString, QString> h;
+  //parsing
+
+  for (int i = 0; i < ls.size() - 1; i++)
+      {
+       QStringList lt = ls[i].split ("=");
+       h[lt[0]] = lt[1];
+      }  
+      
+  QStringList lt = h["dial_gain"].split (",");    
+  QStringList lt2 = lt[0].split (":");    
+  dial_gain->setValue (lt2[1].toDouble());    
+  
+  lt = h["dial_drive"].split (",");    
+  lt2 = lt[0].split (":");    
+  dial_drive->setValue (lt2[1].toDouble());    
+  
+  lt = h["dial_tone"].split (",");    
+  lt2 = lt[0].split (":");    
+  dial_tone->setValue (lt2[1].toDouble());    
+
+  lt = h["dial_level"].split (",");    
+  lt2 = lt[0].split (":");    
+  dial_level->setValue (lt2[1].toDouble());    
+}
+
 
 
 void CFxJest::dial_gain_valueChanged (int value)
