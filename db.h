@@ -5,10 +5,14 @@
 
 extern double db_scale;
 
+
+
 inline float db2lin (float db)
 {
  return (float) exp (db * db_scale);
 }
+
+
 
 /*
 static inline float db2lin (float db)
@@ -16,6 +20,7 @@ static inline float db2lin (float db)
   return powf (10.0f, db / 20);
 }
 */
+
 
 
 inline float float2db (float v)

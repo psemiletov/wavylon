@@ -2289,82 +2289,77 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
          
             while (frame < buffer_size_frames)
                   {
-                             
                    fb_trackbuf->buffer[0][frame] += p_input_buf[0][frame];
                    fb_trackbuf->buffer[1][frame] += p_input_buf[1][frame];
-                   
                    frame++;
                   }
            }
      
            
-
             /*
              put INSERTS, SENDS HERE
             */
 
 //ЧАСТЬ ЭФФЕКТОВ НЕ ПАШЕТ ИЛИ ПАШУТ СТРАННО            
-            for (int i = 0; i < p_track->fxrack.effects.size(); i++)
+        for (int i = 0; i < p_track->fxrack.effects.size(); i++)
+            {
+             if (! p_track->fxrack.effects[i]->bypass)
                 {
-                 if (! p_track->fxrack.effects[i]->bypass)
-                    {
-                     p_track->fxrack.effects[i]->channels = 2;//p_track->channels;
-                     p_track->fxrack.effects[i]->samplerate = settings.samplerate;
+                 p_track->fxrack.effects[i]->channels = 2;//p_track->channels;
+                 p_track->fxrack.effects[i]->samplerate = settings.samplerate;
                      
-                     p_track->fxrack.effects[i]->execute (fb_trackbuf->buffer, fb_trackbuf->buffer, buffer_size_frames);
-                    }
-                
+                 p_track->fxrack.effects[i]->execute (fb_trackbuf->buffer, fb_trackbuf->buffer, buffer_size_frames);
                 }
+             }
 
 
  ////
              
-             float maxl = 0.0f;
-             float maxr = 0.0f;
+        float maxl = 0.0f;
+        float maxr = 0.0f;
             
-             float sqr_sum_l = 0.0f;
-             float sqr_sum_r = 0.0f;
+        float sqr_sum_l = 0.0f;
+        float sqr_sum_r = 0.0f;
             
+        size_t frame = 0;
             
-             size_t frame = 0;
+        //mix trackbuffer with mastertrack    
+        while (frame < buffer_size_frames)
+              {
+               float panl = 0.0;
+               float panr = 0.0;
             
-             while (frame < buffer_size_frames)
-                   {
-                    float panl = 0.0;
-                    float panr = 0.0;
-            
-                    if (settings.panner == 0)
-                       pan_linear0 (panl, panr, p_track->pan);
-                    else
-                        if (settings.panner == 1)
-                           pan_linear6 (panl, panr, p_track->pan);
-                    else
-                        if (settings.panner == 2)
-                           pan_sqrt (panl, panr, p_track->pan);
-	                else
-                        if (settings.panner == 3)
-                           pan_sincos (panl, panr, p_track->pan);
+               if (settings.panner == 0)
+                  pan_linear0 (panl, panr, p_track->pan);
+               else
+               if (settings.panner == 1)
+                  pan_linear6 (panl, panr, p_track->pan);
+               else
+               if (settings.panner == 2)
+                   pan_sqrt (panl, panr, p_track->pan);
+               else
+               if (settings.panner == 3)
+                  pan_sincos (panl, panr, p_track->pan);
 
-                    
-                    fb_trackbuf->buffer[0][frame] = fb_trackbuf->buffer[0][frame] * panl * p_track->volume;
-                    master_track->fb->buffer[0][frame] += fb_trackbuf->buffer[0][frame];
+               fb_trackbuf->buffer[0][frame] = fb_trackbuf->buffer[0][frame] * panl * p_track->volume;
+               master_track->fb->buffer[0][frame] += fb_trackbuf->buffer[0][frame];
     
-                    if (float_less_than (maxl, fb_trackbuf->buffer[0][frame]))
-                        maxl = fb_trackbuf->buffer[0][frame];
+               if (float_less_than (maxl, fb_trackbuf->buffer[0][frame]))
+                  maxl = fb_trackbuf->buffer[0][frame];
 
-                    sqr_sum_l += fb_trackbuf->buffer[0][frame] * fb_trackbuf->buffer[0][frame];
+               sqr_sum_l += fb_trackbuf->buffer[0][frame] * fb_trackbuf->buffer[0][frame];
                      
                  
-                    fb_trackbuf->buffer[1][frame] = fb_trackbuf->buffer[1][frame] * panl * p_track->volume;
-                    master_track->fb->buffer[1][frame] += fb_trackbuf->buffer[1][frame];
+               fb_trackbuf->buffer[1][frame] = fb_trackbuf->buffer[1][frame] * panl * p_track->volume;
+               master_track->fb->buffer[1][frame] += fb_trackbuf->buffer[1][frame];
     
-                    if (float_less_than (maxr, fb_trackbuf->buffer[1][frame]))
-                        maxr = fb_trackbuf->buffer[1][frame];
+               if (float_less_than (maxr, fb_trackbuf->buffer[1][frame]))
+                  maxr = fb_trackbuf->buffer[1][frame];
 
-                    sqr_sum_r += fb_trackbuf->buffer[1][frame] * fb_trackbuf->buffer[1][frame];
+               sqr_sum_r += fb_trackbuf->buffer[1][frame] * fb_trackbuf->buffer[1][frame];
                     
-                    frame++;
-                   }
+               frame++;
+              }
                    
 
                    

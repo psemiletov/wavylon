@@ -282,7 +282,6 @@ size_t CFxSimpleOverdrive::execute (float **input, float **output, size_t frames
                if (float_less_than (output[ch][i], -1.0f))
                    output[ch][i] = -1.0f;
                    
-                   
            output[ch][i] *= level;        
           /*         
             if (output[ch][i] > 1.0f)
@@ -293,7 +292,6 @@ size_t CFxSimpleOverdrive::execute (float **input, float **output, size_t frames
                 else
                     output[ch][i] = output[ch][i] - (pow (output[ch][i], 3) / 3 );  
 */
-                   
            }       
       }
 

@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QRect>
 #include <QPoint>
+#include <QDebug>
 
 
 #include "db.h"
@@ -37,6 +38,8 @@ void CLevelMeter::update_scale_image()
         int ymin = channel_height - linval * channel_height;
         
         int y = abs(ymin);  
+        
+        qDebug() << "y " << y;
 
         QPoint p1 (1, y);
         QPoint p2 (5, y);
