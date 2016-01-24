@@ -443,7 +443,7 @@ public:
   size_t tracks_window_inner_offset; //offset of mixbuf at tracks window
 
 
-  CFloatBuffer *fb_trackbuf; 
+ // CFloatBuffer *fb_trackbuf; 
   
 //  float *mixbuf; 
 

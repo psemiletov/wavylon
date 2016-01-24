@@ -981,7 +981,7 @@ CProject::~CProject()
   
   //delete temp_mixbuf_one;
   
-  delete fb_trackbuf;
+  //delete fb_trackbuf;
   
   delete mixer_window;
 
@@ -1325,7 +1325,7 @@ CProject::CProject()
   
  // trackbuf = new float [buffer_size_frames * 2]; //stereo
 
-  fb_trackbuf = new CFloatBuffer (buffer_size_frames, 2); //stereo
+  //fb_trackbuf = new CFloatBuffer (buffer_size_frames, 2); //stereo
 
   mixbuf_stream = 0;;
  
@@ -2209,6 +2209,7 @@ size_t CProject::tracks_render_next()
       {
        CTrack *p_track = tracks[i];
        p_track->render_portion (tracks_window_start_frames, tracks_window_length_frames);  
+       p_track->fbtrack->pbuffer_reset();
       }
  
   
@@ -2267,7 +2268,7 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
           continue;
 
   
-       fb_trackbuf->settozero();
+       //fb_trackbuf->settozero();
     
         
        /*
@@ -2275,7 +2276,7 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
        копируем часть буфера дорожки в промежуточный trackbuffer
          
        */   
-
+/*
        if (p_track->channels == 1)        
            {
             p_track->fbtrack->copy_channel_to_pos (fb_trackbuf, 0, 0, tracks_window_inner_offset, buffer_size_frames, 0);
@@ -2283,7 +2284,7 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
            }
         else //stereo    
             p_track->fbtrack->copy_to_pos (fb_trackbuf, tracks_window_inner_offset, buffer_size_frames, 0);
-     
+  */   
        /*
         if monitoring, mix with input:
        */
@@ -2294,8 +2295,8 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
          
             while (frame < buffer_size_frames)
                   {
-                   fb_trackbuf->buffer[0][frame] += p_input_buf[0][frame];
-                   fb_trackbuf->buffer[1][frame] += p_input_buf[1][frame];
+                   p_track->fbtrack->pbuffer[0][frame] += p_input_buf[0][frame];
+                   p_track->fbtrack->pbuffer[1][frame] += p_input_buf[1][frame];
                    frame++;
                   }
            }
@@ -2312,10 +2313,10 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
             {
              if (! p_track->fxrack.effects[i]->bypass)
                 {
-                 p_track->fxrack.effects[i]->channels = 2;//p_track->channels;
+                 p_track->fxrack.effects[i]->channels = p_track->channels;
                  p_track->fxrack.effects[i]->samplerate = settings.samplerate;
                      
-                 p_track->fxrack.effects[i]->execute (fb_trackbuf->buffer, fb_trackbuf->buffer, buffer_size_frames);
+                 p_track->fxrack.effects[i]->execute (p_track->fbtrack->pbuffer, p_track->fbtrack->pbuffer, buffer_size_frames);
                 }
              }
 
@@ -2353,22 +2354,46 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
                if (settings.panner == 3)
                   pan_sincos (panl, panr, p_track->pan);
 
-               fb_trackbuf->buffer[0][frame] = fb_trackbuf->buffer[0][frame] * panl * p_track->volume;
-               master_track->fb->buffer[0][frame] += fb_trackbuf->buffer[0][frame];
+               if (p_track->channels == 2)
+                  { 
+                   float l = p_track->fbtrack->pbuffer[0][frame] * panl * p_track->volume;
+                   float r = p_track->fbtrack->pbuffer[1][frame] * panr * p_track->volume;
+                   
+                   master_track->fb->buffer[0][frame] += l;
     
-               if (float_less_than (maxl, fb_trackbuf->buffer[0][frame]))
-                  maxl = fb_trackbuf->buffer[0][frame];
+                   if (float_less_than (maxl, l))
+                       maxl = l;
 
-               sqr_sum_l += fb_trackbuf->buffer[0][frame] * fb_trackbuf->buffer[0][frame];
-                     
+                   sqr_sum_l += l * l;
                  
-               fb_trackbuf->buffer[1][frame] = fb_trackbuf->buffer[1][frame] * panl * p_track->volume;
-               master_track->fb->buffer[1][frame] += fb_trackbuf->buffer[1][frame];
+                   master_track->fb->buffer[1][frame] += r;
     
-               if (float_less_than (maxr, fb_trackbuf->buffer[1][frame]))
-                  maxr = fb_trackbuf->buffer[1][frame];
+                  if (float_less_than (maxr, r))
+                    maxr = r;
 
-               sqr_sum_r += fb_trackbuf->buffer[1][frame] * fb_trackbuf->buffer[1][frame];
+                  sqr_sum_r += r * r;
+                  }
+               else
+               if (p_track->channels == 1)
+                  { 
+                   float l = p_track->fbtrack->pbuffer[0][frame] * panl * p_track->volume;
+                   float r = p_track->fbtrack->pbuffer[0][frame] * panr * p_track->volume;
+                   
+                   master_track->fb->buffer[0][frame] += l;
+    
+                   if (float_less_than (maxl, l))
+                       maxl = l;
+
+                   sqr_sum_l += l * l;
+                 
+                   master_track->fb->buffer[1][frame] += r;
+    
+                  if (float_less_than (maxr, r))
+                    maxr = r;
+
+                  sqr_sum_r += r * r;
+                  }
+                  
                     
                frame++;
               }
@@ -2388,6 +2413,9 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
                        
       p_track->mixer_strip->rms_meter->pl = srms_l;
       p_track->mixer_strip->rms_meter->pr = srms_r;
+      
+      
+      p_track->fbtrack->pbuffer_inc (buffer_size_frames);
      }
 
 
@@ -2593,7 +2621,7 @@ void CProject::mixbuf_play()
 
    for (int i = 0; i < tracks.size(); i++)
         {
-         tracks[i]->fxrack.reset_all_fx (settings.samplerate, 2/*tracks[i]->channels*/);
+         tracks[i]->fxrack.reset_all_fx (settings.samplerate, tracks[i]->channels);
         }
     
 
