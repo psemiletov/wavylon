@@ -1105,81 +1105,78 @@ void CProject::load_project()
   QString temp = qstring_load (fname);
   QXmlStreamReader xml (temp);
   
-   while (! xml.atEnd())
+  while (! xml.atEnd())
         {
          xml.readNext();
 
          QString tag_name = xml.name().toString().toLower();
 
          if (xml.isStartElement() && tag_name == "document")
-             {
-              settings.bpm = get_value_with_default (xml.attributes().value ("bpm"), 120);
-              settings.samplerate = get_value_with_default (xml.attributes().value ("samplerate"), 44100);
-              settings.panner = get_value_with_default (xml.attributes().value ("panner"), 0);
+            {
+             settings.bpm = get_value_with_default (xml.attributes().value ("bpm"), 120);
+             settings.samplerate = get_value_with_default (xml.attributes().value ("samplerate"), 44100);
+             settings.panner = get_value_with_default (xml.attributes().value ("panner"), 0);
              
-              global_samplerate = settings.samplerate;
-              
-             }
+             global_samplerate = settings.samplerate;
+            }
 
             
-             if (tag_name == "tracks" && xml.isStartElement())
-                {
+         if (tag_name == "tracks" && xml.isStartElement())
+            {
                 
                 
-                }
+            }
 
-            if (tag_name == "comments" && xml.isStartElement())
-                {
-                 if (t)
-                    t->track_comment = xml.readElementText();
-                 else
-                     comments = xml.readElementText();;  
-                }
+         if (tag_name == "comments" && xml.isStartElement())
+            {
+             if (t)
+                t->track_comment = xml.readElementText();
+             else
+                 comments = xml.readElementText();;  
+            }
 
-
-           if (tag_name == "track" && xml.isEndElement())
-               t = 0;
+         if (tag_name == "track" && xml.isEndElement())
+            t = 0;
             
 
-            if (tag_name == "mastertrack" && xml.isStartElement())
-               {
-                master_track->volume_left = get_value_with_default (xml.attributes().value ("volume_left"), 1.0f);
-                master_track->volume_right = get_value_with_default (xml.attributes().value ("volume_right"), 1.0f);
-                master_track->linked_channels = get_value_with_default (xml.attributes().value ("linked_channels"), 1.0f);
-                
-                master_track->update_strip();
-               }
+         if (tag_name == "mastertrack" && xml.isStartElement())
+            {
+             master_track->volume_left = get_value_with_default (xml.attributes().value ("volume_left"), 1.0f);
+             master_track->volume_right = get_value_with_default (xml.attributes().value ("volume_right"), 1.0f);
+             master_track->linked_channels = get_value_with_default (xml.attributes().value ("linked_channels"), 1.0f);
+             master_track->update_strip();
+            }
 
 
-            if (tag_name == "track" && xml.isStartElement())
-                {
-                 QString attr_type = xml.attributes().value ("type").toString();
+        if (tag_name == "track" && xml.isStartElement())
+           {
+            QString attr_type = xml.attributes().value ("type").toString();
                  
-                 if (attr_type == "wav")
-                    {
-                     int nchannels = get_value_with_default (xml.attributes().value ("channels"), 1);
+            if (attr_type == "wav")
+               {
+                int nchannels = get_value_with_default (xml.attributes().value ("channels"), 1);
                      
-                     t = new CWavTrack (this, nchannels);
+                t = new CWavTrack (this, nchannels);
                      
-                     t->track_name = get_value_with_default (xml.attributes().value ("name"), "default");
-                     t->track_type = "wav";
+                t->track_name = get_value_with_default (xml.attributes().value ("name"), "default");
+                t->track_type = "wav";
                      
-                     t->channels = nchannels;
+                t->channels = nchannels;
                      
-                     t->pan = get_value_with_default (xml.attributes().value ("pan"), 0.5f);
-                     t->volume = get_value_with_default (xml.attributes().value ("volume"), 0.0f);
-                     t->mute = get_value_with_default (xml.attributes().value ("mute"), 0.0f);
-                     t->solo = get_value_with_default (xml.attributes().value ("solo"), 0.0f);
-                     t->arm = get_value_with_default (xml.attributes().value ("arm"), 0.0f);
-                     t->monitor_input = get_value_with_default (xml.attributes().value ("monitor_input"), 0.0f);
+                t->pan = get_value_with_default (xml.attributes().value ("pan"), 0.5f);
+                t->volume = get_value_with_default (xml.attributes().value ("volume"), 0.0f);
+                t->mute = get_value_with_default (xml.attributes().value ("mute"), 0.0f);
+                t->solo = get_value_with_default (xml.attributes().value ("solo"), 0.0f);
+                t->arm = get_value_with_default (xml.attributes().value ("arm"), 0.0f);
+                t->monitor_input = get_value_with_default (xml.attributes().value ("monitor_input"), 0.0f);
             
-                     tracks.append (t);
+                tracks.append (t);
                      
-                     t->update_strip();
+                t->update_strip();
 
-                     track_add_strip_to_mixer_window (t);
-                    }
-                }
+                track_add_strip_to_mixer_window (t);
+              }
+            }
 
 
           if (tag_name == "fx" && xml.isStartElement())
@@ -1928,16 +1925,14 @@ void CProject::track_insert_new()
      
   CTrackTableWidget *tw = (CTrackTableWidget*)track->table_widget;
   tw->update_track_table();
-          
-//     p->p_track->clips.append (clip);
-
- 
+  track->update_strip();
+  
+  track_add_strip_to_mixer_window (track);
 }
 
 
 void CProject::track_delete (int track_number)
 {
-
   QWidget *w = table_container->focusWidget();
 
  int row = 0;
@@ -2869,13 +2864,9 @@ CMasterTrack::CMasterTrack (CProject *prj)
 {
   qDebug() << "CMasterTrack::CMasterTrack ";
 
-
   track_name = tr ("Master");
   
   p_project = prj;
-  //buffer_offset_frames = 0;
-  
-  qDebug() << "xxx1";  
   
   channels = 2;  
     
@@ -2883,19 +2874,8 @@ CMasterTrack::CMasterTrack (CProject *prj)
   volume_right = 1.0f;
   linked_channels = true;
   
-  qDebug() << "xxx2";  
-  
-  
-  //buffer_length_frames = buffer_size_frames;
-  
-  //qDebug() << "buffer_length_frames: " << buffer_length_frames;
-  
   fb = new CFloatBuffer (buffer_size_frames, 2);  
-  //buffer = new float [buffer_length_frames * channels];
-  
   mixer_strip = new CMixerMasterStrip (this);
-
-  qDebug() << "xxx4";  
   
   update_strip();
 } 
@@ -2953,10 +2933,7 @@ void CProject::mixdown_to_default()
 
 void CMasterTrack::update_strip()
 {
- qDebug() << "CMasterTrack::update_strip(): " << track_name;
- 
   mixer_strip->update_strip_controls = true;
-  
   mixer_strip->setTitle (track_name);
   
   mixer_strip->dsb_vol_l->setValue (float2db (volume_left));
