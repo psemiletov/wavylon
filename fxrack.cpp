@@ -9,6 +9,8 @@
 #include "gui_utils.h"
 #include "fxrack.h"
 
+CFxList *avail_fx;
+
 
 void CFxRack::tv_activated (const QModelIndex &index)
 {
@@ -242,7 +244,7 @@ CFxRack::~CFxRack()
           delete f;
          }
  
-  delete avail_fx;
+  //delete avail_fx;
   
   inserts->close();
 }

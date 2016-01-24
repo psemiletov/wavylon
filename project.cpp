@@ -36,6 +36,7 @@
 
 
 #include "db.h"
+#include "fxlist.h"
 
 #include "tio.h"
 #include "project.h"
@@ -46,6 +47,9 @@
 
 #define RENDER_MODE_REALTIME 0
 #define RENDER_MODE_OFFLINE 1
+
+
+extern CFxList *avail_fx;
 
 
 CTioHandler *tio_handler;
@@ -1185,7 +1189,7 @@ void CProject::load_project()
                   
              QString attr_classname = xml.attributes().value ("classname").toString();
                   
-             AFx *fx = t->fxrack.avail_fx->classnames[attr_classname]();     
+             AFx *fx = /*t->fxrack.*/avail_fx->classnames[attr_classname]();     
              
              if (fx)     
                 {
@@ -2261,6 +2265,7 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
   
        if (has_solo && ! p_track->solo)
           continue;
+
   
        fb_trackbuf->settozero();
     
@@ -2300,7 +2305,9 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
              put INSERTS, SENDS HERE
             */
 
-//ЧАСТЬ ЭФФЕКТОВ НЕ ПАШЕТ ИЛИ ПАШУТ СТРАННО            
+
+//INSERTS
+   
         for (int i = 0; i < p_track->fxrack.effects.size(); i++)
             {
              if (! p_track->fxrack.effects[i]->bypass)
@@ -2313,6 +2320,11 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
              }
 
 
+
+//SENDS TO BUSES
+
+
+//END SENDS TO BUSES
  ////
              
         float maxl = 0.0f;
@@ -2361,7 +2373,9 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
                frame++;
               }
                    
+//MIX AUX BUSES WITH MASTERTRACK
 
+//END MIX AUX BUSES 
                    
           
       float srms_l = sqrt (sqr_sum_l / buffer_size_frames);             

@@ -1,7 +1,6 @@
 #include "fxlist.h"
 #include "fxset.h"
 
-
 CFxList::CFxList()
 {
   /*list.append (new CFxSimpleAmp);

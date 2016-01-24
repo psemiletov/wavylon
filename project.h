@@ -59,7 +59,6 @@ class CMixerStrip;
 class CMixerMasterStrip;
 
 
-
 class CMixerMasterStrip: public QGroupBox
 {
 Q_OBJECT
@@ -383,12 +382,6 @@ public:
   
   CFloatBuffer *fb;
 
-  //size_t buffer_length_frames;
- 
-/*  
-  float *buffer; //clips will be rendered here
-  size_t buffer_offset_frames; //current offset in buffer
-  */
   CMasterTrack (CProject *prj);
   ~CMasterTrack();
 

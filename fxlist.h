@@ -14,8 +14,6 @@ class CFxList: public QObject
 {
 public:
 
-// QList < AFx *> list;
-
  QHash <QString, t_fx_creator> modulenames;
  QHash <QString, t_fx_creator> classnames;
 
@@ -26,7 +24,6 @@ public:
  AFx *find_by_name (const QString &fxname);
  QStringList names();
 };
-
 
 
 #endif // FXLIST_H

@@ -47,6 +47,7 @@ Public Domain
 
 
 #include "db.h"
+#include "fxlist.h"
 
 #include "tio.h"
 #include "project.h"
@@ -58,6 +59,8 @@ Public Domain
 
 
 #define C_METER_CPS 32;
+
+extern CFxList *avail_fx;
 
 
 bool b_altmenu;
@@ -405,6 +408,8 @@ CWavylon::CWavylon()
 {
 
   init_db();
+  
+  avail_fx = new CFxList;
   
   pa_init (this);
 
@@ -1136,6 +1141,8 @@ void CWavylon::createStatusBar()
 CWavylon::~CWavylon()
 {
 //  qDebug() << "~CEKO()";
+
+  delete avail_fx;
 
   QFile::remove (temp_mp3_fname);
 

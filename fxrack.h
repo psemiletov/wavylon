@@ -18,13 +18,12 @@ class CFxTreeView;
 class CFxListInterface;
 
 
+
 class CFxRack: public QObject
 {
   Q_OBJECT
 
 public:
-
-  CFxList *avail_fx;
 
   QList <AFx*> effects;
   
