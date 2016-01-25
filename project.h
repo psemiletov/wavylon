@@ -442,11 +442,6 @@ public:
   size_t tracks_window_length_frames;
   size_t tracks_window_inner_offset; //offset of mixbuf at tracks window
 
-
- // CFloatBuffer *fb_trackbuf; 
-  
-//  float *mixbuf; 
-
   CMasterTrack *master_track;
   
   CProjectPaths paths;

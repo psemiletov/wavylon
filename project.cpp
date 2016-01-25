@@ -976,17 +976,14 @@ CProject::~CProject()
   for (int i = 0; i < tracks.size(); i++)
       delete tracks[i];
  
-  delete table_scroll_area;
+  delete table_container;
   
-  
-  //delete temp_mixbuf_one;
-  
-  //delete fb_trackbuf;
+ // delete table_scroll_area;
   
   delete mixer_window;
 
   delete master_track;
-  
+   
   delete wnd_files;
   
   if (mixbuf_stream)
@@ -1410,7 +1407,6 @@ void CProject::create_widgets()
   */ 
   
   table_scroll_area = new QScrollArea;
-  //table_scroll_area->setBackgroundRole(QPalette::Dark);
   table_scroll_area->setWidget (table_container);
   
   //tab_project_ui->addTab (table_container, tr ("table"));
@@ -1491,7 +1487,7 @@ void CProject::refresh_song_length()
       
    //иначе не будет записывать   
    if (song_length_frames == 0)   
-      song_length_frames = std::numeric_limits<size_t>::max();
+      song_length_frames = std::numeric_limits<int>::max();
 
   slider_position->setMinimum (0);
   slider_position->setMaximum (song_length_frames);
@@ -1501,7 +1497,9 @@ void CProject::refresh_song_length()
   if (cursor_frames >= song_length_frames)
      cursor_frames = song_length_frames - tracks_window_length_frames;
      
-     
+ qDebug() << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx";
+ qDebug() << "song_length_frames: " << song_length_frames;
+ qDebug() << "XXXXXXXXXXXXXXXXXXXXXXXXXXXX";   
 }
 
 
