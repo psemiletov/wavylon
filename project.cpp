@@ -2289,7 +2289,10 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
             while (frame < buffer_size_frames)
                   {
                    p_track->fbtrack->pbuffer[0][frame] += p_input_buf[0][frame];
-                   p_track->fbtrack->pbuffer[1][frame] += p_input_buf[1][frame];
+                   
+                   if (p_track->channels == 2)       
+                      p_track->fbtrack->pbuffer[1][frame] += p_input_buf[1][frame];
+                      
                    frame++;
                   }
            }
