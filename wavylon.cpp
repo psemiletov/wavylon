@@ -963,6 +963,8 @@ void CWavylon::createMenus()
   
 
   add_to_menu (menu_project, tr ("WAVs"), SLOT(project_call_wavs_wnd()));
+  add_to_menu (menu_project, tr ("Tracks"), SLOT(project_call_tracks_wnd()));
+  
   add_to_menu (menu_project, tr ("Project settings"), SLOT(project_props()));
   add_to_menu (menu_project, tr ("Project mixdown"), SLOT(project_mixdown()));
   
@@ -3364,6 +3366,16 @@ void CWavylon::project_call_wavs_wnd()
      return;
   
   project_manager->project->files_window_show();
+
+}
+
+
+void CWavylon::project_call_tracks_wnd()
+{
+  if (! project_manager->project)
+     return;
+  
+  project_manager->project->tracks_window_show();
 
 }
 

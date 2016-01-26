@@ -511,7 +511,10 @@ public:
   void tracks_window_create();
 
   void files_window_show();
-  
+  void tracks_window_show();
+
+  void lw_tracks_refresh();
+
 
   void track_add_strip_to_mixer_window (CTrack *t);
 

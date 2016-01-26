@@ -389,6 +389,8 @@ prefs window callbacks
 
   void view_use_theme();
 
+  void project_call_tracks_wnd();
+  
   void project_call_wavs_wnd();
   void project_props();
 

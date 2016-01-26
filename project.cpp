@@ -116,8 +116,7 @@ void rec_write_portion (SNDFILE *hfile, const void *input, size_t frameCount, in
     }
   
   //если пишем моно, что делать с каналами?
-  
-        
+       
    if (mono_recording_mode == 0)
       sf_writef_float (hfile, pinput[0], frameCount);
    else
@@ -542,13 +541,8 @@ void CWAVSource::load (const QString &path)
 
 void CProject::lw_wavs_refresh()
 {
-qDebug() << "CProject::lw_wavs_refresh() - 1";
-
   lw_wavs->clear();
   lw_wavs->addItems (read_dir_files (paths.wav_dir));
-
-qDebug() << "CProject::lw_wavs_refresh() - 2";
-  
 }
 
 
@@ -670,21 +664,12 @@ qDebug() << "CProject::bt_wavs_del_click()";
   if (! item)
      return;
 
-qDebug() << "1";
-
   QString fname = item->text(); 
   QString path = paths.wav_dir + "/" + fname;
 
-
-qDebug() << "2";
-
-  
   QFile f (path);
   f.remove();
   lw_wavs_refresh();
-  
-qDebug() << "3";
-
 
 //похерить объект в files!!!
 
@@ -750,14 +735,12 @@ void CProject::bt_wavclip_del_click()
 void CProject::files_window_show()
 {
   lw_wavs_refresh();
-  
 
   if (! wnd_files->isVisible())
      wnd_files->show();
   else
      wnd_files->close();
 }
-
 
 
 void CProject::files_window_create()
@@ -776,11 +759,6 @@ void CProject::files_window_create()
   lw_wavs = new QListWidget;
   v_wavs->addWidget (lw_wavs);
   
-  //lw_wavs_refresh();
-  
-  //lw_wavs->addItems (read_dir_files (paths.wav_dir));
- 
- 
   QHBoxLayout *h_wavs_buttons = new QHBoxLayout;
   v_wavs->addLayout (h_wavs_buttons);
   
@@ -981,7 +959,8 @@ CProject::~CProject()
  // delete table_scroll_area;
   
   delete mixer_window;
-
+  delete wnd_tracks;
+  
   delete master_track;
    
   delete wnd_files;
@@ -1288,6 +1267,9 @@ CTrack::~CTrack()
      
   delete mixer_strip;   
      
+  delete gb_track;   
+  //delete table_widget;
+     
 //  qDebug() << "CTrack::~CTrack()  -2";
    
 }
@@ -1453,6 +1435,7 @@ void CProject::create_widgets()
   
   
   files_window_create();
+  tracks_window_create();
   
   mixer_window = new CMixerWindow (this);
 }
@@ -2618,12 +2601,10 @@ void CProject::mixbuf_play()
       mixbuf_stream = 0;
      }
 
-
    for (int i = 0; i < tracks.size(); i++)
         {
          tracks[i]->fxrack.reset_all_fx (settings.samplerate, tracks[i]->channels);
         }
-    
 
    PaStreamParameters inputParameters;
 
@@ -3471,7 +3452,6 @@ void CWavTrack::call_properties_wnd()
 
 void CProject::tracks_window_create()
 {
-
   wnd_tracks = new QWidget;
   wnd_tracks->setWindowTitle (tr ("Tracks"));
 
@@ -3484,12 +3464,6 @@ void CProject::tracks_window_create()
  
   lw_tracks = new QListWidget;
   v_tracks->addWidget (lw_tracks);
-  
-  
-  
-  //lw_wavs_refresh();
-  
-  //lw_wavs->addItems (read_dir_files (paths.wav_dir));
  
  
   QHBoxLayout *h_tracks_buttons = new QHBoxLayout;
@@ -3519,11 +3493,38 @@ void CProject::tracks_window_create()
 
 void CProject::bt_tracks_new()
 {
-
+  track_insert_new();
 }
+
 
 void CProject::bt_tracks_delete()
 {
+  int index = lw_tracks->currentRow();
+  
+  QListWidgetItem *item = lw_tracks->takeItem (index);
+  delete item;
+
+  //t->mixer_strip
+  
+  CTrack *track = tracks[index];
+  
+  tracks.removeAt (index);
+
+  delete track;
+
+  
+  //обновить таблицу
+  
+  
+  
+  //обновить микшер
+
+/*
+ for (int i = 0; i < tracks.size(); i++)
+     { 
+      track_add_strip_to_mixer_window (tracks[i]);
+     } 
+*/
 
 }
 
@@ -3536,4 +3537,26 @@ void CProject::bt_tracks_up()
 void CProject::bt_tracks_down()
 {
 
+}
+
+
+
+void CProject::tracks_window_show()
+{
+  lw_tracks_refresh();
+
+  if (! wnd_tracks->isVisible())
+     wnd_tracks->show();
+  else
+     wnd_tracks->close();
+}
+
+
+void CProject::lw_tracks_refresh()
+{
+  lw_tracks->clear();
+  for (int i = 0; i < tracks.size(); i++)
+     { 
+      lw_tracks->addItem (tracks[i]->track_name);
+     } 
 }
