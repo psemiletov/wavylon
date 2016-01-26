@@ -1565,9 +1565,9 @@ void CProject::table_track_create (CTrack *t)
     
   qDebug() << "CProject::table_track_create: " << t->track_name; 
 
-  QGroupBox *gb_track = new QGroupBox (t->track_name);
+  t->gb_track = new QGroupBox (t->track_name);
   QVBoxLayout *v_track = new QVBoxLayout;
-  gb_track->setLayout (v_track);
+  t->gb_track->setLayout (v_track);
    
   CTrackTableWidget *table = new CTrackTableWidget;
   table->p_track = t;
@@ -1612,7 +1612,7 @@ void CProject::table_track_create (CTrack *t)
 
   v_track->addWidget (table);
   
-  table_widget_layout->addWidget (gb_track);
+  table_widget_layout->addWidget (t->gb_track);
   
   //QGraphicsProxyWidget *proxy = table_scene->addWidget (gb_track);
   //proxy->setPos (index * gb_track->width(), 1);
@@ -3461,8 +3461,9 @@ void CWavTrack::call_properties_wnd()
   
   
   //и таблицу обновить!
-  p_project->update_table();
+  //p_project->update_table();
   
+  gb_track->setTitle (track_name);
 }
 
 

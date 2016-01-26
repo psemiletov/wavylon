@@ -278,6 +278,7 @@ public:
   CProject *p_project;
   
   CMixerStrip *mixer_strip;
+  QGroupBox *gb_track;
  
   size_t channels;
   
