@@ -784,13 +784,13 @@ void CProject::files_window_create()
   QHBoxLayout *h_wavs_buttons = new QHBoxLayout;
   v_wavs->addLayout (h_wavs_buttons);
   
-  QPushButton *bt_wavs_add = new QPushButton ("+");
-  QPushButton *bt_wavs_play = new QPushButton (">");
+  QPushButton *bt_wavs_add = new QPushButton ("Import");
+  QPushButton *bt_wavs_play = new QPushButton("Play");
   
-  QPushButton *bt_wavs_edit = new QPushButton ("*");
-  QPushButton *bt_wavs_clip = new QPushButton ("^");
+  QPushButton *bt_wavs_edit = new QPushButton ("Edit");
+  QPushButton *bt_wavs_clip = new QPushButton ("To clip");
   
-  QPushButton *bt_wavs_del = new QPushButton ("-");
+  QPushButton *bt_wavs_del = new QPushButton ("Delete");
     
   connect (bt_wavs_add, SIGNAL(clicked()), this, SLOT(bt_wavs_add_click()));  
   connect (bt_wavs_play, SIGNAL(clicked()), this, SLOT(bt_wavs_play_click()));  
@@ -1622,13 +1622,16 @@ void CProject::table_track_create (CTrack *t)
 
 void CWaveClip::call_ui()
 {
+  if (! file)
+     return;
+
   QDialog dialog;
   
-   dialog.setWindowTitle (tr ("Clip properties"));
+  dialog.setWindowTitle (tr ("Clip properties"));
 
   
-   QVBoxLayout *v_box = new QVBoxLayout;
-   dialog.setLayout (v_box);
+  QVBoxLayout *v_box = new QVBoxLayout;
+  dialog.setLayout (v_box);
 
    QLabel *l_clipname = new QLabel (tr ("Clip name: ") + name);
    QLabel *l_type = new QLabel (tr ("Type: ") + type);
@@ -2161,12 +2164,13 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
            //ошибка в вычислении clip_insertion_pos???     
            //тут может быть вылет!!!  
         
-        if (clip->playback_rate == 1.0f)
+        if (clip->playback_rate == 1.0f && clip->file)
           {
            //memcpy (p_dest_buffer, p_source_buffer, clip_data_length * channels * sizeof (float));
            clip->file->fb->copy_to_pos (fbtrack, extoffs, clip_data_length, clip_insertion_pos);
           } 
         else 
+        if (clip->file)
             {
              qDebug() << "clip->playback_rate != 1.0f";
 
@@ -3449,10 +3453,86 @@ void CWavTrack::call_properties_wnd()
       {
        track_comment = pte_comments->toPlainText();
        track_name = ed_trackname->text();
-      
       }   
       
   dialog.close();   
 
   update_strip();
+  
+  
+  //и таблицу обновить!
+  p_project->update_table();
+  
+}
+
+
+
+
+void CProject::tracks_window_create()
+{
+
+  wnd_tracks = new QWidget;
+  wnd_tracks->setWindowTitle (tr ("Tracks"));
+
+  QHBoxLayout *h_main = new QHBoxLayout;
+  wnd_tracks->setLayout (h_main);
+  
+  QGroupBox *gb_tracks = new QGroupBox (tr ("Tracks"));
+  QVBoxLayout *v_tracks = new QVBoxLayout;
+  gb_tracks->setLayout (v_tracks);
+ 
+  lw_tracks = new QListWidget;
+  v_tracks->addWidget (lw_tracks);
+  
+  
+  
+  //lw_wavs_refresh();
+  
+  //lw_wavs->addItems (read_dir_files (paths.wav_dir));
+ 
+ 
+  QHBoxLayout *h_tracks_buttons = new QHBoxLayout;
+  v_tracks->addLayout (h_tracks_buttons);
+  
+  QPushButton *bt_tracks_new = new QPushButton ("New");
+  QPushButton *bt_tracks_delete = new QPushButton("Delete");
+  QPushButton *bt_tracks_up = new QPushButton ("Up");
+  QPushButton *bt_tracks_down = new QPushButton ("Down");
+  
+    
+  connect (bt_tracks_new, SIGNAL(clicked()), this, SLOT(bt_tracks_new()));  
+  connect (bt_tracks_delete, SIGNAL(clicked()), this, SLOT(bt_tracks_delete()));  
+  connect (bt_tracks_up, SIGNAL(clicked()), this, SLOT(bt_tracks_up()));  
+  connect (bt_tracks_down, SIGNAL(clicked()), this, SLOT(bt_tracks_down()));  
+    
+    
+  h_tracks_buttons->addWidget (bt_tracks_new);  
+  h_tracks_buttons->addWidget (bt_tracks_delete);  
+  h_tracks_buttons->addWidget (bt_tracks_up);  
+  h_tracks_buttons->addWidget (bt_tracks_down);  
+  
+    
+  h_main->addWidget (gb_tracks);
+}
+
+
+void CProject::bt_tracks_new()
+{
+
+}
+
+void CProject::bt_tracks_delete()
+{
+
+}
+
+void CProject::bt_tracks_up()
+{
+
+}
+
+
+void CProject::bt_tracks_down()
+{
+
 }

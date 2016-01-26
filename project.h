@@ -457,7 +457,12 @@ public:
   QListWidget *lw_wavclips;
   QListWidget *lw_wavs;
   
+  QListWidget *lw_tracks;
+  
   QTabWidget *tab_project_ui;
+  
+  QWidget *wnd_tracks;
+  
   
   QWidget *table_container; //container for tables
   QScrollArea *table_scroll_area;
@@ -502,8 +507,10 @@ public:
 
   void files_window_create();
 
-  void files_window_show();
+  void tracks_window_create();
 
+  void files_window_show();
+  
 
   void track_add_strip_to_mixer_window (CTrack *t);
 
@@ -526,6 +533,11 @@ public:
   
   
 public slots:
+
+  void bt_tracks_new();
+  void bt_tracks_delete();
+  void bt_tracks_up();
+  void bt_tracks_down();
 
   void bt_wavs_add_click();
   void bt_wavs_play_click();
