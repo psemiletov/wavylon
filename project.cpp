@@ -2895,17 +2895,19 @@ void CProject::mixdown_to_default()
   
   file_mixdown_handle = sf_open (tf.toUtf8().data(), SFM_WRITE, &sf);
 
-  while (cursor_frames < song_length_frames - buffer_size_frames)
-         {
-          if (mixbuf_render_next (RENDER_MODE_OFFLINE) == -1)
+  master_track->fb->allocate_interleaved();
+
+  while (cursor_frames < (song_length_frames - buffer_size_frames))
+        {
+         if (mixbuf_render_next (RENDER_MODE_OFFLINE) == -1)
              break;
          
-          master_track->fb->allocate_interleaved();
+//          master_track->fb->allocate_interleaved();
           master_track->fb->fill_interleaved();             
           sf_writef_float (file_mixdown_handle, (float *)master_track->fb->buffer_interleaved, buffer_size_frames);
+          memset (master_track->fb->buffer_interleaved, 0, master_track->fb->length_frames * channels * sizeof (float));
          }
- 
-   
+    
   slider_position->setValue (0); 
 
   sf_close  (file_mixdown_handle);
