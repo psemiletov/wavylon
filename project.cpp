@@ -2890,6 +2890,15 @@ void CProject::mixdown_to_default()
      }    
 
   slider_position->setValue (0); 
+    
+  tracks_window_inner_offset = 0;
+  tracks_window_start_frames = 0;   
+  
+  for (int i = 0; i < tracks.size(); i++)
+      {
+       tracks[i]->fxrack.reset_all_fx (settings.samplerate, tracks[i]->channels);
+      }
+
   
   QString tf = paths.output_dir + "/" + "out.wav";
   
