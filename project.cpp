@@ -2477,7 +2477,6 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
 
 
 
-
 int mixbuf_pa_stream_callback (const void *input, void *output, unsigned long frameCount, const PaStreamCallbackTimeInfo *timeInfo, PaStreamCallbackFlags statusFlags, void *userData)
 {
 //  qDebug() << "mixbuf_pa_stream_callback  -1";   
@@ -2588,6 +2587,15 @@ void CProject::mixbuf_record()
 }
 
 
+
+
+void fnPaStreamFinishedCallback (void *userData)
+{
+
+
+}
+
+
 void CProject::mixbuf_play()
 {
   qDebug() << "CProject::mixbuf_play()  -1";
@@ -2651,6 +2659,8 @@ void CProject::mixbuf_play()
       return;
      }
      
+
+  Pa_SetStreamFinishedCallback (mixbuf_stream, fnPaStreamFinishedCallback);
       
   err = Pa_StartStream (mixbuf_stream);
   qDebug() << Pa_GetErrorText (err);
