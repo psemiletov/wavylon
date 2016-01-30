@@ -308,6 +308,10 @@ public:
   //renders clips to buffer from pos 
   virtual size_t render_portion (size_t start_pos_, size_t window_length_frames) = 0;  
 
+  virtual void record_start() = 0;
+  virtual void record_iteration (const void *input, size_t frameCount) = 0;
+  virtual void record_stop() = 0;
+
   virtual void call_properties_wnd() = 0;
   void update_strip();
 
@@ -355,8 +359,17 @@ public:
   QString fname_rec_fullpath;
   SNDFILE *hrecfile;
   
+  CFloatBuffer *fb_recbuffer;
+  
   CWavTrack (CProject *prj, int nchannels);
+  ~CWavTrack();
+  
   size_t render_portion (size_t start_pos_frames, size_t window_length_frames);  
+  
+  void record_start();
+  void record_iteration (const void *input, size_t frameCount);
+  void record_stop();
+
   
   void call_properties_wnd();
 };

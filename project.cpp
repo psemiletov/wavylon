@@ -73,7 +73,7 @@ size_t buffer_size_frames;
 size_t buffer_size_frames_multiplier;
 
 
-CFloatBuffer *fb_stereo_rec;
+//CFloatBuffer *fb_stereo_rec;
 
 bool comp_clips (CClip *c1, CClip *c2)
 {
@@ -94,34 +94,6 @@ size_t timestring_to_frames (const QString &val)
  
   return msecs_to_frames (mseconds_total, global_samplerate);
 }
-
-
-void rec_write_portion (SNDFILE *hfile, const void *input, size_t frameCount, int channels)
-{
- // qDebug() << "rec_write_portion";
-
-  float **pinput = (float **)input;
-
-  if (channels == 2)
-    {
-     fb_stereo_rec->settozero();
-     
-     memcpy (fb_stereo_rec->buffer[0], pinput[0], frameCount * sizeof (float));
-     memcpy (fb_stereo_rec->buffer[1], pinput[1], frameCount * sizeof (float));
-     
-     fb_stereo_rec->fill_interleaved();
-     
-     sf_writef_float (hfile, (float *)fb_stereo_rec->buffer_interleaved, frameCount);
-     return; 	
-    }
-  
-  //если пишем моно, что делать с каналами?
-       
-   if (mono_recording_mode == 0)
-      sf_writef_float (hfile, pinput[0], frameCount);
-   else
-       sf_writef_float (hfile, pinput[1], frameCount);
-} 
 
 
 void CProject::project_new (const QString &fname)
@@ -181,7 +153,7 @@ CProjectManager::CProjectManager()
 
   wav_player = new CWAVPlayer;
 
-  fb_stereo_rec = new CFloatBuffer (buffer_size_frames, 1);
+ // fb_stereo_rec = 0;
 
 }
 
@@ -194,7 +166,7 @@ CProjectManager::~CProjectManager()
   delete tio_handler;   
   delete wav_player; 
   
-  delete fb_stereo_rec;
+ // delete fb_stereo_rec;
 }
 
 
@@ -1248,6 +1220,7 @@ CWavTrack::CWavTrack (CProject *prj, int nchannels): CTrack (prj, nchannels)
 {
   track_type = "wav";
   hrecfile = 0;
+  fb_recbuffer = 0;
 }
 
 
@@ -1264,6 +1237,7 @@ CTrack::~CTrack()
   
   delete fbtrack;   
       
+     
      
   delete mixer_strip;   
      
@@ -1346,7 +1320,7 @@ void CProject::bt_transport_forward_click()
  
 void CProject::bt_transport_record_click()
 {
-  fb_stereo_rec->allocate_interleaved();
+  //fb_stereo_rec->allocate_interleaved();
     
 
   mixbuf_record();
@@ -2410,7 +2384,8 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
            {
             CWavTrack *p_track = (CWavTrack *)tracks[i];
             if (p_track->arm)
-               rec_write_portion (p_track->hrecfile, inpbuf, buffer_size_frames, p_track->channels);
+               //rec_write_portion (p_track->hrecfile, inpbuf, buffer_size_frames, p_track->channels);
+               p_track->record_iteration (inpbuf, buffer_size_frames);
            }     
       } 
 
@@ -2525,6 +2500,10 @@ void CProject::mixbuf_record()
 {
   recording = true;
 
+  //if (fb_stereo_rec)
+    // delete fb_stereo_rec;
+  
+
   //найти, на какую дорожку пишем
   //открываем файл дорожки на запись
   
@@ -2552,33 +2531,10 @@ void CProject::mixbuf_record()
        CWavTrack *p_track = (CWavTrack*) tracks[i];
        if (p_track->arm)
           {
+           p_track->record_start();
+          
            p_track->record_insertion_pos_frames = cursor_frames;
            
-           int sndfile_format = 0;
-           sndfile_format |= SF_FORMAT_WAV | SF_FORMAT_FLOAT;
-
-           SF_INFO sf;
-
-           sf.samplerate = settings.samplerate;
-           sf.channels = p_track->channels;
-                      
-           sf.format = sndfile_format;
-   
-           if (! sf_format_check (&sf))
-               {
-                qDebug() << "! sf_format_check (&sf)";
-                recording = false;
-                return;  
-               }    
-  
-            QDateTime dt = QDateTime::currentDateTime();
-            QString sdt = dt.toString ("yyyy-MM-dd@hh:mm:ss:zzz");
-            sdt = sdt.replace ("@", "-");
-            sdt = sdt.replace (":", "-");
-    
-            p_track->fname_rec_fullpath = paths.wav_dir + "/" + p_track->track_name + "-" + sdt + ".wav";
-          
-            p_track->hrecfile = sf_open (p_track->fname_rec_fullpath.toUtf8().data(), SFM_WRITE, &sf);
           }
       }
   
@@ -2699,28 +2655,7 @@ void CProject::mixbuf_stop()
            CWavTrack *p_track = (CWavTrack*) tracks[i];
            if (p_track->arm)
               {
-               sf_close (p_track->hrecfile);
-                          
-               QFileInfo fi (p_track->fname_rec_fullpath);
-               QString fname = fi.fileName();
-               
-               files.load_file (paths.wav_dir, fname);        
-               
-               CWaveClip *clip = new CWaveClip (p_track);
-               clip->filename = fname;
-               clip->file = files.wavs[clip->filename];
-               
-               clip->position_frames = p_track->record_insertion_pos_frames;
-               clip->offset_frames = 0;
-               clip->length_frames = clip->file->fb->length_frames;
-               
-               clip->name = fname;
-               
-               p_track->clips.append (clip);
-                              
-               CTrackTableWidget *w = (CTrackTableWidget*)p_track->table_widget;
-               w->update_track_table (true);
-    
+               p_track->record_stop();
                refresh_song_length();
               }
           }          
@@ -3581,3 +3516,108 @@ void CProject::lw_tracks_refresh()
       lw_tracks->addItem (tracks[i]->track_name);
      } 
 }
+
+
+void CWavTrack::record_start()
+{
+  int sndfile_format = 0;
+  sndfile_format |= SF_FORMAT_WAV | SF_FORMAT_FLOAT;
+
+  SF_INFO sf;
+
+  sf.samplerate = p_project->settings.samplerate;
+  sf.channels = channels;
+  sf.format = sndfile_format;
+   
+  if (! sf_format_check (&sf))
+     {
+      qDebug() << "! sf_format_check (&sf)";
+      //recording = false;
+      return;  
+     }    
+  
+  //allocate recbuf
+  if (fb_recbuffer)
+     delete fb_recbuffer;
+     
+  fb_recbuffer = new CFloatBuffer (buffer_size_frames_multiplier, 2);   
+  fb_recbuffer->allocate_interleaved();
+
+  QDateTime dt = QDateTime::currentDateTime();
+  QString sdt = dt.toString ("yyyy-MM-dd@hh:mm:ss:zzz");
+  sdt = sdt.replace ("@", "-");
+  sdt = sdt.replace (":", "-");
+    
+  fname_rec_fullpath = p_project->paths.wav_dir + "/" + track_name + "-" + sdt + ".wav";
+  hrecfile = sf_open (fname_rec_fullpath.toUtf8().data(), SFM_WRITE, &sf);
+}
+
+ 
+void CWavTrack::record_iteration (const void *input, size_t frameCount)
+{
+
+//ВСё ПЕРЕПИСАТЬ ПОД fb_recbuffer
+
+  float **pinput = (float **)input;
+
+  if (fb_recbuffer->offset >= fb_recbuffer->length_frames)
+     {
+      fb_recbuffer->offset = 0;
+      
+      if (channels == 1)
+         {
+          if (mono_recording_mode == 0)
+            sf_writef_float (hrecfile, pinput[0], frameCount);
+          else
+              sf_writef_float (hrecfile, pinput[1], frameCount);
+
+          fb_recbuffer->settozero();
+         }
+       else
+           {
+            fb_recbuffer->fill_interleaved();
+            sf_writef_float (hrecfile, (float *)fb_recbuffer->buffer_interleaved, buffer_size_frames_multiplier);
+            fb_recbuffer->settozero();
+           }  
+     }
+
+  memcpy (fb_recbuffer->buffer[0] + fb_recbuffer->offset, pinput[0], frameCount * sizeof (float));
+  
+  if (channels == 2)
+      memcpy (fb_recbuffer->buffer[1] + fb_recbuffer->offset, pinput[1], frameCount * sizeof (float));
+
+  fb_recbuffer->offset += frameCount;
+}
+
+
+void CWavTrack::record_stop()
+{
+  sf_close (hrecfile);
+                          
+  QFileInfo fi (fname_rec_fullpath);
+  QString fname = fi.fileName();
+               
+  p_project->files.load_file (p_project->paths.wav_dir, fname);        
+               
+  CWaveClip *clip = new CWaveClip (this);
+  clip->filename = fname;
+  clip->file = p_project->files.wavs[clip->filename];
+               
+  clip->position_frames = record_insertion_pos_frames;
+  clip->offset_frames = 0;
+  clip->length_frames = clip->file->fb->length_frames;
+               
+  clip->name = fname;
+  clips.append (clip);
+                              
+  CTrackTableWidget *w = (CTrackTableWidget*)table_widget;
+  w->update_track_table (true);
+}
+
+
+CWavTrack::~CWavTrack()
+{
+  if (fb_recbuffer)
+     delete fb_recbuffer;
+}
+  
