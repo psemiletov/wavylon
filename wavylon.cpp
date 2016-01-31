@@ -1786,8 +1786,6 @@ void CWavylon::createOptions()
            this, SLOT(cmb_sound_dev_out_currentIndexChanged (int)));
 
 
- 
-
   QHBoxLayout *hb_mono_recording_mode = new QHBoxLayout;
 
   QLabel *l_mono_recording_mode = new QLabel (tr ("Mono recording mode"));

@@ -2384,12 +2384,12 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
            {
             CWavTrack *p_track = (CWavTrack *)tracks[i];
             if (p_track->arm)
-               //rec_write_portion (p_track->hrecfile, inpbuf, buffer_size_frames, p_track->channels);
                p_track->record_iteration (inpbuf, buffer_size_frames);
            }     
       } 
 
    
+  qDebug() << "x1";
 
   //MASTER TRACK
 
@@ -2435,6 +2435,7 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
       master_track->mixer_strip->rms_meter->pl = srms_l;
       master_track->mixer_strip->rms_meter->pr = srms_r;
 
+qDebug() << "x2";
 
 
   //and go to next iteration
@@ -2447,6 +2448,9 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
 
   //qDebug() << "CProject::mixbuf_render_next() - 2";
 
+qDebug() << "x3";
+
+
   return tracks_window_inner_offset;
 }
 
@@ -2454,16 +2458,13 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
 
 int mixbuf_pa_stream_callback (const void *input, void *output, unsigned long frameCount, const PaStreamCallbackTimeInfo *timeInfo, PaStreamCallbackFlags statusFlags, void *userData)
 {
-//  qDebug() << "mixbuf_pa_stream_callback  -1";   
+  //qDebug() << "mixbuf_pa_stream_callback  -1";   
      
   CProject *p_project = (CProject*) userData;
 
   float** pchannels = (float **)output;
 
   int r = p_project->mixbuf_render_next (0, input);
-  
- // qDebug() << "p_project->cursor_frames: " << p_project->cursor_frames;
-//  qDebug() << "p_project->song_length_frames: " << p_project->song_length_frames;
  
   if (r == -1)
      {
@@ -2477,10 +2478,6 @@ int mixbuf_pa_stream_callback (const void *input, void *output, unsigned long fr
       qDebug() << "!!!!!!!!!!!!!!!!!!! END OF SONG !!!!!!!!!!!!!!!!!!!!!";
       return paComplete;
      } 
-  
-  //buffer_size_frames == frameCount?
-  
-//  memcpy (output, p_project->master_track->buffer, buffer_size_frames * 2 * sizeof (float));
 
   memcpy (pchannels[0], p_project->master_track->fb->buffer[0], 
           frameCount * sizeof (float));
@@ -2490,7 +2487,7 @@ int mixbuf_pa_stream_callback (const void *input, void *output, unsigned long fr
 
 
 
-  //qDebug() << "mixbuf_pa_stream_callback  -2";   
+ // qDebug() << "mixbuf_pa_stream_callback  -2";   
     
   return paContinue; 	
 }
@@ -3517,9 +3514,12 @@ void CProject::lw_tracks_refresh()
      } 
 }
 
+#define REC_BUFFER_MULTILPLIER 24
 
 void CWavTrack::record_start()
 {
+  qDebug() << "CWavTrack::record_start() - 1";
+
   int sndfile_format = 0;
   sndfile_format |= SF_FORMAT_WAV | SF_FORMAT_FLOAT;
 
@@ -3540,7 +3540,8 @@ void CWavTrack::record_start()
   if (fb_recbuffer)
      delete fb_recbuffer;
      
-  fb_recbuffer = new CFloatBuffer (buffer_size_frames_multiplier, 2);   
+  fb_recbuffer = new CFloatBuffer (buffer_size_frames * REC_BUFFER_MULTILPLIER, 2);   
+  
   fb_recbuffer->allocate_interleaved();
 
   QDateTime dt = QDateTime::currentDateTime();
@@ -3550,15 +3551,16 @@ void CWavTrack::record_start()
     
   fname_rec_fullpath = p_project->paths.wav_dir + "/" + track_name + "-" + sdt + ".wav";
   hrecfile = sf_open (fname_rec_fullpath.toUtf8().data(), SFM_WRITE, &sf);
+  
+  qDebug() << "CWavTrack::record_start() - 2";
+
 }
 
  
 void CWavTrack::record_iteration (const void *input, size_t frameCount)
 {
-
-//ВСё ПЕРЕПИСАТЬ ПОД fb_recbuffer
-
   float **pinput = (float **)input;
+
 
   if (fb_recbuffer->offset >= fb_recbuffer->length_frames)
      {
@@ -3567,26 +3569,34 @@ void CWavTrack::record_iteration (const void *input, size_t frameCount)
       if (channels == 1)
          {
           if (mono_recording_mode == 0)
-            sf_writef_float (hrecfile, pinput[0], frameCount);
-          else
-              sf_writef_float (hrecfile, pinput[1], frameCount);
-
-          fb_recbuffer->settozero();
+             sf_writef_float (hrecfile, fb_recbuffer->buffer[0], REC_BUFFER_MULTILPLIER * buffer_size_frames);
          }
        else
            {
             fb_recbuffer->fill_interleaved();
-            sf_writef_float (hrecfile, (float *)fb_recbuffer->buffer_interleaved, buffer_size_frames_multiplier);
-            fb_recbuffer->settozero();
-           }  
+            sf_writef_float (hrecfile, (float *)fb_recbuffer->buffer_interleaved, REC_BUFFER_MULTILPLIER * buffer_size_frames);
+           }
+       
+      fb_recbuffer->settozero();
      }
 
-  memcpy (fb_recbuffer->buffer[0] + fb_recbuffer->offset, pinput[0], frameCount * sizeof (float));
-  
   if (channels == 2)
+     {
+      memcpy (fb_recbuffer->buffer[0] + fb_recbuffer->offset, pinput[0], frameCount * sizeof (float));
       memcpy (fb_recbuffer->buffer[1] + fb_recbuffer->offset, pinput[1], frameCount * sizeof (float));
-
+     }
+  else  
+  if (channels == 1)
+     {
+      if (mono_recording_mode == 0)
+          memcpy (fb_recbuffer->buffer[0] + fb_recbuffer->offset, pinput[0], frameCount * sizeof (float));
+      else   
+          memcpy (fb_recbuffer->buffer[0] + fb_recbuffer->offset, pinput[1], frameCount * sizeof (float));
+     }
+  
   fb_recbuffer->offset += frameCount;
+//  qDebug() << "fb_recbuffer->offset:" << fb_recbuffer->offset;
+  
 }
 
 
