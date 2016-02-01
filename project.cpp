@@ -3551,30 +3551,22 @@ void CWavTrack::record_iteration (const void *input, size_t frameCount)
 {
   float **pinput = (float **)input;
 
-
-  if (fb_recbuffer->offset >= fb_recbuffer->length_frames)
+  if (fb_recbuffer->offset >= fb_recbuffer->length_frames) //SAVE BUFFER TO DISK
      {
-      qDebug() << "fb_recbuffer->offset: " << fb_recbuffer->offset;
-     
       fb_recbuffer->offset = 0;
       
       if (channels == 1)
-         {
-          qDebug() << "save mono: " << REC_BUFFER_MULTILPLIER * buffer_size_frames;
-         
-          if (mono_recording_mode == 0)
-             sf_writef_float (hrecfile, fb_recbuffer->buffer[0], REC_BUFFER_MULTILPLIER * buffer_size_frames);
-         }
-       else
-           {
-            qDebug() << "save stereo: " << REC_BUFFER_MULTILPLIER * buffer_size_frames;
-
-            fb_recbuffer->fill_interleaved();
-            sf_writef_float (hrecfile, (float *)fb_recbuffer->buffer_interleaved, REC_BUFFER_MULTILPLIER * buffer_size_frames);
-           }
+          sf_writef_float (hrecfile, fb_recbuffer->buffer[0], REC_BUFFER_MULTILPLIER * buffer_size_frames);
+      else          
+          {
+           fb_recbuffer->fill_interleaved();
+           sf_writef_float (hrecfile, (float *)fb_recbuffer->buffer_interleaved, REC_BUFFER_MULTILPLIER * buffer_size_frames);
+          }
        
       fb_recbuffer->settozero();
      }
+
+ //COPY TO BUFFER
 
   if (channels == 2)
      {
@@ -3591,8 +3583,7 @@ void CWavTrack::record_iteration (const void *input, size_t frameCount)
      }
   
   fb_recbuffer->offset += frameCount;
-//  qDebug() << "fb_recbuffer->offset:" << fb_recbuffer->offset;
-  
+  //qDebug() << "fb_recbuffer->offset:" << fb_recbuffer->offset;
 }
 
 
