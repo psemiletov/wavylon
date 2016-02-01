@@ -2389,7 +2389,6 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
       } 
 
    
-  qDebug() << "x1";
 
   //MASTER TRACK
 
@@ -2435,8 +2434,6 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
       master_track->mixer_strip->rms_meter->pl = srms_l;
       master_track->mixer_strip->rms_meter->pr = srms_r;
 
-qDebug() << "x2";
-
 
   //and go to next iteration
 
@@ -2447,8 +2444,6 @@ qDebug() << "x2";
      tracks_window_inner_offset = 0;
 
   //qDebug() << "CProject::mixbuf_render_next() - 2";
-
-qDebug() << "x3";
 
 
   return tracks_window_inner_offset;
@@ -3514,12 +3509,10 @@ void CProject::lw_tracks_refresh()
      } 
 }
 
-#define REC_BUFFER_MULTILPLIER 24
+#define REC_BUFFER_MULTILPLIER 48
 
 void CWavTrack::record_start()
 {
-  qDebug() << "CWavTrack::record_start() - 1";
-
   int sndfile_format = 0;
   sndfile_format |= SF_FORMAT_WAV | SF_FORMAT_FLOAT;
 
@@ -3551,9 +3544,6 @@ void CWavTrack::record_start()
     
   fname_rec_fullpath = p_project->paths.wav_dir + "/" + track_name + "-" + sdt + ".wav";
   hrecfile = sf_open (fname_rec_fullpath.toUtf8().data(), SFM_WRITE, &sf);
-  
-  qDebug() << "CWavTrack::record_start() - 2";
-
 }
 
  
@@ -3564,15 +3554,21 @@ void CWavTrack::record_iteration (const void *input, size_t frameCount)
 
   if (fb_recbuffer->offset >= fb_recbuffer->length_frames)
      {
+      qDebug() << "fb_recbuffer->offset: " << fb_recbuffer->offset;
+     
       fb_recbuffer->offset = 0;
       
       if (channels == 1)
          {
+          qDebug() << "save mono: " << REC_BUFFER_MULTILPLIER * buffer_size_frames;
+         
           if (mono_recording_mode == 0)
              sf_writef_float (hrecfile, fb_recbuffer->buffer[0], REC_BUFFER_MULTILPLIER * buffer_size_frames);
          }
        else
            {
+            qDebug() << "save stereo: " << REC_BUFFER_MULTILPLIER * buffer_size_frames;
+
             fb_recbuffer->fill_interleaved();
             sf_writef_float (hrecfile, (float *)fb_recbuffer->buffer_interleaved, REC_BUFFER_MULTILPLIER * buffer_size_frames);
            }
@@ -3602,6 +3598,18 @@ void CWavTrack::record_iteration (const void *input, size_t frameCount)
 
 void CWavTrack::record_stop()
 {
+  if (channels == 1)
+     {
+      if (mono_recording_mode == 0)
+         sf_writef_float (hrecfile, fb_recbuffer->buffer[0], fb_recbuffer->offset);
+     }
+  else
+      {
+       fb_recbuffer->fill_interleaved();
+       sf_writef_float (hrecfile, (float *)fb_recbuffer->buffer_interleaved, fb_recbuffer->offset);
+      }
+ 
+
   sf_close (hrecfile);
                           
   QFileInfo fi (fname_rec_fullpath);
