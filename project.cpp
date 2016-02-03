@@ -1990,6 +1990,8 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
 
                    clip_insertion_pos = 0; //по границе начала окна
                    clip_data_start = start_pos_frames - clip_start;
+                   
+                   qDebug() << "clip_data_start: " << clip_data_start;
             
                    if (clip_end >= end_pos_frames)
                        clip_data_length = window_length_frames;
