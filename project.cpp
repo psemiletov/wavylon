@@ -928,8 +928,6 @@ CProject::~CProject()
  
   delete table_container;
   
- // delete table_scroll_area;
-  
   delete mixer_window;
   delete wnd_tracks;
   
@@ -1936,7 +1934,7 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
        if (clip->muted)
           continue;
       
-       qDebug() << "***** clip: " << clip->name << " **** " << clip->length_frames;
+       //qDebug() << "***** clip: " << clip->name << " **** " << clip->length_frames;
        
       // qDebug() << "clip: " << clip->name;
        //qDebug() << "clip len: " << clip->length_frames;
@@ -1977,11 +1975,11 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
         
        if (clip_in_window == 1)
           {
-           qDebug() << clip->name << " clip_in_window == 1";
+         //  qDebug() << clip->name << " clip_in_window == 1";
            
            if (start_pos_frames <= clip_start)
              {
-              qDebug() << "x1";
+           //   qDebug() << "x1";
               clip_insertion_pos = clip_start - start_pos_frames;
               clip_data_start = 0;
               clip_data_length = end_pos_frames - clip_start;
@@ -1989,20 +1987,20 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
            else   
                if (start_pos_frames > clip_start)
                   {
-                   qDebug() << "x2";
+                   //qDebug() << "x2";
 
                    clip_insertion_pos = 0; //по границе начала окна
                    clip_data_start = start_pos_frames - clip_start;
                    
-                   qDebug() << "clip_data_start: " << clip_data_start;
-                   qDebug() << "clip_end: " << clip_end;
-                   qDebug() << "end_pos_frames: " << end_pos_frames;
+                   //qDebug() << "clip_data_start: " << clip_data_start;
+                   //qDebug() << "clip_end: " << clip_end;
+                   //qDebug() << "end_pos_frames: " << end_pos_frames;
             
                    if (clip_end >= end_pos_frames)
                        clip_data_length = window_length_frames;
                    else
                       {
-                      qDebug() << "x3";   
+                      //qDebug() << "x3";   
                       // clip_data_length = end_pos_frames - clip_start;
                         clip_data_length = clip_end - start_pos_frames;
                       
@@ -2041,14 +2039,13 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
                    }
             }
           
-        //ошибка с clip_data_length, может быть больше, чем действительно есть  
+        //ошибка с clip_data_length, может быть больше, чем действительно есть?  
           
       //  qDebug() << "clip_data_start: " << clip_data_start;
 //        qDebug() << "clip_data_length: " << clip_data_length;
   //      qDebug() << "clip_insertion_pos: " << clip_insertion_pos;
         
-        //CFloatBuffer *p_source_fb = clip->file->fb;
- 
+      
         size_t extoffs = (clip->offset_frames + clip_data_start) * clip->playback_rate;
        
            //ошибка в вычислении clip_insertion_pos???     
@@ -2152,24 +2149,6 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
        if (has_solo && ! p_track->solo)
           continue;
 
-  
-       //fb_trackbuf->settozero();
-    
-        
-       /*
-       
-       копируем часть буфера дорожки в промежуточный trackbuffer
-         
-       */   
-/*
-       if (p_track->channels == 1)        
-           {
-            p_track->fbtrack->copy_channel_to_pos (fb_trackbuf, 0, 0, tracks_window_inner_offset, buffer_size_frames, 0);
-            p_track->fbtrack->copy_channel_to_pos (fb_trackbuf, 0, 1, tracks_window_inner_offset, buffer_size_frames, 0);
-           }
-        else //stereo    
-            p_track->fbtrack->copy_to_pos (fb_trackbuf, tracks_window_inner_offset, buffer_size_frames, 0);
-  */   
        /*
         if monitoring, mix with input:
        */
@@ -2190,10 +2169,6 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
            }
      
            
-            /*
-             put INSERTS, SENDS HERE
-            */
-
 
 //INSERTS
    
@@ -2276,10 +2251,10 @@ int CProject::mixbuf_render_next (int rendering_mode, const void *inpbuf)
                  
                    master_track->fb->buffer[1][frame] += r;
     
-                  if (float_less_than (maxr, r))
-                    maxr = r;
+                   if (float_less_than (maxr, r))
+                     maxr = r;
 
-                  sqr_sum_r += r * r;
+                   sqr_sum_r += r * r;
                   }
                   
                     
@@ -2615,10 +2590,15 @@ CMixerWindow::CMixerWindow (CProject *ptr)
   h_channel_strips_container = new QHBoxLayout;
   channel_strips_container->setLayout (h_channel_strips_container);
   
+  //h_channel_strips_container->setSizeConstraint (QLayout::SetFixedSize);
+
+  
   channel_strips_scroll = new QScrollArea;
+  channel_strips_scroll->setWidgetResizable (true);
   channel_strips_scroll->setWidget (channel_strips_container);
   
-  h_main->addWidget (channel_strips_container);
+  //h_main->addWidget (channel_strips_container);
+  h_main->addWidget (channel_strips_scroll);
   h_main->addWidget (p_project->master_track->mixer_strip);
 
 }
@@ -3031,6 +3011,8 @@ CMixerStrip::CMixerStrip (CTrack *ptrk, QWidget *parent): QGroupBox (parent)
   v_main->addWidget (gb_pan);
      
   v_main->addWidget (gb_meter);
+  
+  setSizePolicy (QSizePolicy::Fixed, QSizePolicy::Fixed);
 }
 
 
@@ -3103,7 +3085,6 @@ void CMixerMasterStrip::dsb_vol_l_valueChanged (double d)
       }
       
 }
-
 
 
 void CMixerMasterStrip::dsb_vol_r_valueChanged (double d)
