@@ -1913,9 +1913,10 @@ void CProject::track_swap (int track_number1, int track_number2)
 }  
 
 
+//start_pos_frames - начало окна на дорожке
 size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_frames)
 {
-  size_t end_pos_frames = start_pos_frames + window_length_frames;
+  size_t end_pos_frames = start_pos_frames + window_length_frames; //конец окна на дорожке
 
   int clips_count = clips.size();
  
@@ -1934,14 +1935,16 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
 
        if (clip->muted)
           continue;
+      
+       qDebug() << "***** clip: " << clip->name << " **** " << clip->length_frames;
        
       // qDebug() << "clip: " << clip->name;
        //qDebug() << "clip len: " << clip->length_frames;
        
        //check is clip in range?
        
-       size_t clip_start = clip->position_frames;
-       size_t clip_end = clip_start + clip->length_frames;
+       size_t clip_start = clip->position_frames; //начало клипа на дорожке, положение
+       size_t clip_end = clip_start + clip->length_frames;//конец клипа на дорожке, положение
        
        int clip_in_window = 0; //0 - not, 1 - window len <= clip, 2 - window len => clip
        
@@ -1992,11 +1995,22 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
                    clip_data_start = start_pos_frames - clip_start;
                    
                    qDebug() << "clip_data_start: " << clip_data_start;
+                   qDebug() << "clip_end: " << clip_end;
+                   qDebug() << "end_pos_frames: " << end_pos_frames;
             
                    if (clip_end >= end_pos_frames)
                        clip_data_length = window_length_frames;
-                   else   
-                       clip_data_length = end_pos_frames - clip_start;
+                   else
+                      {
+                      qDebug() << "x3";   
+                      // clip_data_length = end_pos_frames - clip_start;
+                        clip_data_length = clip_end - start_pos_frames;
+                      
+                       
+                      } 
+                       
+                   qDebug() << "!!! clip_data_length: " << clip_data_length;
+                
                  }
            }
         
