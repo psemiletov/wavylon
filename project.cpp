@@ -1913,87 +1913,6 @@ void CProject::track_swap (int track_number1, int track_number2)
 }  
 
 
-/*
-void CProject::mixbuf_one()
-{
-  qDebug() << "CProject::mixbuf_one()";
-  
-  qDebug() << "mixbuf_window_start_frames: " << mixbuf_window_start_frames_one << " mixbuf_window_length_frames: " << mixbuf_window_length_frames_one;
-  qDebug() << "mixbuf_window_start time: " << frames_to_time_str (mixbuf_window_start_frames_one, global_samplerate) <<
-              "mixbuf_window_length time: " << frames_to_time_str (mixbuf_window_length_frames_one, global_samplerate);
-
-  size_t dest_buffer_len = mixbuf_window_length_frames_one * 2; //stereo
-  
-  memset (temp_mixbuf_one, 0, dest_buffer_len * sizeof (float));
-   
-  //size_t mixbuf_window_end_frames = mixbuf_window_start_frames + mixbuf_window_length_frames;
- 
-  for (int i = 0; i < tracks.size(); i++)
-      {
-       qDebug() << "============track name: " << tracks[i]->track_name;
-       
-       CTrack *p_track = tracks[i];
-       
-       p_track->render_portion (mixbuf_window_start_frames_one, mixbuf_window_length_frames_one);  
-
-       size_t sample_source = 0;
-       size_t sample_dest = 0;
-       
-       float *p_track_buffer = p_track->buffer; 
-  
-       //size_t source_buffer_len = mixbuf_window_length_frames_one * p_track->channels;
-       size_t dest_buffer_len = mixbuf_window_length_frames_one * 2;
-
-       while (sample_dest < dest_buffer_len)
-             {
-              float tl = 0.0f;
-              float tr = 0.0f;
-             
-              if (p_track->channels == 2)        
-                 {
-                  tl = p_track_buffer[sample_source++];
-                  tr = p_track_buffer[sample_source++];
-                 }
-              else   
-              if (p_track->channels == 1)        
-                 { 
-                  tl = p_track_buffer[sample_source];
-                  tr = p_track_buffer[sample_source++];
-                 }
-             
-              temp_mixbuf_one[sample_dest++] += tl;
-              temp_mixbuf_one[sample_dest++] += tr;
-            }
-     }
-
-
-     wav_player->link (temp_mixbuf_one, mixbuf_window_length_frames_one, 2, global_samplerate);
-     wav_player->play();
-
-  
-  
-   // tracks[1]->render_portion (mixbuf_window_start_frames, mixbuf_window_length_frames);  
-
-   //  wav_player->link (tracks[1]->buffer, mixbuf_window_length_frames, 2, global_samplerate);
-   
-   //wav_player->play();
-  
-  
-  //  tracks[1]->render_portion (mixbuf_window_start_frames, mixbuf_window_length_frames);  
-
-    // wav_player->link (tracks[1]->buffer, mixbuf_window_length_frames, 2, global_samplerate);
-   
-   //wav_player->play();
-   
-   //for (size_t i = 0; i < mixbuf_window_length_frames * 2; i++)
-    //   qDebug() << temp_mixbuf[i];
-   
-} 
-
-*/
-
-
-
 size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_frames)
 {
   size_t end_pos_frames = start_pos_frames + window_length_frames;
@@ -2001,9 +1920,6 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
   int clips_count = clips.size();
  
   fbtrack->settozero(); 
-
-  //if (mute)
-    // return end_pos_frames;
 
 /*
 
@@ -2018,6 +1934,9 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
 
        if (clip->muted)
           continue;
+       
+      // qDebug() << "clip: " << clip->name;
+       //qDebug() << "clip len: " << clip->length_frames;
        
        //check is clip in range?
        
@@ -2039,10 +1958,11 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
                clip_in_window = 1;    
             }  
        
+     //  qDebug() << clip_in_window;
       
        if (clip_in_window == 0)
           continue;
-          
+                
 //       qDebug() << "clip: " << clip->name << " is in window";  
         
        //теперь вычислить отрезок клипа, входящий в окно
@@ -2051,13 +1971,14 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
        size_t clip_data_start = 0;  //где в клипе начало попадающего в окно отрезка? относительно начала клипа
        size_t clip_insertion_pos = 0; //куда вставлять в буфер дорожки?
        size_t clip_data_length = 0;
-
         
        if (clip_in_window == 1)
           {
-  //         qDebug() << "clip_in_window == 1";
+           qDebug() << clip->name << " clip_in_window == 1";
+           
            if (start_pos_frames <= clip_start)
              {
+              qDebug() << "x1";
               clip_insertion_pos = clip_start - start_pos_frames;
               clip_data_start = 0;
               clip_data_length = end_pos_frames - clip_start;
@@ -2065,6 +1986,8 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
            else   
                if (start_pos_frames > clip_start)
                   {
+                   qDebug() << "x2";
+
                    clip_insertion_pos = 0; //по границе начала окна
                    clip_data_start = start_pos_frames - clip_start;
             
@@ -2112,28 +2035,20 @@ size_t CWavTrack::render_portion (size_t start_pos_frames, size_t window_length_
  
         size_t extoffs = (clip->offset_frames + clip_data_start) * clip->playback_rate;
        
-       // p_source_buffer += extoffs;
-
-        //float *p_dest_buffer = buffer;
-        
-        //p_dest_buffer += (clip_insertion_pos * channels);
-
            //ошибка в вычислении clip_insertion_pos???     
            //тут может быть вылет!!!  
         
         if (clip->playback_rate == 1.0f && clip->file)
           {
-           //memcpy (p_dest_buffer, p_source_buffer, clip_data_length * channels * sizeof (float));
            clip->file->fb->copy_to_pos (fbtrack, extoffs, clip_data_length, clip_insertion_pos);
           } 
         else 
         if (clip->file)
             {
              qDebug() << "clip->playback_rate != 1.0f";
-
             
              clip->file->fb->copy_to_pos_with_rate (fbtrack, extoffs, 
-                             clip_data_length, clip_insertion_pos, clip->playback_rate);
+                              clip_data_length, clip_insertion_pos, clip->playback_rate);
             
              qDebug() << "clip->playback_rate != 1.0f";
             }   
