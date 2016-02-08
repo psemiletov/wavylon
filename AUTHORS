@@ -1,15 +1,11 @@
 Code and design:
+Jazz,
 Peter 'Roxton' Semiletov <tea@list.ru, http://semiletov.org>
-
-3 Band EQ - (c) Neil C / Etanza Systems / 
-db.h -  Copyright (C) 2003,2005 Steve Harris, Nicholas Humfrey
-noise generator: Dominic Mazzoni (from Audacity code)
 
  
 ##
 Translators:
 
-Czech UI translation: Pavel Fric
 Russian UI translation and documentation: Peter Semiletov
 
 ##
@@ -24,4 +20,3 @@ Acknowledgements:
 Thanks to (an incomplete and unsorted list):
 
 Nastia
-Shifter (downshft)
