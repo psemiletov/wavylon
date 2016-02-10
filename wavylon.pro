@@ -100,6 +100,7 @@ TRANSLATIONS += translations/wavylon_ru.ts
 DISTFILES += ChangeLog \
     COPYING \
     README \
+    ARCHITECTURE \
     NEWS \
     NEWS-RU \
     AUTHORS \

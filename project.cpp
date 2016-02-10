@@ -2473,8 +2473,8 @@ void CProject::mixbuf_play()
    inputParameters.device = pa_device_id_in;
    inputParameters.channelCount = 2;
    
-    inputParameters.sampleFormat = paFloat32;
-    inputParameters.sampleFormat |= paNonInterleaved;
+   inputParameters.sampleFormat = paFloat32;
+   inputParameters.sampleFormat |= paNonInterleaved;
  
    
    inputParameters.suggestedLatency = Pa_GetDeviceInfo (inputParameters.device)->defaultLowOutputLatency;;
