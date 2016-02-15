@@ -113,6 +113,7 @@ OBJECTS       = wavylon.o \
 DIST          = ChangeLog \
 		COPYING \
 		README \
+		ARCHITECTURE \
 		NEWS \
 		NEWS-RU \
 		AUTHORS \
@@ -397,49 +398,49 @@ compiler_rcc_make_all: qrc_wavylon.cpp
 compiler_rcc_clean:
 	-$(DEL_FILE) qrc_wavylon.cpp
 qrc_wavylon.cpp: wavylon.qrc \
+		TODO \
 		NEWS-RU \
 		AUTHORS \
+		NEWS \
+		COPYING \
 		README \
 		ChangeLog \
-		COPYING \
 		INSTALL \
-		TODO \
-		NEWS \
-		translations/wavylon_ru.qm \
+		icons/edit-copy-active.png \
+		icons/file-save.png \
+		icons/home.png \
+		icons/file-new.png \
+		icons/file-open.png \
+		icons/file-save-active.png \
+		icons/create-dir.png \
+		icons/stop.png \
+		icons/edit-paste.png \
+		icons/refresh.png \
+		icons/edit-copy.png \
+		icons/wavylon_icon.png \
+		icons/edit-paste-active.png \
+		icons/go.png \
+		icons/play.png \
+		icons/file-open-active.png \
+		icons/edit-cut.png \
+		icons/file-save-as.png \
+		icons/edit-cut-active.png \
+		icons/pause.png \
+		icons/search_find.png \
 		themes/Vegan/stylesheet.css \
 		themes/Smaragd/stylesheet.css \
-		themes/TEA/stylesheet.css \
 		themes/Turbo/stylesheet.css \
-		themes/Cotton/stylesheet.css \
+		themes/TEA/stylesheet.css \
 		themes/Plum/stylesheet.css \
-		palettes/Grey \
+		themes/Cotton/stylesheet.css \
 		palettes/EKO \
+		palettes/Grey \
 		palettes/Winter \
 		palettes/Spring \
 		palettes/Vinyl \
-		icons/edit-cut-active.png \
-		icons/edit-paste.png \
-		icons/wavylon_icon.png \
-		icons/edit-copy.png \
-		icons/edit-paste-active.png \
-		icons/file-open.png \
-		icons/create-dir.png \
-		icons/file-open-active.png \
-		icons/search_find.png \
-		icons/file-save-as.png \
-		icons/refresh.png \
-		icons/home.png \
-		icons/stop.png \
-		icons/edit-cut.png \
-		icons/edit-copy-active.png \
-		icons/play.png \
-		icons/file-save.png \
-		icons/go.png \
-		icons/pause.png \
-		icons/file-save-active.png \
-		icons/file-new.png \
 		manuals/en.html \
-		manuals/ru.html
+		manuals/ru.html \
+		translations/wavylon_ru.qm
 	/usr/lib64/qt5/bin/rcc -name wavylon wavylon.qrc -o qrc_wavylon.cpp
 
 compiler_moc_header_make_all: moc_wavylon.cpp moc_afx.cpp moc_envelope.cpp moc_fman.cpp moc_shortcuts.cpp moc_logmemo.cpp moc_tio.cpp moc_gui_utils.cpp moc_fxrack.cpp moc_project.cpp moc_fxset.cpp moc_levelmeter.cpp
@@ -634,16 +635,18 @@ moc_wavylon.cpp: /usr/lib64/qt5/include/QtCore/QObject \
 		/usr/lib64/qt5/include/QtWidgets/QDoubleSpinBox \
 		/usr/lib64/qt5/include/QtWidgets/QGroupBox \
 		/usr/lib64/qt5/include/QtWidgets/qgroupbox.h \
+		/usr/lib64/qt5/include/QtWidgets/QScrollArea \
+		/usr/lib64/qt5/include/QtWidgets/qscrollarea.h \
+		/usr/lib64/qt5/include/QtWidgets/QScrollBar \
+		/usr/lib64/qt5/include/QtWidgets/qscrollbar.h \
 		/usr/lib64/qt5/include/QtWidgets/QAbstractItemDelegate \
 		/usr/lib64/qt5/include/QtWidgets/QGraphicsView \
 		/usr/lib64/qt5/include/QtWidgets/qgraphicsview.h \
 		/usr/lib64/qt5/include/QtGui/qpainter.h \
-		/usr/lib64/qt5/include/QtWidgets/qscrollarea.h \
 		/usr/lib64/qt5/include/QtWidgets/qgraphicsscene.h \
 		/usr/lib64/qt5/include/QtWidgets/QGraphicsScene \
 		/usr/lib64/qt5/include/QtWidgets/QItemDelegate \
 		/usr/lib64/qt5/include/QtWidgets/qitemdelegate.h \
-		/usr/lib64/qt5/include/QtWidgets/QScrollArea \
 		/usr/lib64/qt5/include/QtWidgets/QDial \
 		/usr/lib64/qt5/include/QtWidgets/qdial.h \
 		/usr/lib64/qt5/include/QtCore/QTimer \
@@ -653,6 +656,19 @@ moc_wavylon.cpp: /usr/lib64/qt5/include/QtCore/QObject \
 		/usr/lib64/qt5/include/QtWidgets/QWidget \
 		/usr/lib64/qt5/include/QtGui/QImage \
 		floatbuffer.h \
+		fxrack.h \
+		/usr/lib64/qt5/include/QtWidgets/QTreeView \
+		/usr/lib64/qt5/include/QtWidgets/qtreeview.h \
+		/usr/lib64/qt5/include/QtCore/QModelIndex \
+		/usr/lib64/qt5/include/QtGui/QStandardItemModel \
+		/usr/lib64/qt5/include/QtGui/qstandarditemmodel.h \
+		afx.h \
+		/usr/lib64/qt5/include/QtWidgets/QVBoxLayout \
+		/usr/lib64/qt5/include/QtCore/QXmlStreamWriter \
+		/usr/lib64/qt5/include/QtCore/qxmlstream.h \
+		/usr/lib64/qt5/include/QtCore/QXmlStreamReader \
+		fxlist.h \
+		/usr/lib64/qt5/include/QtCore/QHash \
 		logmemo.h \
 		/usr/lib64/qt5/include/QtWidgets/QPlainTextEdit \
 		/usr/lib64/qt5/include/QtWidgets/qplaintextedit.h \
@@ -661,10 +677,6 @@ moc_wavylon.cpp: /usr/lib64/qt5/include/QtCore/QObject \
 		/usr/lib64/qt5/include/QtGui/qglyphrun.h \
 		/usr/lib64/qt5/include/QtGui/qrawfont.h \
 		fman.h \
-		/usr/lib64/qt5/include/QtGui/QStandardItemModel \
-		/usr/lib64/qt5/include/QtGui/qstandarditemmodel.h \
-		/usr/lib64/qt5/include/QtWidgets/QTreeView \
-		/usr/lib64/qt5/include/QtWidgets/qtreeview.h \
 		/usr/lib64/qt5/include/QtWidgets/QHeaderView \
 		/usr/lib64/qt5/include/QtWidgets/qheaderview.h \
 		/usr/lib64/qt5/include/QtCore/QDir \
@@ -674,7 +686,6 @@ moc_wavylon.cpp: /usr/lib64/qt5/include/QtCore/QObject \
 		/usr/lib64/qt5/include/QtGui/qdrag.h \
 		/usr/lib64/qt5/include/QtGui/QPainter \
 		shortcuts.h \
-		/usr/lib64/qt5/include/QtCore/QHash \
 		wavylon.h
 	/usr/lib64/qt5/bin/moc $(DEFINES) $(INCPATH) -I/usr/lib/gcc/include/c++/4.8.2 -I/usr/lib/gcc/include/c++/4.8.2/x86_64-mageia-linux-gnu -I/usr/lib/gcc/include/c++/4.8.2/backward -I/usr/lib/gcc/x86_64-mageia-linux-gnu/4.8.2/include -I/usr/local/include -I/usr/include wavylon.h -o moc_wavylon.cpp
 
@@ -1622,6 +1633,7 @@ moc_fxrack.cpp: /usr/lib64/qt5/include/QtWidgets/QWidget \
 		/usr/lib64/qt5/include/QtCore/QXmlStreamReader \
 		floatbuffer.h \
 		fxlist.h \
+		/usr/lib64/qt5/include/QtCore/QHash \
 		fxrack.h
 	/usr/lib64/qt5/bin/moc $(DEFINES) $(INCPATH) -I/usr/lib/gcc/include/c++/4.8.2 -I/usr/lib/gcc/include/c++/4.8.2/x86_64-mageia-linux-gnu -I/usr/lib/gcc/include/c++/4.8.2/backward -I/usr/lib/gcc/x86_64-mageia-linux-gnu/4.8.2/include -I/usr/local/include -I/usr/include fxrack.h -o moc_fxrack.cpp
 
@@ -1785,16 +1797,18 @@ moc_project.cpp: /usr/lib64/qt5/include/QtCore/QObject \
 		/usr/lib64/qt5/include/QtWidgets/qgroupbox.h \
 		/usr/lib64/qt5/include/QtWidgets/QComboBox \
 		/usr/lib64/qt5/include/QtWidgets/qcombobox.h \
+		/usr/lib64/qt5/include/QtWidgets/QScrollArea \
+		/usr/lib64/qt5/include/QtWidgets/qscrollarea.h \
+		/usr/lib64/qt5/include/QtWidgets/QScrollBar \
+		/usr/lib64/qt5/include/QtWidgets/qscrollbar.h \
 		/usr/lib64/qt5/include/QtWidgets/QAbstractItemDelegate \
 		/usr/lib64/qt5/include/QtWidgets/QGraphicsView \
 		/usr/lib64/qt5/include/QtWidgets/qgraphicsview.h \
 		/usr/lib64/qt5/include/QtGui/qpainter.h \
-		/usr/lib64/qt5/include/QtWidgets/qscrollarea.h \
 		/usr/lib64/qt5/include/QtWidgets/qgraphicsscene.h \
 		/usr/lib64/qt5/include/QtWidgets/QGraphicsScene \
 		/usr/lib64/qt5/include/QtWidgets/QItemDelegate \
 		/usr/lib64/qt5/include/QtWidgets/qitemdelegate.h \
-		/usr/lib64/qt5/include/QtWidgets/QScrollArea \
 		/usr/lib64/qt5/include/QtWidgets/QDial \
 		/usr/lib64/qt5/include/QtWidgets/qdial.h \
 		/usr/lib64/qt5/include/QtCore/QTimer \
@@ -1804,6 +1818,19 @@ moc_project.cpp: /usr/lib64/qt5/include/QtCore/QObject \
 		/usr/lib64/qt5/include/QtWidgets/QWidget \
 		/usr/lib64/qt5/include/QtGui/QImage \
 		floatbuffer.h \
+		fxrack.h \
+		/usr/lib64/qt5/include/QtWidgets/QTreeView \
+		/usr/lib64/qt5/include/QtWidgets/qtreeview.h \
+		/usr/lib64/qt5/include/QtCore/QModelIndex \
+		/usr/lib64/qt5/include/QtGui/QStandardItemModel \
+		/usr/lib64/qt5/include/QtGui/qstandarditemmodel.h \
+		afx.h \
+		/usr/lib64/qt5/include/QtWidgets/QVBoxLayout \
+		/usr/lib64/qt5/include/QtCore/QXmlStreamWriter \
+		/usr/lib64/qt5/include/QtCore/qxmlstream.h \
+		/usr/lib64/qt5/include/QtCore/QXmlStreamReader \
+		fxlist.h \
+		/usr/lib64/qt5/include/QtCore/QHash \
 		project.h
 	/usr/lib64/qt5/bin/moc $(DEFINES) $(INCPATH) -I/usr/lib/gcc/include/c++/4.8.2 -I/usr/lib/gcc/include/c++/4.8.2/x86_64-mageia-linux-gnu -I/usr/lib/gcc/include/c++/4.8.2/backward -I/usr/lib/gcc/x86_64-mageia-linux-gnu/4.8.2/include -I/usr/local/include -I/usr/include project.h -o moc_project.cpp
 
@@ -2316,15 +2343,17 @@ wavylon.o: wavylon.cpp /usr/lib64/qt5/include/QtCore/QDebug \
 		/usr/lib64/qt5/include/QtWidgets/QDoubleSpinBox \
 		/usr/lib64/qt5/include/QtWidgets/QGroupBox \
 		/usr/lib64/qt5/include/QtWidgets/qgroupbox.h \
+		/usr/lib64/qt5/include/QtWidgets/QScrollArea \
+		/usr/lib64/qt5/include/QtWidgets/qscrollarea.h \
+		/usr/lib64/qt5/include/QtWidgets/QScrollBar \
+		/usr/lib64/qt5/include/QtWidgets/qscrollbar.h \
 		/usr/lib64/qt5/include/QtWidgets/QAbstractItemDelegate \
 		/usr/lib64/qt5/include/QtWidgets/QGraphicsView \
 		/usr/lib64/qt5/include/QtWidgets/qgraphicsview.h \
-		/usr/lib64/qt5/include/QtWidgets/qscrollarea.h \
 		/usr/lib64/qt5/include/QtWidgets/qgraphicsscene.h \
 		/usr/lib64/qt5/include/QtWidgets/QGraphicsScene \
 		/usr/lib64/qt5/include/QtWidgets/QItemDelegate \
 		/usr/lib64/qt5/include/QtWidgets/qitemdelegate.h \
-		/usr/lib64/qt5/include/QtWidgets/QScrollArea \
 		/usr/lib64/qt5/include/QtWidgets/QDial \
 		/usr/lib64/qt5/include/QtWidgets/qdial.h \
 		/usr/lib64/qt5/include/QtCore/QTimer \
@@ -2334,6 +2363,18 @@ wavylon.o: wavylon.cpp /usr/lib64/qt5/include/QtCore/QDebug \
 		/usr/lib64/qt5/include/QtWidgets/QWidget \
 		/usr/lib64/qt5/include/QtGui/QImage \
 		floatbuffer.h \
+		fxrack.h \
+		/usr/lib64/qt5/include/QtWidgets/QTreeView \
+		/usr/lib64/qt5/include/QtWidgets/qtreeview.h \
+		/usr/lib64/qt5/include/QtCore/QModelIndex \
+		/usr/lib64/qt5/include/QtGui/QStandardItemModel \
+		/usr/lib64/qt5/include/QtGui/qstandarditemmodel.h \
+		afx.h \
+		/usr/lib64/qt5/include/QtCore/QXmlStreamWriter \
+		/usr/lib64/qt5/include/QtCore/qxmlstream.h \
+		/usr/lib64/qt5/include/QtCore/QXmlStreamReader \
+		fxlist.h \
+		/usr/lib64/qt5/include/QtCore/QHash \
 		logmemo.h \
 		/usr/lib64/qt5/include/QtWidgets/QPlainTextEdit \
 		/usr/lib64/qt5/include/QtWidgets/qplaintextedit.h \
@@ -2342,23 +2383,20 @@ wavylon.o: wavylon.cpp /usr/lib64/qt5/include/QtCore/QDebug \
 		/usr/lib64/qt5/include/QtGui/qglyphrun.h \
 		/usr/lib64/qt5/include/QtGui/qrawfont.h \
 		fman.h \
-		/usr/lib64/qt5/include/QtGui/QStandardItemModel \
-		/usr/lib64/qt5/include/QtGui/qstandarditemmodel.h \
-		/usr/lib64/qt5/include/QtWidgets/QTreeView \
-		/usr/lib64/qt5/include/QtWidgets/qtreeview.h \
 		/usr/lib64/qt5/include/QtWidgets/QHeaderView \
 		/usr/lib64/qt5/include/QtWidgets/qheaderview.h \
 		/usr/lib64/qt5/include/QtCore/QDir \
 		/usr/lib64/qt5/include/QtGui/QDrag \
 		/usr/lib64/qt5/include/QtGui/qdrag.h \
 		shortcuts.h \
-		/usr/lib64/qt5/include/QtCore/QHash \
 		utils.h \
 		/usr/lib64/qt5/include/QtCore/QFileInfo \
 		/usr/lib64/qt5/include/QtCore/QStringList \
+		/usr/lib64/qt5/include/QtCore/QTime \
 		gui_utils.h \
 		/usr/lib64/qt5/include/QtWidgets/QMenu \
 		/usr/lib64/qt5/include/QtWidgets/QBoxLayout \
+		db.h \
 		tio.h \
 		/usr/lib64/qt5/include/QtCore/QMultiHash
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o wavylon.o wavylon.cpp
@@ -2681,16 +2719,18 @@ main.o: main.cpp /usr/lib64/qt5/include/QtWidgets/QApplication \
 		/usr/lib64/qt5/include/QtWidgets/QDoubleSpinBox \
 		/usr/lib64/qt5/include/QtWidgets/QGroupBox \
 		/usr/lib64/qt5/include/QtWidgets/qgroupbox.h \
+		/usr/lib64/qt5/include/QtWidgets/QScrollArea \
+		/usr/lib64/qt5/include/QtWidgets/qscrollarea.h \
+		/usr/lib64/qt5/include/QtWidgets/QScrollBar \
+		/usr/lib64/qt5/include/QtWidgets/qscrollbar.h \
 		/usr/lib64/qt5/include/QtWidgets/QAbstractItemDelegate \
 		/usr/lib64/qt5/include/QtWidgets/QGraphicsView \
 		/usr/lib64/qt5/include/QtWidgets/qgraphicsview.h \
 		/usr/lib64/qt5/include/QtGui/qpainter.h \
-		/usr/lib64/qt5/include/QtWidgets/qscrollarea.h \
 		/usr/lib64/qt5/include/QtWidgets/qgraphicsscene.h \
 		/usr/lib64/qt5/include/QtWidgets/QGraphicsScene \
 		/usr/lib64/qt5/include/QtWidgets/QItemDelegate \
 		/usr/lib64/qt5/include/QtWidgets/qitemdelegate.h \
-		/usr/lib64/qt5/include/QtWidgets/QScrollArea \
 		/usr/lib64/qt5/include/QtWidgets/QDial \
 		/usr/lib64/qt5/include/QtWidgets/qdial.h \
 		/usr/lib64/qt5/include/QtCore/QTimer \
@@ -2700,6 +2740,19 @@ main.o: main.cpp /usr/lib64/qt5/include/QtWidgets/QApplication \
 		/usr/lib64/qt5/include/QtWidgets/QWidget \
 		/usr/lib64/qt5/include/QtGui/QImage \
 		floatbuffer.h \
+		fxrack.h \
+		/usr/lib64/qt5/include/QtWidgets/QTreeView \
+		/usr/lib64/qt5/include/QtWidgets/qtreeview.h \
+		/usr/lib64/qt5/include/QtCore/QModelIndex \
+		/usr/lib64/qt5/include/QtGui/QStandardItemModel \
+		/usr/lib64/qt5/include/QtGui/qstandarditemmodel.h \
+		afx.h \
+		/usr/lib64/qt5/include/QtWidgets/QVBoxLayout \
+		/usr/lib64/qt5/include/QtCore/QXmlStreamWriter \
+		/usr/lib64/qt5/include/QtCore/qxmlstream.h \
+		/usr/lib64/qt5/include/QtCore/QXmlStreamReader \
+		fxlist.h \
+		/usr/lib64/qt5/include/QtCore/QHash \
 		logmemo.h \
 		/usr/lib64/qt5/include/QtWidgets/QPlainTextEdit \
 		/usr/lib64/qt5/include/QtWidgets/qplaintextedit.h \
@@ -2708,10 +2761,6 @@ main.o: main.cpp /usr/lib64/qt5/include/QtWidgets/QApplication \
 		/usr/lib64/qt5/include/QtGui/qglyphrun.h \
 		/usr/lib64/qt5/include/QtGui/qrawfont.h \
 		fman.h \
-		/usr/lib64/qt5/include/QtGui/QStandardItemModel \
-		/usr/lib64/qt5/include/QtGui/qstandarditemmodel.h \
-		/usr/lib64/qt5/include/QtWidgets/QTreeView \
-		/usr/lib64/qt5/include/QtWidgets/qtreeview.h \
 		/usr/lib64/qt5/include/QtWidgets/QHeaderView \
 		/usr/lib64/qt5/include/QtWidgets/qheaderview.h \
 		/usr/lib64/qt5/include/QtCore/QDir \
@@ -2720,8 +2769,7 @@ main.o: main.cpp /usr/lib64/qt5/include/QtWidgets/QApplication \
 		/usr/lib64/qt5/include/QtGui/QDrag \
 		/usr/lib64/qt5/include/QtGui/qdrag.h \
 		/usr/lib64/qt5/include/QtGui/QPainter \
-		shortcuts.h \
-		/usr/lib64/qt5/include/QtCore/QHash
+		shortcuts.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o main.cpp
 
 floatbuffer.o: floatbuffer.cpp floatbuffer.h
@@ -2855,10 +2903,6 @@ fxset.o: fxset.cpp /usr/lib64/qt5/include/QtCore/QDebug \
 		/usr/lib64/qt5/include/QtWidgets/qabstractspinbox.h \
 		/usr/lib64/qt5/include/QtGui/qvalidator.h \
 		/usr/lib64/qt5/include/QtCore/qregularexpression.h \
-		/usr/lib64/qt5/include/QtGui/QDrag \
-		/usr/lib64/qt5/include/QtGui/qdrag.h \
-		/usr/lib64/qt5/include/QtCore/QMimeData \
-		/usr/lib64/qt5/include/QtCore/qmimedata.h \
 		/usr/lib64/qt5/include/QtCore/QXmlStreamWriter \
 		/usr/lib64/qt5/include/QtCore/qxmlstream.h \
 		/usr/lib64/qt5/include/QtCore/QXmlStreamReader \
@@ -2895,7 +2939,9 @@ fxset.o: fxset.cpp /usr/lib64/qt5/include/QtCore/QDebug \
 		/usr/lib64/qt5/include/QtCore/QHash \
 		/usr/lib64/qt5/include/QtCore/QFileInfo \
 		/usr/lib64/qt5/include/QtCore/qfileinfo.h \
-		/usr/lib64/qt5/include/QtCore/QStringList
+		/usr/lib64/qt5/include/QtCore/QStringList \
+		/usr/lib64/qt5/include/QtCore/QTime \
+		/usr/lib64/qt5/include/QtCore/qdatetime.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o fxset.o fxset.cpp
 
 fxrack.o: fxrack.cpp /usr/lib64/qt5/include/QtGui/QStandardItem \
@@ -3074,15 +3120,14 @@ fxrack.o: fxrack.cpp /usr/lib64/qt5/include/QtGui/QStandardItem \
 		/usr/lib64/qt5/include/QtCore/qxmlstream.h \
 		/usr/lib64/qt5/include/QtCore/QXmlStreamReader \
 		floatbuffer.h \
-		fxlist.h
+		fxlist.h \
+		/usr/lib64/qt5/include/QtCore/QHash
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o fxrack.o fxrack.cpp
 
 fxlist.o: fxlist.cpp fxlist.h \
-		afx.h \
-		/usr/lib64/qt5/include/QtCore/QObject \
-		/usr/lib64/qt5/include/QtCore/qobject.h \
-		/usr/lib64/qt5/include/QtCore/qobjectdefs.h \
-		/usr/lib64/qt5/include/QtCore/qnamespace.h \
+		/usr/lib64/qt5/include/QtCore/QHash \
+		/usr/lib64/qt5/include/QtCore/qhash.h \
+		/usr/lib64/qt5/include/QtCore/qchar.h \
 		/usr/lib64/qt5/include/QtCore/qglobal.h \
 		/usr/lib64/qt5/include/QtCore/qconfig.h \
 		/usr/lib64/qt5/include/QtCore/qfeatures.h \
@@ -3119,16 +3164,21 @@ fxlist.o: fxlist.cpp fxlist.h \
 		/usr/lib64/qt5/include/QtCore/qtypeinfo.h \
 		/usr/lib64/qt5/include/QtCore/qtypetraits.h \
 		/usr/lib64/qt5/include/QtCore/qsysinfo.h \
-		/usr/lib64/qt5/include/QtCore/qobjectdefs_impl.h \
-		/usr/lib64/qt5/include/QtCore/qstring.h \
-		/usr/lib64/qt5/include/QtCore/qchar.h \
-		/usr/lib64/qt5/include/QtCore/qbytearray.h \
-		/usr/lib64/qt5/include/QtCore/qrefcount.h \
-		/usr/lib64/qt5/include/QtCore/qarraydata.h \
-		/usr/lib64/qt5/include/QtCore/qstringbuilder.h \
+		/usr/lib64/qt5/include/QtCore/qiterator.h \
 		/usr/lib64/qt5/include/QtCore/qlist.h \
 		/usr/lib64/qt5/include/QtCore/qalgorithms.h \
-		/usr/lib64/qt5/include/QtCore/qiterator.h \
+		/usr/lib64/qt5/include/QtCore/qrefcount.h \
+		/usr/lib64/qt5/include/QtCore/qpair.h \
+		afx.h \
+		/usr/lib64/qt5/include/QtCore/QObject \
+		/usr/lib64/qt5/include/QtCore/qobject.h \
+		/usr/lib64/qt5/include/QtCore/qobjectdefs.h \
+		/usr/lib64/qt5/include/QtCore/qnamespace.h \
+		/usr/lib64/qt5/include/QtCore/qobjectdefs_impl.h \
+		/usr/lib64/qt5/include/QtCore/qstring.h \
+		/usr/lib64/qt5/include/QtCore/qbytearray.h \
+		/usr/lib64/qt5/include/QtCore/qarraydata.h \
+		/usr/lib64/qt5/include/QtCore/qstringbuilder.h \
 		/usr/lib64/qt5/include/QtCore/qcoreevent.h \
 		/usr/lib64/qt5/include/QtCore/qscopedpointer.h \
 		/usr/lib64/qt5/include/QtCore/qmetatype.h \
@@ -3151,7 +3201,6 @@ fxlist.o: fxlist.cpp fxlist.h \
 		/usr/lib64/qt5/include/QtCore/qstringlist.h \
 		/usr/lib64/qt5/include/QtCore/qdatastream.h \
 		/usr/lib64/qt5/include/QtCore/qiodevice.h \
-		/usr/lib64/qt5/include/QtCore/qpair.h \
 		/usr/lib64/qt5/include/QtCore/qregexp.h \
 		/usr/lib64/qt5/include/QtCore/qstringmatcher.h \
 		/usr/lib64/qt5/include/QtGui/qbrush.h \
@@ -3167,7 +3216,6 @@ fxlist.o: fxlist.cpp fxlist.h \
 		/usr/lib64/qt5/include/QtCore/qsharedpointer.h \
 		/usr/lib64/qt5/include/QtCore/qshareddata.h \
 		/usr/lib64/qt5/include/QtCore/qsharedpointer_impl.h \
-		/usr/lib64/qt5/include/QtCore/qhash.h \
 		/usr/lib64/qt5/include/QtGui/qfont.h \
 		/usr/lib64/qt5/include/QtGui/qfontmetrics.h \
 		/usr/lib64/qt5/include/QtGui/qfontinfo.h \
@@ -3317,6 +3365,10 @@ envelope.o: envelope.cpp /usr/lib64/qt5/include/QtCore/QRect \
 		/usr/lib64/qt5/include/QtCore/qfile.h \
 		/usr/lib64/qt5/include/QtCore/qfiledevice.h \
 		/usr/lib64/qt5/include/QtCore/QStringList \
+		/usr/lib64/qt5/include/QtCore/QTime \
+		/usr/lib64/qt5/include/QtCore/qdatetime.h \
+		/usr/lib64/qt5/include/QtCore/qsharedpointer.h \
+		/usr/lib64/qt5/include/QtCore/qsharedpointer_impl.h \
 		envelope.h \
 		/usr/lib64/qt5/include/QtCore/QList
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o envelope.o envelope.cpp
@@ -3491,7 +3543,9 @@ utils.o: utils.cpp /usr/lib64/qt5/include/QtCore/QTextStream \
 		utils.h \
 		/usr/lib64/qt5/include/QtCore/QHash \
 		/usr/lib64/qt5/include/QtCore/QFileInfo \
-		/usr/lib64/qt5/include/QtCore/QStringList
+		/usr/lib64/qt5/include/QtCore/QStringList \
+		/usr/lib64/qt5/include/QtCore/QTime \
+		/usr/lib64/qt5/include/QtCore/qdatetime.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o utils.o utils.cpp
 
 fman.o: fman.cpp fman.h \
@@ -3639,6 +3693,8 @@ fman.o: fman.cpp fman.h \
 		/usr/lib64/qt5/include/QtCore/QHash \
 		/usr/lib64/qt5/include/QtCore/QFileInfo \
 		/usr/lib64/qt5/include/QtCore/QStringList \
+		/usr/lib64/qt5/include/QtCore/QTime \
+		/usr/lib64/qt5/include/QtCore/qdatetime.h \
 		logmemo.h \
 		/usr/lib64/qt5/include/QtWidgets/QPlainTextEdit \
 		/usr/lib64/qt5/include/QtWidgets/qplaintextedit.h \
@@ -3666,7 +3722,6 @@ fman.o: fman.cpp fman.h \
 		/usr/lib64/qt5/include/QtGui/qguiapplication.h \
 		/usr/lib64/qt5/include/QtGui/qinputmethod.h \
 		/usr/lib64/qt5/include/QtCore/QDateTime \
-		/usr/lib64/qt5/include/QtCore/qdatetime.h \
 		/usr/lib64/qt5/include/QtCore/QSettings \
 		/usr/lib64/qt5/include/QtCore/qsettings.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o fman.o fman.cpp
@@ -3792,6 +3847,8 @@ shortcuts.o: shortcuts.cpp shortcuts.h \
 		/usr/lib64/qt5/include/QtCore/QFileInfo \
 		/usr/lib64/qt5/include/QtCore/qfileinfo.h \
 		/usr/lib64/qt5/include/QtCore/QStringList \
+		/usr/lib64/qt5/include/QtCore/QTime \
+		/usr/lib64/qt5/include/QtCore/qdatetime.h \
 		gui_utils.h \
 		/usr/lib64/qt5/include/QtWidgets/QMenu \
 		/usr/lib64/qt5/include/QtWidgets/qmenu.h \
@@ -4252,6 +4309,8 @@ gui_utils.o: gui_utils.cpp gui_utils.h \
 		/usr/lib64/qt5/include/QtCore/QFileInfo \
 		/usr/lib64/qt5/include/QtCore/qfileinfo.h \
 		/usr/lib64/qt5/include/QtCore/QStringList \
+		/usr/lib64/qt5/include/QtCore/QTime \
+		/usr/lib64/qt5/include/QtCore/qdatetime.h \
 		/usr/lib64/qt5/include/QtCore/QDir \
 		/usr/lib64/qt5/include/QtCore/qdir.h \
 		/usr/lib64/qt5/include/QtWidgets/QLabel \
@@ -4442,16 +4501,29 @@ project.o: project.cpp /usr/lib64/qt5/include/QtCore/QDir \
 		/usr/lib64/qt5/include/QtWidgets/qdial.h \
 		/usr/lib64/qt5/include/QtWidgets/QDoubleSpinBox \
 		/usr/lib64/qt5/include/QtWidgets/qspinbox.h \
+		/usr/lib64/qt5/include/QtWidgets/QPlainTextEdit \
+		/usr/lib64/qt5/include/QtWidgets/qplaintextedit.h \
+		/usr/lib64/qt5/include/QtWidgets/qtextedit.h \
+		/usr/lib64/qt5/include/QtGui/qtextdocument.h \
+		/usr/lib64/qt5/include/QtGui/qabstracttextdocumentlayout.h \
+		/usr/lib64/qt5/include/QtGui/qtextlayout.h \
+		/usr/lib64/qt5/include/QtGui/qglyphrun.h \
+		/usr/lib64/qt5/include/QtGui/qrawfont.h \
+		/usr/lib64/qt5/include/QtGui/qfontdatabase.h \
 		/usr/lib64/qt5/include/QtWidgets/QMessageBox \
 		/usr/lib64/qt5/include/QtWidgets/qmessagebox.h \
-		tio.h \
-		/usr/lib64/qt5/include/QtCore/QObject \
-		/usr/lib64/qt5/include/QtCore/QMultiHash \
+		db.h \
+		fxlist.h \
 		/usr/lib64/qt5/include/QtCore/QHash \
-		/usr/lib64/qt5/include/QtCore/QStringList \
-		floatbuffer.h \
-		project.h \
+		afx.h \
+		/usr/lib64/qt5/include/QtCore/QObject \
 		/usr/lib64/qt5/include/QtCore/QString \
+		/usr/lib64/qt5/include/QtCore/QXmlStreamReader \
+		floatbuffer.h \
+		tio.h \
+		/usr/lib64/qt5/include/QtCore/QMultiHash \
+		/usr/lib64/qt5/include/QtCore/QStringList \
+		project.h \
 		/usr/lib64/qt5/include/QtCore/QList \
 		/usr/lib64/qt5/include/QtWidgets/QDialog \
 		/usr/lib64/qt5/include/QtWidgets/QTableWidget \
@@ -4459,6 +4531,8 @@ project.o: project.cpp /usr/lib64/qt5/include/QtCore/QDir \
 		/usr/lib64/qt5/include/QtWidgets/qtableview.h \
 		/usr/lib64/qt5/include/QtWidgets/QComboBox \
 		/usr/lib64/qt5/include/QtWidgets/qcombobox.h \
+		/usr/lib64/qt5/include/QtWidgets/QScrollBar \
+		/usr/lib64/qt5/include/QtWidgets/qscrollbar.h \
 		/usr/lib64/qt5/include/QtWidgets/QAbstractItemDelegate \
 		/usr/lib64/qt5/include/QtWidgets/QGraphicsView \
 		/usr/lib64/qt5/include/QtWidgets/qgraphicsview.h \
@@ -4472,7 +4546,14 @@ project.o: project.cpp /usr/lib64/qt5/include/QtCore/QDir \
 		/usr/lib64/qt5/include/QtCore/qbasictimer.h \
 		levelmeter.h \
 		/usr/lib64/qt5/include/QtGui/QImage \
+		fxrack.h \
+		/usr/lib64/qt5/include/QtWidgets/QTreeView \
+		/usr/lib64/qt5/include/QtWidgets/qtreeview.h \
+		/usr/lib64/qt5/include/QtCore/QModelIndex \
+		/usr/lib64/qt5/include/QtGui/QStandardItemModel \
+		/usr/lib64/qt5/include/QtGui/qstandarditemmodel.h \
 		utils.h \
+		/usr/lib64/qt5/include/QtCore/QTime \
 		fx-panners.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o project.o project.cpp
 
@@ -4601,12 +4682,16 @@ levelmeter.o: levelmeter.cpp /usr/lib64/qt5/include/QtGui/QPainter \
 		/usr/lib64/qt5/include/QtGui/qcursor.h \
 		/usr/lib64/qt5/include/QtCore/QRect \
 		/usr/lib64/qt5/include/QtCore/QPoint \
+		/usr/lib64/qt5/include/QtCore/QDebug \
+		db.h \
 		utils.h \
 		/usr/lib64/qt5/include/QtCore/QObject \
 		/usr/lib64/qt5/include/QtCore/QHash \
 		/usr/lib64/qt5/include/QtCore/QFileInfo \
 		/usr/lib64/qt5/include/QtCore/qfileinfo.h \
 		/usr/lib64/qt5/include/QtCore/QStringList \
+		/usr/lib64/qt5/include/QtCore/QTime \
+		/usr/lib64/qt5/include/QtCore/qdatetime.h \
 		levelmeter.h \
 		/usr/lib64/qt5/include/QtGui/QImage
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o levelmeter.o levelmeter.cpp

@@ -136,11 +136,10 @@ void CProject::project_new (const QString &fname)
   settings.call_ui (true);
 
   //settings.save (paths.fname_project);
-   
-  tab_project_ui->addTab (table_container, tr ("table"));
+
+  tab_project_ui->addTab (w_timeline, tr ("timeline"));
   tab_project_ui->addTab (mixer_window, tr ("mixer"));
-  
-  
+  tab_project_ui->addTab (table_container, tr ("table"));
 }
 
 
@@ -225,8 +224,9 @@ bool CProject::project_open (const QString &fname)
   
   paths.fname_project = paths.project_dir + "/" + f.baseName() + ".wvn";
 
-  tab_project_ui->addTab (table_container, tr ("table"));
+  tab_project_ui->addTab (w_timeline, tr ("timeline"));
   tab_project_ui->addTab (mixer_window, tr ("mixer"));
+  tab_project_ui->addTab (table_container, tr ("table"));
 
      
   files.load_all_from_dir (paths.wav_dir); 
@@ -931,6 +931,8 @@ CProject::~CProject()
   delete mixer_window;
   delete wnd_tracks;
   
+  delete w_timeline;
+  
   delete master_track;
    
   delete wnd_files;
@@ -1219,6 +1221,8 @@ CWavTrack::CWavTrack (CProject *prj, int nchannels): CTrack (prj, nchannels)
   track_type = "wav";
   hrecfile = 0;
   fb_recbuffer = 0;
+  
+  track_widget = new CWAVTrackWidget (this, 0);
 }
 
 
@@ -1240,6 +1244,9 @@ CTrack::~CTrack()
   delete mixer_strip;   
      
   delete gb_track;   
+  
+  delete track_widget;
+  
   //delete table_widget;
      
 //  qDebug() << "CTrack::~CTrack()  -2";
@@ -1268,12 +1275,6 @@ CProject::CProject()
   tracks_window_start_frames = 0;
   tracks_window_length_frames = buffer_size_frames * buffer_size_frames_multiplier;
   tracks_window_inner_offset = 0;
-
- // temp_mixbuf_one = new float [mixbuf_window_length_frames_one * 2];
-  
- // trackbuf = new float [buffer_size_frames * 2]; //stereo
-
-  //fb_trackbuf = new CFloatBuffer (buffer_size_frames, 2); //stereo
 
   mixbuf_stream = 0;;
  
@@ -1352,19 +1353,11 @@ void CProject::create_widgets()
   table_container = new QWidget;
   table_widget_layout = new QHBoxLayout;
   table_container->setLayout (table_widget_layout);
-  
-/*
-  QRectF bounds(0, 0, 1024, 768);
-  
-  table_scene = new QGraphicsScene (bounds);
-  table_widget = new QGraphicsView (table_scene);
-  */ 
+
   
   table_scroll_area = new QScrollArea;
   table_scroll_area->setWidget (table_container);
-  
-  //tab_project_ui->addTab (table_container, tr ("table"));
-  
+   
   
   transport_simple = new QWidget; 
 
@@ -1410,6 +1403,9 @@ void CProject::create_widgets()
   tracks_window_create();
   
   mixer_window = new CMixerWindow (this);
+  
+  w_timeline = new CTimeLine (this);
+  
 }
 
 
@@ -2580,27 +2576,20 @@ CMixerWindow::CMixerWindow (CProject *ptr)
   p_project = ptr;
   
   setWindowTitle (tr ("Mixer"));
-
   
   h_main = new QHBoxLayout;
   setLayout (h_main);
 
-
   channel_strips_container = new QWidget;
   h_channel_strips_container = new QHBoxLayout;
   channel_strips_container->setLayout (h_channel_strips_container);
-  
-  //h_channel_strips_container->setSizeConstraint (QLayout::SetFixedSize);
 
-  
   channel_strips_scroll = new QScrollArea;
   channel_strips_scroll->setWidgetResizable (true);
   channel_strips_scroll->setWidget (channel_strips_container);
-  
-  //h_main->addWidget (channel_strips_container);
+   
   h_main->addWidget (channel_strips_scroll);
   h_main->addWidget (p_project->master_track->mixer_strip);
-
 }
 
 
@@ -2668,20 +2657,19 @@ void CProject::gui_updater_timer_timeout()
 
 void CTrack::update_strip()
 {
- qDebug() << "CTrack::update_strip(): " << track_name;
- qDebug() << "CTrack::volume: " << float2db (volume);
+ //qDebug() << "CTrack::update_strip(): " << track_name;
+// qDebug() << "CTrack::volume: " << float2db (volume);
 
   mixer_strip->update_strip_controls = true;
   
   mixer_strip->setTitle (track_name);
   
-      mixer_strip->dsb_vol->setValue (float2db (volume));
-      mixer_strip->dsb_pan->setValue (pan);
-      mixer_strip->cb_mute->setChecked (mute);
-      mixer_strip->cb_solo->setChecked (solo);
-      mixer_strip->cb_arm->setChecked (arm);
-      mixer_strip->cb_monitor_input->setChecked (monitor_input);
-       
+  mixer_strip->dsb_vol->setValue (float2db (volume));
+  mixer_strip->dsb_pan->setValue (pan);
+  mixer_strip->cb_mute->setChecked (mute);
+  mixer_strip->cb_solo->setChecked (solo);
+  mixer_strip->cb_arm->setChecked (arm);
+  mixer_strip->cb_monitor_input->setChecked (monitor_input);
   
   mixer_strip->update_strip_controls = false;
 }
@@ -3542,3 +3530,68 @@ CWavTrack::~CWavTrack()
      delete fb_recbuffer;
 }
   
+
+ATrackWidget::ATrackWidget (CTrack *track, QWidget *parent): QWidget (parent)
+{
+  p_track = track;
+  p_track->p_project->w_timeline->vbl_tracks->addWidget (this);
+  
+  setSizePolicy (QSizePolicy::Fixed, QSizePolicy::Fixed);
+}
+
+
+CTimeLine::CTimeLine (CProject *p, QWidget *parent): QWidget (parent)
+{
+  p_project = p;
+  
+  QVBoxLayout *vbl_main = new QVBoxLayout;
+  setLayout (vbl_main);
+  
+  w_tracks = new QWidget;
+  vbl_tracks = new QVBoxLayout;
+  w_tracks->setLayout (vbl_tracks);
+  
+  QScrollArea *scra_tracks = new QScrollArea;
+  scra_tracks->setWidgetResizable (true);
+  scra_tracks->setWidget (w_tracks);
+
+  //sb_timeline = new QScrollBar (Qt::Horizontal);
+
+  vbl_main->addWidget (scra_tracks);
+ 
+ // vbl_main->addWidget (w_tracks);
+ 
+ // vbl_main->addWidget (sb_timeline);
+ 
+
+}
+
+
+CWAVTrackWidget::CWAVTrackWidget (CTrack *track, QWidget *parent): ATrackWidget (track, parent)
+{
+  qDebug() << "CWAVTrackWidget::CWAVTrackWidget";
+
+}
+
+
+void CWAVTrackWidget::paintEvent (QPaintEvent *event)
+{
+ qDebug() << "CWAVTrackWidget::paintEvent";
+//  QWidget::paintEvent (event);
+  
+  QPainter painter (this);
+  //painter.drawImage (0, 0, waveform_image);
+  
+  painter.drawText (rect(), p_track->track_name);
+  
+  //painter.drawText (rect(), "1111111111111");
+  
+  event->accept();
+}
+
+
+QSize ATrackWidget::sizeHint() const
+{
+  return QSize (100, 100);
+
+}

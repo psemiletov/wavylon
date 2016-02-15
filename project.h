@@ -31,6 +31,8 @@
 #include <QCheckBox>
 #include <QGroupBox>
 #include <QComboBox>
+#include <QScrollArea>
+#include <QScrollBar>
 
 #include <QAbstractItemDelegate>
 
@@ -54,10 +56,14 @@ class CProject;
 class CTrack;
 class CMasterTrack;
 
+class ATrackWidget;
+class CWAVTrackWidget;
+
 class CMixerWindow;
 class CMixerStrip;
 class CMixerMasterStrip;
 
+class CTimeLine;
 
 class CMixerMasterStrip: public QGroupBox
 {
@@ -277,6 +283,8 @@ public:
 
   CProject *p_project;
   
+  ATrackWidget *track_widget;
+  
   CMixerStrip *mixer_strip;
   QGroupBox *gb_track;
  
@@ -478,6 +486,8 @@ public:
   QWidget *wnd_tracks;
   
   
+  CTimeLine *w_timeline;
+  
   QWidget *table_container; //container for tables
   QScrollArea *table_scroll_area;
   QHBoxLayout *table_widget_layout;
@@ -605,7 +615,6 @@ public:
 };
 
 
-
 class CMixerWindow: public QWidget
 {
 Q_OBJECT
@@ -613,7 +622,6 @@ Q_OBJECT
 public:  
 
   CProject *p_project;
-
   
   QHBoxLayout *h_main;
   QHBoxLayout *h_channel_strips_container;
@@ -625,6 +633,66 @@ public:
 
 };
 
+
+//отображает одну дорожку
+class ATrackWidget: public QWidget
+{
+Q_OBJECT
+  
+public:  
+
+  CTrack *p_track;
+  
+  ATrackWidget (CTrack *track, QWidget *parent = 0);
+
+  QSize sizeHint() const;
+
+};
+
+
+
+class CWAVTrackWidget: public ATrackWidget
+{
+Q_OBJECT
+  
+public:  
+
+  CWAVTrackWidget (CTrack *track, QWidget *parent = 0);
+
+   void paintEvent (QPaintEvent *event);
+};
+
+//отображает все дорожки, содержит вертикальный скролл-ареа, и горизонтальный скроллбар
+class CTracksWidget: public QWidget
+{
+Q_OBJECT
+  
+public:  
+
+
+
+};
+
+
+//содержит CTracksWidget, шкалу времени и так далее
+class CTimeLine: public QWidget
+{
+Q_OBJECT
+  
+public:  
+
+  CProject *p_project;
+
+//  CTracksWidget *tracks_widget;
+
+  QScrollArea *scra_tracks;
+  QWidget *w_tracks;
+  QVBoxLayout *vbl_tracks;
+  QScrollBar *sb_timeline;
+
+  CTimeLine (CProject *p, QWidget *parent = 0);
+
+};
 
 
 #endif
