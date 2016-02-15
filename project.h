@@ -662,19 +662,9 @@ public:
    void paintEvent (QPaintEvent *event);
 };
 
-//отображает все дорожки, содержит вертикальный скролл-ареа, и горизонтальный скроллбар
-class CTracksWidget: public QWidget
-{
-Q_OBJECT
-  
-public:  
 
 
 
-};
-
-
-//содержит CTracksWidget, шкалу времени и так далее
 class CTimeLine: public QWidget
 {
 Q_OBJECT

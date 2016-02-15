@@ -3553,15 +3553,16 @@ CTimeLine::CTimeLine (CProject *p, QWidget *parent): QWidget (parent)
   
   QScrollArea *scra_tracks = new QScrollArea;
   scra_tracks->setWidgetResizable (true);
+  scra_tracks->setHorizontalScrollBarPolicy (Qt::ScrollBarAlwaysOff);
+  
   scra_tracks->setWidget (w_tracks);
 
-  //sb_timeline = new QScrollBar (Qt::Horizontal);
+  sb_timeline = new QScrollBar (Qt::Horizontal);
 
   vbl_main->addWidget (scra_tracks);
  
- // vbl_main->addWidget (w_tracks);
  
- // vbl_main->addWidget (sb_timeline);
+  vbl_main->addWidget (sb_timeline);
  
 
 }
@@ -3582,6 +3583,8 @@ void CWAVTrackWidget::paintEvent (QPaintEvent *event)
   QPainter painter (this);
   //painter.drawImage (0, 0, waveform_image);
   
+  painter.drawRect (rect());
+  
   painter.drawText (rect(), p_track->track_name);
   
   //painter.drawText (rect(), "1111111111111");
@@ -3592,6 +3595,6 @@ void CWAVTrackWidget::paintEvent (QPaintEvent *event)
 
 QSize ATrackWidget::sizeHint() const
 {
-  return QSize (100, 100);
+  return QSize (parentWidget()->width(), 100);
 
 }
