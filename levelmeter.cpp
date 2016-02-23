@@ -39,7 +39,7 @@ void CLevelMeter::update_scale_image()
         
         int y = abs(ymin);  
         
-        qDebug() << "y " << y;
+      //  qDebug() << "y " << y;
 
         QPoint p1 (1, y);
         QPoint p2 (5, y);

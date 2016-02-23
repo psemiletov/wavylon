@@ -450,6 +450,8 @@ public:
  
   bool recording;
   
+  int frames_per_pixel;
+  
   size_t cursor_frames;
   
   size_t mixbuf_window_start_frames_one;
@@ -659,7 +661,7 @@ public:
 
   CWAVTrackWidget (CTrack *track, QWidget *parent = 0);
 
-   void paintEvent (QPaintEvent *event);
+  void paintEvent (QPaintEvent *event);
 };
 
 

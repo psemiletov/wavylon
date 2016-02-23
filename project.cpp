@@ -104,7 +104,7 @@ void CProject::project_new (const QString &fname)
 
   paths.project_dir = f.dir().absolutePath() + "/" + f.baseName(); 
 
-  qDebug() << "paths.project_dir: " << paths.project_dir;
+ // qDebug() << "paths.project_dir: " << paths.project_dir;
   
   paths.wav_dir = paths.project_dir + "/wav";
   paths.xml_dir = paths.project_dir + "/xml";
@@ -358,7 +358,7 @@ bool CProjectManager::project_open (const QString &fname)
 
 CProjectSettings::CProjectSettings()
 {
-  qDebug() << "CProjectSettings::CProjectSettings()";
+ // qDebug() << "CProjectSettings::CProjectSettings()";
 
   panner = 0;
   settings_window = 0;
@@ -552,7 +552,7 @@ void CProject::bt_wavs_edit_click()
 
 void CProject::bt_wavs_clip_click()
 {
-qDebug() << "CProject::bt_wavs_clip_click()";
+//qDebug() << "CProject::bt_wavs_clip_click()";
 
   QListWidgetItem *item = lw_wavs->currentItem();
   if (! item)
@@ -630,7 +630,7 @@ void CProject::bt_wavs_play_click()
 
 void CProject::bt_wavs_del_click()
 {
-qDebug() << "CProject::bt_wavs_del_click()";
+//qDebug() << "CProject::bt_wavs_del_click()";
 
   QListWidgetItem *item = lw_wavs->currentItem();
   if (! item)
@@ -1046,7 +1046,7 @@ void CProject::load_project()
  
   QString fname = paths.fname_project;
 
-  qDebug() << "CProject::load_project() " << fname;
+ // qDebug() << "CProject::load_project() " << fname;
   
   CTrack *t = 0;
   
@@ -1145,7 +1145,7 @@ void CProject::load_project()
 
                  t->fxrack.add_entry_silent (fx, fx->bypass);
 
-                 qDebug() << fx->modulename << " added";
+                 //qDebug() << fx->modulename << " added";
                 } 
 
              }
@@ -1213,6 +1213,9 @@ void CProject::load_project()
 
 
   refresh_song_length();
+  frames_per_pixel = song_length_frames / w_timeline->w_tracks->width();
+  
+  qDebug() << "{{{{{{{{{{{{{{{{{{{{{{{{{[ frames_per_pixel: " << frames_per_pixel;
 }
 
 
@@ -1844,7 +1847,7 @@ CTrack::CTrack (CProject *prj, int nchannels)
 
 void CProject::track_insert_new()
 {
- qDebug() << "CProject::track_insert_new()";
+// qDebug() << "CProject::track_insert_new()";
 
  QWidget *w = table_container->focusWidget();
 
@@ -2072,9 +2075,9 @@ size_t CProject::tracks_render_next()
 {
   qDebug() << "CProject::tracks_render_next()  - 1";
   
-  qDebug() << "tracks_window_start_frames: " << tracks_window_start_frames << " tracks_window_length_frames: " << tracks_window_length_frames;
-  qDebug() << "tracks_window_start time: " << frames_to_time_str (tracks_window_start_frames, global_samplerate) <<
-              "tracks_window_length time: " << frames_to_time_str (tracks_window_length_frames, global_samplerate);
+ // qDebug() << "tracks_window_start_frames: " << tracks_window_start_frames << " tracks_window_length_frames: " << tracks_window_length_frames;
+  //qDebug() << "tracks_window_start time: " << frames_to_time_str (tracks_window_start_frames, global_samplerate) <<
+    //          "tracks_window_length time: " << frames_to_time_str (tracks_window_length_frames, global_samplerate);
  
   if (tracks_window_start_frames >= song_length_frames - tracks_window_length_frames)
      {
@@ -3014,7 +3017,7 @@ void CMixerStrip::dsb_pan_valueChanged (double d)
    
    p_track->pan = (float) d;
  
-   qDebug() << "p_track->pan: " << p_track->pan;
+ //  qDebug() << "p_track->pan: " << p_track->pan;
 }
 
 
@@ -3564,7 +3567,14 @@ CTimeLine::CTimeLine (CProject *p, QWidget *parent): QWidget (parent)
  
   vbl_main->addWidget (sb_timeline);
  
+  p_project->frames_per_pixel = p_project->song_length_frames / w_tracks->width();
+  
+//  qDebug() << "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{";
+  
+//  qDebug() << "!!!!!!!!!! p_project->frames_per_pixel: " << p_project->frames_per_pixel;
 
+//  qDebug() << "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{";
+  
 }
 
 
