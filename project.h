@@ -283,6 +283,8 @@ public:
 
   CProject *p_project;
   
+  bool focused;
+  
   ATrackWidget *track_widget;
   
   CMixerStrip *mixer_strip;
@@ -643,11 +645,24 @@ Q_OBJECT
   
 public:  
 
+  QImage image;
+
   CTrack *p_track;
+  
+  //bool focused;
   
   ATrackWidget (CTrack *track, QWidget *parent = 0);
 
   QSize sizeHint() const;
+  
+  virtual void prepare_image() = 0;
+
+  void scale (int delta);
+  void recalc_view();
+
+
+  void wheelEvent (QWheelEvent *event);
+  void resizeEvent (QResizeEvent *event);
 
 };
 
@@ -659,12 +674,16 @@ Q_OBJECT
   
 public:  
 
+
   CWAVTrackWidget (CTrack *track, QWidget *parent = 0);
 
+  void prepare_image();
+
   void paintEvent (QPaintEvent *event);
+  
+  void mousePressEvent (QMouseEvent *event);  
+  void keyPressEvent (QKeyEvent *event);
 };
-
-
 
 
 class CTimeLine: public QWidget
@@ -675,15 +694,18 @@ public:
 
   CProject *p_project;
 
-//  CTracksWidget *tracks_widget;
+  QList <ATrackWidget*> track_widgets;
 
   QScrollArea *scra_tracks;
   QWidget *w_tracks;
   QVBoxLayout *vbl_tracks;
   QScrollBar *sb_timeline;
 
-  CTimeLine (CProject *p, QWidget *parent = 0);
+  size_t zoom_factor;
 
+  size_t frames_per_pixel();
+
+  CTimeLine (CProject *p, QWidget *parent = 0);
 };
 
 

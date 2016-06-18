@@ -23,6 +23,9 @@
 #include <QDial>
 #include <QDoubleSpinBox>
 #include <QPlainTextEdit>
+#include <QImage>
+#include <QPainter>
+
 
 #include <QMessageBox>
 
@@ -1451,6 +1454,8 @@ void CProject::refresh_song_length()
   if (cursor_frames >= song_length_frames)
      cursor_frames = song_length_frames - tracks_window_length_frames;
      
+  w_timeline->sb_timeline->setMaximum (song_length_frames);   
+     
  qDebug() << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx";
  qDebug() << "song_length_frames: " << song_length_frames;
  qDebug() << "XXXXXXXXXXXXXXXXXXXXXXXXXXXX";   
@@ -1806,6 +1811,8 @@ void CProject::list_tracks()
 CTrack::CTrack (CProject *prj, int nchannels)
 {
   qDebug() << "CTrack::CTrack ";
+
+  focused = false;
 
   p_project = prj;
   channels = nchannels;
@@ -3547,6 +3554,8 @@ CTimeLine::CTimeLine (CProject *p, QWidget *parent): QWidget (parent)
 {
   p_project = p;
   
+  zoom_factor = 1;
+  
   QVBoxLayout *vbl_main = new QVBoxLayout;
   setLayout (vbl_main);
   
@@ -3593,12 +3602,14 @@ void CWAVTrackWidget::paintEvent (QPaintEvent *event)
   QPainter painter (this);
   //painter.drawImage (0, 0, waveform_image);
   
+  if (p_track->focused)
+      painter.setPen (Qt::red);
+  else    
+      painter.setPen (Qt::black);
+  
   painter.drawRect (rect());
-  
   painter.drawText (rect(), p_track->track_name);
-  
-  //painter.drawText (rect(), "1111111111111");
-  
+    
   event->accept();
 }
 
@@ -3606,5 +3617,144 @@ void CWAVTrackWidget::paintEvent (QPaintEvent *event)
 QSize ATrackWidget::sizeHint() const
 {
   return QSize (parentWidget()->width(), 100);
+
+}
+
+
+
+void CWAVTrackWidget::mousePressEvent (QMouseEvent *event)  
+{
+      
+  for (int i = 0; i < p_track->p_project->tracks.size(); i++)
+       p_track->p_project->tracks[i]->focused = false;
+         
+      
+  p_track->focused = true;    
+  //setFocus (Qt::OtherFocusReason);
+  //mouse_pressed = true;
+  
+  p_track->p_project->w_timeline->w_tracks->update();
+  
+  event->accept();
+  
+}
+
+
+
+void ATrackWidget::wheelEvent (QWheelEvent *event)
+{
+  scale (event->delta());
+  event->accept();
+}  
+
+
+void ATrackWidget::resizeEvent (QResizeEvent *event)
+{
+  //recalc_view();
+  
+ // section_from = scrollbar->value();
+  //section_to = width() + scrollbar->value();
+  
+  prepare_image();
+}
+
+
+void CWAVTrackWidget::keyPressEvent (QKeyEvent *event)
+{
+  //if (event->key() == Qt::Key_Delete)
+  
+  
+  event->accept();
+}  
+
+
+
+void CWAVTrackWidget::prepare_image()
+{
+/*
+  QImage img (width(), height(), QImage::Format_RGB32);
+  QPainter painter (&img);
+  
+  //painter.setPen (cl_waveform_foreground);
+    
+  //img.fill (cl_waveform_background.rgb()); 
+  
+  image = img;*/
+}
+
+
+
+void ATrackWidget::recalc_view()
+{
+  //qDebug() << "CWaveform::recalc_view() - start";
+   /*
+  sections_total = width() * scale_factor;
+  
+  if (sections_total == 0)
+     return;
+
+  frames_per_section = ceil (fb->length_frames / sections_total);
+  
+  if (frames_per_section < FRAMES_PER_SECT_MAX)
+     frames_per_section = FRAMES_PER_SECT_MAX;
+  
+  scrollbar->setMinimum (0);
+  scrollbar->setMaximum (sections_total - width());
+*/
+  // << "CWaveform::recalc_view() - end";
+}
+
+
+void ATrackWidget::scale (int delta)
+{
+ //qDebug() << "CWaveform::scale - start";
+
+  if (delta > 0)
+     p_track->p_project->w_timeline->zoom_factor++; //  p_track->p_project->w_timeline->zoom_factor
+  if (delta < 0)
+     p_track->p_project->w_timeline->zoom_factor--;
+     
+  if (p_track->p_project->w_timeline->zoom_factor < 1)   
+     p_track->p_project->w_timeline->zoom_factor = 1;
+     
+
+  //p_track->p_project->w_timeline->
+  
+  p_track->p_project->w_timeline->update();
+
+/*
+  if (frames_per_section == 0)
+     return;
+
+  int old_section_from = get_section_from();
+  int old_frame_from = old_section_from * frames_per_section;
+
+  if (delta > 0)
+     scale_factor += 0.1f;
+  else    
+     scale_factor -= 0.1f;
+    
+  if (scale_factor < 1.0f)
+     scale_factor = 1.0f;
+
+  if ((width() * scale_factor) >= fb->length_frames - 1) //can be scale factor so large?
+      return;
+
+  recalc_view();
+  prepare_image();
+  
+  int new_section = old_frame_from / frames_per_section;   
+  scrollbar->setValue (new_section);
+
+  update();   
+  timeruler->update();
+*/
+  //qDebug() << "CWaveform::scale - end";
+}
+
+
+size_t CTimeLine::frames_per_pixel()
+{
+  size_t x = p_project->song_length_frames / width() * zoom_factor;
 
 }
