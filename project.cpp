@@ -446,7 +446,7 @@ void CProjectSettings::call_ui (bool creation)
   v_box->addLayout (h_panner);
  
   QPushButton *bt_done = new QPushButton (tr ("Done"), settings_window);
-   connect (bt_done, SIGNAL(clicked()), this, SLOT(ui_done()));
+  connect (bt_done, SIGNAL(clicked()), this, SLOT(ui_done()));
 
    v_box->addWidget (bt_done);
    
@@ -1216,9 +1216,9 @@ void CProject::load_project()
 
 
   refresh_song_length();
-  frames_per_pixel = song_length_frames / w_timeline->w_tracks->width();
+  //frames_per_pixel = song_length_frames / w_timeline->w_tracks->width();
   
-  qDebug() << "{{{{{{{{{{{{{{{{{{{{{{{{{[ frames_per_pixel: " << frames_per_pixel;
+  //qDebug() << "{{{{{{{{{{{{{{{{{{{{{{{{{[ frames_per_pixel: " << frames_per_pixel;
 }
 
 
@@ -3570,13 +3570,17 @@ CTimeLine::CTimeLine (CProject *p, QWidget *parent): QWidget (parent)
   scra_tracks->setWidget (w_tracks);
 
   sb_timeline = new QScrollBar (Qt::Horizontal);
+  
+  connect (sb_timeline, SIGNAL(valueChanged(int )), this, SLOT(sb_timeline_valueChanged (int )));
+ 
+  
 
   vbl_main->addWidget (scra_tracks);
  
  
   vbl_main->addWidget (sb_timeline);
  
-  p_project->frames_per_pixel = p_project->song_length_frames / w_tracks->width();
+  //p_project->frames_per_pixel = p_project->song_length_frames / w_tracks->width();
   
 //  qDebug() << "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{";
   
@@ -3598,6 +3602,12 @@ void CWAVTrackWidget::paintEvent (QPaintEvent *event)
 {
  qDebug() << "CWAVTrackWidget::paintEvent";
 //  QWidget::paintEvent (event);
+  
+  int window_start = p_track->p_project->w_timeline->sb_timeline->value();
+  int window_end = window_start + p_track->p_project->w_timeline->w_tracks->width();
+  
+  //scaled = window_start * p_track->p_project->w_timeline->frames_per_pixel();
+  
   
   QPainter painter (this);
   //painter.drawImage (0, 0, waveform_image);
@@ -3755,6 +3765,13 @@ void ATrackWidget::scale (int delta)
 
 size_t CTimeLine::frames_per_pixel()
 {
-  size_t x = p_project->song_length_frames / width() * zoom_factor;
+  return p_project->song_length_frames / w_tracks->width() * zoom_factor;
+}
+
+
+void CTimeLine::sb_timeline_valueChanged (int value)
+{
+  w_tracks->update();
+  qDebug() << "CTimeLine::sb_timeline_valueChanged " << value;
 
 }

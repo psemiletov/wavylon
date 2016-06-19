@@ -452,7 +452,7 @@ public:
  
   bool recording;
   
-  int frames_per_pixel;
+  //int frames_per_pixel;
   
   size_t cursor_frames;
   
@@ -694,7 +694,7 @@ public:
 
   CProject *p_project;
 
-  QList <ATrackWidget*> track_widgets;
+ // QList <ATrackWidget*> track_widgets;
 
   QScrollArea *scra_tracks;
   QWidget *w_tracks;
@@ -706,6 +706,10 @@ public:
   size_t frames_per_pixel();
 
   CTimeLine (CProject *p, QWidget *parent = 0);
+  
+public slots:
+
+  void sb_timeline_valueChanged(int value);
 };
 
 
