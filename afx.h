@@ -13,6 +13,7 @@
 
 
 #include "floatbuffer.h"
+#include "fxpresets.h"
 
 
 enum FxState {
@@ -40,6 +41,8 @@ public:
   
   size_t channels;
   size_t samplerate;
+  
+  CFxPresets *presets;
   
   QWidget *wnd_ui;
   QVBoxLayout *vbl_main;
@@ -74,6 +77,13 @@ public:
 
   static QString get_modulename() {return QString ("AFx");};
  // static QString get_classname() {return QString ("AFx");};
+ 
+public slots:
+
+  void slot_preset_changed (const QString &text);
+  void slot_save_request();
+  
+ 
 };
 
 

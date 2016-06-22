@@ -11,6 +11,7 @@ Peter Semiletov
 #include <QImage>
 #include <QTextCodec>
 #include <QByteArray>
+#include <QMap>
 
 #include "gui_utils.h"
 #include "utils.h"
@@ -126,6 +127,26 @@ QHash <QString, QString> hash_load_keyval (const QString &fname)
 }
 
 
+QMap <QString, QString> map_load_keyval (const QString &fname, const QString &sep)
+{
+  QMap <QString, QString> result;
+
+  if (! file_exists (fname))
+     return result;
+
+  QStringList l = qstring_load (fname).split ("\n");
+
+  foreach (QString s, l)
+          {
+           QStringList sl = s.split (sep);
+           if (sl.size() > 1)
+               result.insert (sl[0], sl[1]);
+          }
+
+  return result;
+}
+
+
 bool is_image (const QString &filename)
 {
   QList <QByteArray> a = QImageReader::supportedImageFormats();
@@ -147,6 +168,17 @@ QString hash_keyval_to_string (const QHash <QString, QString> &h)
 
   foreach (QString s, h.keys())
           l.prepend (s.append ("=").append (h.value (s)));
+
+  return l.join ("\n").trimmed();
+}
+
+
+QString map_keyval_to_string (const QMap <QString, QString> &h, const QString &sep)
+{
+  QStringList l;
+
+  foreach (QString s, h.keys())
+          l.prepend (s.append (sep).append (h.value (s)));
 
   return l.join ("\n").trimmed();
 }
@@ -305,51 +337,65 @@ QString str_from_locale (const char *s)
 }
 
 
+QAction* menu_add_item (QObject *obj,
+                      QMenu *menu,
+                      const QString &caption,
+                      const char *method,
+                      const QString &shortkt,
+                      const QString &iconpath
+                     )
+{
+  QAction *act = new QAction (caption, obj);
+
+  if (! shortkt.isEmpty())
+     act->setShortcut (shortkt);
+
+  if (! iconpath.isEmpty())
+     act->setIcon (QIcon (iconpath));
+
+  obj->connect (act, SIGNAL(triggered()), obj, method);
+  menu->addAction (act);
+  return act;
+}
+
+
+
 QStringList read_dir_files (const QString &path)
 {
- QDir dir (path);
- return dir.entryList (QDir::Files | QDir::NoDotAndDotDot);
+QDir dir (path);
+return dir.entryList (QDir::Files | QDir::NoDotAndDotDot);
 }
 
 
 QString get_value_with_default (const QStringRef &val, const QString &def)
 {
- QString s = val.toString();
- if (! s.isEmpty())
-   return s;
- else
-     return def;
+QString s = val.toString();
+if (! s.isEmpty())
+return s;
+else
+return def;
 }
-
-
 int get_value_with_default (const QStringRef &val, int def)
 {
- QString s = val.toString();
-
- if (! s.isEmpty())
- return s.toInt();
- else
- return def;
+QString s = val.toString();
+if (! s.isEmpty())
+return s.toInt();
+else
+return def;
 }
-
-
 size_t get_value_with_default (const QStringRef &val, size_t def)
 {
- QString s = val.toString();
-
- if (! s.isEmpty())
- return (size_t) val.toInt();
- else
- return def;
+QString s = val.toString();
+if (! s.isEmpty())
+return (size_t) val.toInt();
+else
+return def;
 }
-
-
 float get_value_with_default (const QStringRef &val, float def)
 {
- QString s = val.toString();
-
- if (! s.isEmpty())
- return s.toFloat();
- else
- return def;
+QString s = val.toString();
+if (! s.isEmpty())
+return s.toFloat();
+else
+return def;
 }

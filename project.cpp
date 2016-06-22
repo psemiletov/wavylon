@@ -3580,6 +3580,8 @@ CTimeLine::CTimeLine (CProject *p, QWidget *parent): QWidget (parent)
  
   vbl_main->addWidget (sb_timeline);
  
+  update_sb_timeline_zoom();
+ 
   //p_project->frames_per_pixel = p_project->song_length_frames / w_tracks->width();
   
 //  qDebug() << "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{";
@@ -3602,6 +3604,12 @@ void CWAVTrackWidget::paintEvent (QPaintEvent *event)
 {
  qDebug() << "CWAVTrackWidget::paintEvent";
 //  QWidget::paintEvent (event);
+  
+  if (! p_track) 
+     return;
+  
+  if (! p_track->p_project->w_timeline)
+     return;
   
   int window_start = p_track->p_project->w_timeline->sb_timeline->value();
   int window_end = window_start + p_track->p_project->w_timeline->w_tracks->width();
@@ -3728,9 +3736,9 @@ void ATrackWidget::scale (int delta)
      p_track->p_project->w_timeline->zoom_factor = 1;
      
 
-  //p_track->p_project->w_timeline->
-  
   p_track->p_project->w_timeline->update();
+ p_track->p_project->w_timeline->update_sb_timeline_zoom();
+
 
 /*
   if (frames_per_section == 0)
@@ -3765,7 +3773,11 @@ void ATrackWidget::scale (int delta)
 
 size_t CTimeLine::frames_per_pixel()
 {
-  return p_project->song_length_frames / w_tracks->width() * zoom_factor;
+  int t = p_project->song_length_frames / w_tracks->width() * zoom_factor;
+  if (t == 0)
+     t = 1;
+     
+  return t;   
 }
 
 
@@ -3773,5 +3785,15 @@ void CTimeLine::sb_timeline_valueChanged (int value)
 {
   w_tracks->update();
   qDebug() << "CTimeLine::sb_timeline_valueChanged " << value;
+
+}
+
+void CTimeLine::update_sb_timeline_zoom()
+{
+  int val_new = sb_timeline->value() / frames_per_pixel();
+  int max_new = p_project->song_length_frames / frames_per_pixel();  
+  sb_timeline->setValue (val_new);
+  sb_timeline->setMaximum (max_new);
+  
 
 }

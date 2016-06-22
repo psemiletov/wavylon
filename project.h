@@ -699,13 +699,15 @@ public:
   QScrollArea *scra_tracks;
   QWidget *w_tracks;
   QVBoxLayout *vbl_tracks;
-  QScrollBar *sb_timeline;
+  QScrollBar *sb_timeline; //range is scaled to frames_per_pixel
 
   size_t zoom_factor;
 
   size_t frames_per_pixel();
 
   CTimeLine (CProject *p, QWidget *parent = 0);
+  
+  void update_sb_timeline_zoom();
   
 public slots:
 

@@ -22,6 +22,7 @@ SOURCES += wavylon.cpp \
     fxset.cpp \
     fxrack.cpp \
     fxlist.cpp \
+    fxpresets.cpp \
     envelope.cpp \
     utils.cpp \
     fman.cpp \
@@ -51,6 +52,7 @@ HEADERS += wavylon.h \
     project.h \
     fxlist.h \
     fxset.h \
+    fxpresets.h \
     libretta_interpolator.h \
     fx-panners.h \
     fx-filter.h \

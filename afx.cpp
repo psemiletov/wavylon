@@ -20,10 +20,17 @@ AFx::AFx()
   vbl_main = new QVBoxLayout;
   wnd_ui->setLayout (vbl_main);
 
+  presets = new CFxPresets;
+  
+  connect (presets, SIGNAL(save_request()), this, SLOT(slot_save_request()));
+  connect (presets, SIGNAL(preset_changed (const QString &)), this, SLOT(slot_preset_changed (const QString &)));
+
   w_caption = new QWidget; 
   QVBoxLayout *vbl_caption = new QVBoxLayout;
   w_caption->setLayout (vbl_caption);
   
+  
+  vbl_main->addWidget (presets);
   vbl_main->addWidget (w_caption);
   
   l_caption = new QLabel;
@@ -39,6 +46,8 @@ AFx::AFx()
   
   w_caption->setObjectName ("w_caption");
   w_caption->setStyleSheet (qstl);
+  
+  
 }
 
 
@@ -78,3 +87,14 @@ void AFx::reset_params (size_t srate, size_t chann)
   channels = chann;
 }
 
+
+void AFx::slot_preset_changed (const QString &text)
+{
+  load_params_from_string (text);
+}
+
+
+void AFx::slot_save_request()
+{
+  presets->preset_data = save_params_to_string();
+}
