@@ -1333,8 +1333,6 @@ void CProject::bt_transport_record_click()
 }
 
 
-
-
 void CProject::slider_position_valueChanged (int value)
 {
 //  qDebug() << "slider_position_valueChanged " << value;
@@ -3618,7 +3616,10 @@ void CWAVTrackWidget::paintEvent (QPaintEvent *event)
   
   
   QPainter painter (this);
-  //painter.drawImage (0, 0, waveform_image);
+  
+  prepare_image();  
+  painter.drawImage (0, 0, image);
+  
   
   if (p_track->focused)
       painter.setPen (Qt::red);
@@ -3627,6 +3628,7 @@ void CWAVTrackWidget::paintEvent (QPaintEvent *event)
   
   painter.drawRect (rect());
   painter.drawText (rect(), p_track->track_name);
+    
     
   event->accept();
 }
@@ -3689,15 +3691,198 @@ void CWAVTrackWidget::keyPressEvent (QKeyEvent *event)
 
 void CWAVTrackWidget::prepare_image()
 {
-/*
+
   QImage img (width(), height(), QImage::Format_RGB32);
   QPainter painter (&img);
+  
+  
+  img.fill (QColor("white")); 
   
   //painter.setPen (cl_waveform_foreground);
     
   //img.fill (cl_waveform_background.rgb()); 
   
-  image = img;*/
+  
+  if (! p_track) 
+     return;
+  
+  if (! p_track->p_project->w_timeline)
+     return;
+  
+  int scale = p_track->p_project->w_timeline->frames_per_pixel();
+  
+  int window_start = p_track->p_project->w_timeline->sb_timeline->value();
+  int window_end = window_start + p_track->p_project->w_timeline->w_tracks->width();
+  
+  int window_length_frames = p_track->p_project->w_timeline->w_tracks->width() * scale; 
+  
+  //scaled = window_start * p_track->p_project->w_timeline->frames_per_pixel();
+  
+  int start_pos_frames = window_start * scale;
+  int end_pos_frames = window_end * scale;
+  
+    //size_t end_pos_frames = start_pos_frames + window_length_frames; //конец окна на дорожке
+
+  int clips_count = p_track->clips.size();
+ 
+  //fbtrack->settozero(); 
+
+/*
+
+сюда же вставить проверку, находятся ли первый и последний клипы в пределах курсора.
+если нет, то вообще не рендерим больше дорожку
+
+*/
+     
+  for (int i = 0; i < clips_count; i++)
+      {
+       CWaveClip *clip = (CWaveClip*)p_track->clips[i];
+
+       if (clip->muted)
+          continue;
+      
+       //qDebug() << "***** clip: " << clip->name << " **** " << clip->length_frames;
+       
+      // qDebug() << "clip: " << clip->name;
+       //qDebug() << "clip len: " << clip->length_frames;
+       
+       //check is clip in range?
+       
+       size_t clip_start = clip->position_frames; //начало клипа на дорожке, положение
+       size_t clip_end = clip_start + clip->length_frames;//конец клипа на дорожке, положение
+       
+       int clip_in_window = 0; //0 - not, 1 - window len <= clip, 2 - window len => clip
+       
+       if (window_length_frames >= clip->length_frames)
+          {
+           if ((start_pos_frames <= clip_start && clip_start <= end_pos_frames) ||
+               (start_pos_frames <= clip_end && clip_end <= end_pos_frames)) 
+              clip_in_window = 2; 
+          }
+       else
+           {
+            if ((clip_start <= start_pos_frames && start_pos_frames <= clip_end) ||
+                (clip_start <= end_pos_frames && end_pos_frames <= clip_end))
+               clip_in_window = 1;    
+            }  
+       
+     //  qDebug() << clip_in_window;
+      
+       if (clip_in_window == 0)
+          continue;
+                
+//       qDebug() << "clip: " << clip->name << " is in window";  
+        
+       //теперь вычислить отрезок клипа, входящий в окно
+       // именно смещение клипа относительно начала клипа и смещение относительно конца клипа
+        
+       size_t clip_data_start = 0;  //где в клипе начало попадающего в окно отрезка? относительно начала клипа
+       size_t clip_insertion_pos = 0; //куда вставлять в буфер дорожки?
+       size_t clip_data_length = 0;
+        
+       if (clip_in_window == 1)
+          {
+         //  qDebug() << clip->name << " clip_in_window == 1";
+           
+           if (start_pos_frames <= clip_start)
+             {
+           //   qDebug() << "x1";
+              clip_insertion_pos = clip_start - start_pos_frames;
+              clip_data_start = 0;
+              clip_data_length = end_pos_frames - clip_start;
+             }
+           else   
+               if (start_pos_frames > clip_start)
+                  {
+                   //qDebug() << "x2";
+
+                   clip_insertion_pos = 0; //по границе начала окна
+                   clip_data_start = start_pos_frames - clip_start;
+                   
+                   //qDebug() << "clip_data_start: " << clip_data_start;
+                   //qDebug() << "clip_end: " << clip_end;
+                   //qDebug() << "end_pos_frames: " << end_pos_frames;
+            
+                   if (clip_end >= end_pos_frames)
+                       clip_data_length = window_length_frames;
+                   else
+                      {
+                      //qDebug() << "x3";   
+                      // clip_data_length = end_pos_frames - clip_start;
+                        clip_data_length = clip_end - start_pos_frames;
+                      
+                       
+                      } 
+                       
+                   qDebug() << "!!! clip_data_length: " << clip_data_length;
+                
+                 }
+           }
+        
+        if (clip_in_window == 2)
+           {
+    //       qDebug() << "clip_in_window == 2";
+          
+            if (start_pos_frames <= clip_start)
+               {
+                clip_insertion_pos = clip_start - start_pos_frames;
+                clip_data_start = 0;
+                
+                if (clip_start >= start_pos_frames && clip_end <= end_pos_frames)
+                   clip_data_length = clip->length_frames;
+                else   
+                   clip_data_length = end_pos_frames - clip_start;
+               }
+            else   
+                if (start_pos_frames > clip_start)
+                   {
+                    clip_insertion_pos = 0; //по границе начала окна
+                    clip_data_start = start_pos_frames - clip_start;
+          
+                    if (clip_start >= start_pos_frames && clip_end >= end_pos_frames)
+                        clip_data_length = clip->length_frames;
+                    else   
+                        clip_data_length = clip_end - start_pos_frames;
+                   }
+            }
+          
+        //ошибка с clip_data_length, может быть больше, чем действительно есть?  
+          
+      //  qDebug() << "clip_data_start: " << clip_data_start;
+//        qDebug() << "clip_data_length: " << clip_data_length;
+  //      qDebug() << "clip_insertion_pos: " << clip_insertion_pos;
+        
+      
+        size_t extoffs = (clip->offset_frames + clip_data_start) * clip->playback_rate;
+       
+           //ошибка в вычислении clip_insertion_pos???     
+           //тут может быть вылет!!!  
+        
+        if (clip->playback_rate == 1.0f && clip->file)
+          {
+           
+           
+           //образец: clip->file->fb->copy_to_pos (fbtrack, extoffs, clip_data_length, clip_insertion_pos);
+           
+           int x = clip_insertion_pos / scale - window_start;
+           int y = 0;
+           int w = clip_data_length / scale;
+           int h = height();
+           
+           QRect r (x, y, w, h);
+           
+           painter.fillRect (r, QBrush ("blue", Qt::Dense3Pattern));
+           
+           
+           
+           
+          } 
+        
+       }   
+       
+       
+       
+  image = img; 
 }
 
 
