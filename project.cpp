@@ -3600,7 +3600,7 @@ CWAVTrackWidget::CWAVTrackWidget (CTrack *track, QWidget *parent): ATrackWidget 
 
 void CWAVTrackWidget::paintEvent (QPaintEvent *event)
 {
- qDebug() << "CWAVTrackWidget::paintEvent";
+// qDebug() << "CWAVTrackWidget::paintEvent";
 //  QWidget::paintEvent (event);
   
   if (! p_track) 
@@ -3872,15 +3872,8 @@ void CWAVTrackWidget::prepare_image()
            QRect r (x, y, w, h);
            
            painter.fillRect (r, QBrush ("blue", Qt::Dense3Pattern));
-           
-           
-           
-           
           } 
-        
        }   
-       
-       
        
   image = img; 
 }
@@ -3912,6 +3905,8 @@ void ATrackWidget::scale (int delta)
 {
  //qDebug() << "CWaveform::scale - start";
 
+  qDebug() << "delta " << delta;
+
   if (delta > 0)
      p_track->p_project->w_timeline->zoom_factor++; //  p_track->p_project->w_timeline->zoom_factor
   if (delta < 0)
@@ -3922,8 +3917,13 @@ void ATrackWidget::scale (int delta)
      
 
   p_track->p_project->w_timeline->update();
- p_track->p_project->w_timeline->update_sb_timeline_zoom();
+  
+  p_track->p_project->w_timeline->w_tracks->update();
+  
+  p_track->p_project->w_timeline->update_sb_timeline_zoom();
 
+
+  qDebug() << "zoom_factor: " << p_track->p_project->w_timeline->zoom_factor;
 
 /*
   if (frames_per_section == 0)
@@ -3958,7 +3958,7 @@ void ATrackWidget::scale (int delta)
 
 size_t CTimeLine::frames_per_pixel()
 {
-  int t = p_project->song_length_frames / w_tracks->width() * zoom_factor;
+  int t = p_project->song_length_frames / w_tracks->width() / zoom_factor;
   if (t == 0)
      t = 1;
      
