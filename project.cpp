@@ -3644,16 +3644,48 @@ QSize ATrackWidget::sizeHint() const
 
 void CWAVTrackWidget::mousePressEvent (QMouseEvent *event)  
 {
+  
+  setFocus (Qt::OtherFocusReason);
+  //mouse_pressed = true;
       
   for (int i = 0; i < p_track->p_project->tracks.size(); i++)
        p_track->p_project->tracks[i]->focused = false;
          
       
   p_track->focused = true;    
-  //setFocus (Qt::OtherFocusReason);
-  //mouse_pressed = true;
   
-  p_track->p_project->w_timeline->w_tracks->update();
+  
+  if (event->button() == Qt::LeftButton)
+     {
+  //найти клип под курсором, если найден - выделить, не найден - установить курсор 
+  
+      size_t frame_at_pos = p_track->p_project->w_timeline->sb_timeline->value() + event->x();
+      frame_at_pos *= p_track->p_project->w_timeline->frames_per_pixel();
+  
+      qDebug() << "frame_at_pos " << frame_at_pos;
+  
+      
+  
+      for (int i = 0; i < p_track->p_project->tracks.size(); i++)
+          {
+           CTrack *t = p_track->p_project->tracks[i];
+           for (int j = 0; j < t->clips.size(); j++)
+               {
+                CClip *clip = t->clips[j];
+                if (frame_at_pos > clip->position_frames && frame_at_pos < 
+                    clip->position_frames + clip->length_frames)
+                    {
+                     qDebug() << clip->name;
+                    
+                    } 
+               
+               } 
+          } 
+           
+  
+  
+      p_track->p_project->w_timeline->w_tracks->update();
+     }
   
   event->accept();
   
