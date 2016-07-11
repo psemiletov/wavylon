@@ -3661,10 +3661,13 @@ void CWAVTrackWidget::mousePressEvent (QMouseEvent *event)
   
       size_t frame_at_pos = p_track->p_project->w_timeline->sb_timeline->value() + event->x();
       frame_at_pos *= p_track->p_project->w_timeline->frames_per_pixel();
-  
-      qDebug() << "frame_at_pos " << frame_at_pos;
-  
       
+      bool add_to_sel = 
+      
+      p_track->p_project->w_timeline->clip_select_at_pos (frame_at_pos, false);
+  
+  /*
+      qDebug() << "frame_at_pos " << frame_at_pos;
   
       for (int i = 0; i < p_track->p_project->tracks.size(); i++)
           {
@@ -3685,6 +3688,8 @@ void CWAVTrackWidget::mousePressEvent (QMouseEvent *event)
   
   
       p_track->p_project->w_timeline->w_tracks->update();
+      
+      */
      }
   
   event->accept();
@@ -3903,7 +3908,18 @@ void CWAVTrackWidget::prepare_image()
            
            QRect r (x, y, w, h);
            
-           painter.fillRect (r, QBrush ("blue", Qt::Dense3Pattern));
+           QBrush clip_brush;
+           
+           if (! clip->selected)
+              clip_brush.setColor ("blue");
+           else    
+               clip_brush.setColor ("green");
+               
+           clip_brush.setStyle  (Qt::Dense3Pattern);
+               
+           painter.fillRect (r, clip_brush);
+           
+           
           } 
        }   
        
@@ -4011,6 +4027,36 @@ void CTimeLine::update_sb_timeline_zoom()
   int max_new = p_project->song_length_frames / frames_per_pixel();  
   sb_timeline->setValue (val_new);
   sb_timeline->setMaximum (max_new);
-  
-
 }
+
+int CTimeLine::clip_select_at_pos (size_t frame, bool add_to_selection)
+{
+  for (int i = 0; i < p_project->tracks.size(); i++)
+      {
+       CTrack *t = p_project->tracks[i];
+       for (int j = 0; j < t->clips.size(); j++)
+           {
+            CClip *clip = t->clips[j];
+            
+            if (! add_to_selection)
+                clip->selected = false;
+            
+            if (t->focused)
+            if (frame > clip->position_frames && frame < 
+               clip->position_frames + clip->length_frames)
+                 {
+                  clip->selected = true;
+                  qDebug() << clip->name;
+                    
+                  } 
+               
+            } 
+          } 
+           
+  
+  
+  w_tracks->update();
+   
+  return 1;
+}
+

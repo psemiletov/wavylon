@@ -703,12 +703,16 @@ public:
 
   size_t zoom_factor;
 
+  CTimeLine (CProject *p, QWidget *parent = 0);
+
+
   size_t frames_per_pixel();
 
-  CTimeLine (CProject *p, QWidget *parent = 0);
   
   void update_sb_timeline_zoom();
-  
+ 
+  int clip_select_at_pos (size_t frame, bool add_to_selection);
+    
 public slots:
 
   void sb_timeline_valueChanged(int value);
