@@ -3655,6 +3655,8 @@ void CWAVTrackWidget::mousePressEvent (QMouseEvent *event)
   p_track->focused = true;    
   
   
+  bool ctrl_pressed = (event->modifiers() & Qt::ControlModifier);  
+  
   if (event->button() == Qt::LeftButton)
      {
   //найти клип под курсором, если найден - выделить, не найден - установить курсор 
@@ -3662,9 +3664,9 @@ void CWAVTrackWidget::mousePressEvent (QMouseEvent *event)
       size_t frame_at_pos = p_track->p_project->w_timeline->sb_timeline->value() + event->x();
       frame_at_pos *= p_track->p_project->w_timeline->frames_per_pixel();
       
-      bool add_to_sel = 
+      //bool add_to_sel = 
       
-      p_track->p_project->w_timeline->clip_select_at_pos (frame_at_pos, false);
+      p_track->p_project->w_timeline->clip_select_at_pos (frame_at_pos, ctrl_pressed);
   
   /*
       qDebug() << "frame_at_pos " << frame_at_pos;
@@ -4045,10 +4047,14 @@ int CTimeLine::clip_select_at_pos (size_t frame, bool add_to_selection)
             if (frame > clip->position_frames && frame < 
                clip->position_frames + clip->length_frames)
                  {
-                  clip->selected = true;
+                  if (! add_to_selection)
+                    clip->selected = true;
+                  else
+                      clip->selected = ! clip->selected;
+                  
                   qDebug() << clip->name;
                     
-                  } 
+                 } 
                
             } 
           } 
