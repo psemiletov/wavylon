@@ -441,6 +441,7 @@ CWavylon::CWavylon()
   idx_tab_tune = 0;
   idx_tab_fman = 0;
   idx_tab_learn = 0;
+  idx_tab_timeline = 0;
   
   create_paths();
   
@@ -3383,7 +3384,25 @@ void CWavylon::prj_clip_props()
   if (! project_manager->project)
      return;
 
-  project_manager->project->table_clip_props();
+ // project_manager->project->table_clip_props();
+ 
+  CClip *clip = project_manager->project->w_timeline->get_selected_clip();
+  if (! clip)
+     return;
+ 
+  clip->call_ui();
+  //    p->update_track_table(); 
+  
+  for (int i = 0; i < project_manager->project->tracks.size(); i++)
+    {
+     
+     CTrackTableWidget *w = (CTrackTableWidget*)project_manager->project->tracks[i]->table_widget;
+     w->update_track_table();
+       
+     //qDebug() << "clips count: " << tracks[i]->clips.size();
+    }
+  
+  project_manager->project->refresh_song_length();
 }   
 
 

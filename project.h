@@ -557,7 +557,7 @@ public:
   
   void table_track_create (CTrack *t);
   void table_clip_props();
-
+  
   void track_insert_new();
   void track_delete (int track_number);
   void track_swap (int track_number1, int track_number2);
@@ -708,6 +708,7 @@ public:
 
   size_t frames_per_pixel();
 
+  CClip* get_selected_clip(); //return first selected clip
   
   void update_sb_timeline_zoom();
  

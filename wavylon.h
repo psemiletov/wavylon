@@ -120,6 +120,7 @@ public:
 
   bool b_preview;
 
+  int idx_tab_timeline;
   int idx_tab_edit;
   int idx_tab_tune;
   int idx_tab_fman;

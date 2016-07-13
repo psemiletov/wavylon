@@ -4031,6 +4031,7 @@ void CTimeLine::update_sb_timeline_zoom()
   sb_timeline->setMaximum (max_new);
 }
 
+
 int CTimeLine::clip_select_at_pos (size_t frame, bool add_to_selection)
 {
   for (int i = 0; i < p_project->tracks.size(); i++)
@@ -4066,3 +4067,22 @@ int CTimeLine::clip_select_at_pos (size_t frame, bool add_to_selection)
   return 1;
 }
 
+
+
+CClip* CTimeLine::get_selected_clip()
+{
+  CClip *clip = 0;
+
+  for (int i = 0; i < p_project->tracks.size(); i++)
+      {
+       CTrack *t = p_project->tracks[i];
+       for (int j = 0; j < t->clips.size(); j++)
+           {
+            clip = t->clips[j];
+            if (clip->selected)
+               return clip;
+           }
+      }
+      
+  return clip;    
+}
