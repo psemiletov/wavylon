@@ -710,6 +710,9 @@ public:
 
   CClip* get_selected_clip(); //return first selected clip
   
+  void clip_selected_delete();
+  
+  
   void update_sb_timeline_zoom();
  
   int clip_select_at_pos (size_t frame, bool add_to_selection);

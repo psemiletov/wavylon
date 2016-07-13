@@ -992,6 +992,7 @@ void CWavylon::createMenus()
   menu_clip->setTearOffEnabled (true);
 
   add_to_menu (menu_clip, tr ("Edit clip"), SLOT(prj_clip_props()));
+  add_to_menu (menu_clip, tr ("Delete clip"), SLOT(prj_clip_del()));
   
 
   editMenu = menuBar()->addMenu (tr ("Edit"));
@@ -3379,6 +3380,30 @@ void CWavylon::project_call_tracks_wnd()
 }
 
 
+void CWavylon::prj_clip_del()
+{
+  if (! project_manager->project)
+     return;
+
+ // project_manager->project->table_clip_props();
+ 
+  /*CClip *clip = project_manager->project->w_timeline->get_selected_clip();
+  if (! clip)
+     return;
+*/
+  project_manager->project->w_timeline->clip_selected_delete();
+  project_manager->project->w_timeline->w_tracks->update();
+  
+  for (int i = 0; i < project_manager->project->tracks.size(); i++)
+     {
+      CTrackTableWidget *w = (CTrackTableWidget*)project_manager->project->tracks[i]->table_widget;
+      w->update_track_table();
+    }
+  
+  project_manager->project->refresh_song_length();
+
+}
+
 void CWavylon::prj_clip_props()
 {
   if (! project_manager->project)
@@ -3391,15 +3416,13 @@ void CWavylon::prj_clip_props()
      return;
  
   clip->call_ui();
-  //    p->update_track_table(); 
+  
+  project_manager->project->w_timeline->update();
   
   for (int i = 0; i < project_manager->project->tracks.size(); i++)
-    {
-     
-     CTrackTableWidget *w = (CTrackTableWidget*)project_manager->project->tracks[i]->table_widget;
-     w->update_track_table();
-       
-     //qDebug() << "clips count: " << tracks[i]->clips.size();
+     {
+      CTrackTableWidget *w = (CTrackTableWidget*)project_manager->project->tracks[i]->table_widget;
+      w->update_track_table();
     }
   
   project_manager->project->refresh_song_length();

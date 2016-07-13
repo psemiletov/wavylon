@@ -4086,3 +4086,25 @@ CClip* CTimeLine::get_selected_clip()
       
   return clip;    
 }
+
+
+void CTimeLine::clip_selected_delete()
+{
+ CClip *clip = 0;
+
+  for (int i = 0; i < p_project->tracks.size(); i++)
+      {
+       CTrack *t = p_project->tracks[i];
+       for (int j = 0; j < t->clips.size(); j++)
+           {
+            clip = t->clips[j];
+            
+            if (clip->selected)
+               {
+                qDebug() << "delete " << clip->name;
+                clip = t->clips.takeAt (j);
+                delete clip;
+               }
+           }
+      }
+}

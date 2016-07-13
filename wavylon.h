@@ -247,6 +247,8 @@ main window callbacks
   //void fm_full_info();
 
   void prj_clip_props();
+  void prj_clip_del();
+
 
   
   void fman_refresh();
