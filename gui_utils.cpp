@@ -85,35 +85,6 @@ void create_menu_from_dir_dir (QObject *handler,
          }
 }
 
-
-QImage image_scale_by (const QImage &source,
-                       bool by_side,
-                       int value,
-                       Qt::TransformationMode mode)
-{
-  bool horisontal = (source.width() > source.height());
-
-  int width;
-  int height;
-
-  if (by_side)
-     {
-      width = value;
-      height = value;
-     }
-   else
-       {
-        width = get_value (source.width(), value);
-        height = get_value (source.height(), value);
-       }
-
-  if (horisontal)
-     return source.scaledToWidth (width, mode);
-  else
-      return source.scaledToHeight (height, mode);
-}
-
-
 QLineEdit* new_line_edit (QBoxLayout *layout, const QString &label, const QString &def_value)
 {
   QHBoxLayout *lt_h = new QHBoxLayout;
@@ -244,4 +215,26 @@ double input_double_value (const QString &caption, const QString &lbl,
      result = ed.text().toDouble();
 
   return result;
+}
+
+
+QAction* menu_add_item (QObject *obj,
+                      QMenu *menu,
+                      const QString &caption,
+                      const char *method,
+                      const QString &shortkt,
+                      const QString &iconpath
+                     )
+{
+  QAction *act = new QAction (caption, obj);
+
+  if (! shortkt.isEmpty())
+     act->setShortcut (shortkt);
+
+  if (! iconpath.isEmpty())
+     act->setIcon (QIcon (iconpath));
+
+  obj->connect (act, SIGNAL(triggered()), obj, method);
+  menu->addAction (act);
+  return act;
 }
