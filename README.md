@@ -1,2 +1,2 @@
 # wavylon
-minimalistic DAW
+minimalistic DAW :metal:
