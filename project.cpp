@@ -3735,7 +3735,7 @@ void CWAVTrackWidget::prepare_image()
   QPainter painter (&img);
   
   
-  img.fill (QColor("white")); 
+  img.fill (QColor ("white")); 
   
   //painter.setPen (cl_waveform_foreground);
     
@@ -3919,8 +3919,9 @@ void CWAVTrackWidget::prepare_image()
                
            clip_brush.setStyle  (Qt::Dense3Pattern);
                
+           painter.font().setPointSize (12);    
            painter.fillRect (r, clip_brush);
-           
+           painter.drawText (r, clip->name);
            
           } 
        }   
