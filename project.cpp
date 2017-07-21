@@ -76,6 +76,9 @@ size_t buffer_size_frames;
 size_t buffer_size_frames_multiplier;
 
 
+#define TRACKCONTROLW 0
+
+
 //CFloatBuffer *fb_stereo_rec;
 
 bool comp_clips (CClip *c1, CClip *c2)
@@ -3661,7 +3664,7 @@ void CWAVTrackWidget::mousePressEvent (QMouseEvent *event)
      {
   //найти клип под курсором, если найден - выделить, не найден - установить курсор 
   
-      size_t frame_at_pos = p_track->p_project->w_timeline->sb_timeline->value() + event->x();
+      size_t frame_at_pos = p_track->p_project->w_timeline->sb_timeline->value() + event->x() + TRACKCONTROLW;
       frame_at_pos *= p_track->p_project->w_timeline->frames_per_pixel();
       
       //bool add_to_sel = 
@@ -3727,11 +3730,10 @@ void CWAVTrackWidget::keyPressEvent (QKeyEvent *event)
 }  
 
 
-
 void CWAVTrackWidget::prepare_image()
 {
 
-  QImage img (width(), height(), QImage::Format_RGB32);
+  QImage img (width() - TRACKCONTROLW, height(), QImage::Format_RGB32);
   QPainter painter (&img);
   
   
@@ -3751,9 +3753,9 @@ void CWAVTrackWidget::prepare_image()
   int scale = p_track->p_project->w_timeline->frames_per_pixel();
   
   int window_start = p_track->p_project->w_timeline->sb_timeline->value();
-  int window_end = window_start + p_track->p_project->w_timeline->w_tracks->width();
+  int window_end = window_start + p_track->p_project->w_timeline->w_tracks->width() - TRACKCONTROLW;
   
-  int window_length_frames = p_track->p_project->w_timeline->w_tracks->width() * scale; 
+  int window_length_frames = (p_track->p_project->w_timeline->w_tracks->width() - TRACKCONTROLW) * scale; 
   
   //scaled = window_start * p_track->p_project->w_timeline->frames_per_pixel();
   
@@ -3903,7 +3905,7 @@ void CWAVTrackWidget::prepare_image()
            
            //образец: clip->file->fb->copy_to_pos (fbtrack, extoffs, clip_data_length, clip_insertion_pos);
            
-           int x = clip_insertion_pos / scale - window_start;
+           int x = TRACKCONTROLW + clip_insertion_pos / scale - window_start;
            int y = 0;
            int w = clip_data_length / scale;
            int h = height();
