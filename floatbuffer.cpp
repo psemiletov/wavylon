@@ -580,3 +580,5 @@ void CFloatBuffer::ringbuffer_set_length (size_t len)
   if (ringbuffer_length > length_frames)
      ringbuffer_length = length_frames;   
 }
+
+
