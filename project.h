@@ -240,6 +240,9 @@ public:
   CClip (CTrack *ptr);
 
   virtual void call_ui() = 0;
+  virtual void repeat_cloned (int n) = 0; //repeat clip N times after this
+  virtual void repeat_unique (int n) = 0; //repeat clip N times after this
+
 };
 
 
@@ -272,6 +275,9 @@ public:
   CWaveClip (CTrack *ptr);
   
   void call_ui();
+  void repeat_cloned (int n); //repeat clip N times after this
+  void repeat_unique (int n); //repeat clip N times after this
+
 }; 
 
 

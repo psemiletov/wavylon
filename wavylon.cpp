@@ -993,7 +993,11 @@ void CWavylon::createMenus()
 
   add_to_menu (menu_clip, tr ("Edit clip"), SLOT(prj_clip_props()));
   add_to_menu (menu_clip, tr ("Delete clip"), SLOT(prj_clip_del()));
-  
+
+  add_to_menu (menu_clip, tr ("Repead cloned"), SLOT(prj_clip_repeat_cloned()));
+    
+
+
 
   editMenu = menuBar()->addMenu (tr ("Edit"));
   editMenu->setTearOffEnabled (true);
@@ -3515,5 +3519,37 @@ void CWavylon::project_mixdown()
 
 }
 
+
+void CWavylon::prj_clip_repeat_cloned()
+{
+  if (! project_manager->project)
+     return;
+
+ // project_manager->project->table_clip_props();
+ 
+  CClip *clip = project_manager->project->w_timeline->get_selected_clip();
+  if (! clip)
+     return;
+
+
+ bool ok;
+ int n = QInputDialog::getInt(this, tr("Repeat cloning"),
+                                 tr("Times:"), 25, 0, 100, 1, &ok);
+ if (! ok)
+    return;
+
+ clip->repeat_cloned (n);
+
+//  project_manager->project->w_timeline->w_tracks->update();
+  /*
+  for (int i = 0; i < project_manager->project->tracks.size(); i++)
+     {
+      CTrackTableWidget *w = (CTrackTableWidget*)project_manager->project->tracks[i]->table_widget;
+      w->update_track_table();
+    }
+  
+  project_manager->project->refresh_song_length();
+*/
+}
 
 

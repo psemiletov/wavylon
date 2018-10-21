@@ -4116,3 +4116,41 @@ void CTimeLine::clip_selected_delete()
            }
       }
 }
+
+
+void CWaveClip::repeat_cloned (int n)
+{
+  for (int i = 1; i < (n + 1); i++)
+      {
+       qDebug() << "i = " << i;
+       CWaveClip *t = new CWaveClip (p_track);
+       t->filename = filename;
+
+       t->file = file;
+     
+       t->type = type;
+       t->name = name;
+       t->muted = muted;
+      // t->selected = selected;
+       t->playback_rate = t->playback_rate;
+       t->offset_frames = offset_frames; 
+       t->length_frames = length_frames; 
+       t->position_frames = position_frames + (i * length_frames);
+
+       t->p_track->clips.append (t);
+      }  
+
+   CTrackTableWidget *w = (CTrackTableWidget*)p_track->table_widget;
+   w->update_track_table();
+  
+  p_track->p_project->refresh_song_length();
+
+
+}
+
+
+void CWaveClip::repeat_unique (int n)
+{
+
+
+}

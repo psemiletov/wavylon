@@ -248,6 +248,7 @@ main window callbacks
 
   void prj_clip_props();
   void prj_clip_del();
+  void prj_clip_repeat_cloned();
 
 
   
