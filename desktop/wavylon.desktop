@@ -1,0 +1,13 @@
+[Desktop Entry]
+Name=Wavylon
+Terminal=false
+Type=Application
+Icon=wavylon
+Categories=AudioVideo;Audio;
+StartupNotify=false
+NoDisplay=false
+Keywords=sound editor;sound;editor;
+Comment=Simple audio editor with mixer and realtime effects
+Comment[ru]=Редактор звука с микшером и эффектами
+Comment[fr]=Éditeur audio simple avec un mixeur et des effets temps-réel
+Exec=wavylon %U
