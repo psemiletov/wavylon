@@ -552,7 +552,7 @@ CWavylon::CWavylon()
   ui_update = false;
   
   setAcceptDrops (true);
-  qApp->setWindowIcon (QIcon (":/icons/wavylon_icon.png"));
+  qApp->setWindowIcon (QIcon (":/icons/wavylon.png"));
   log->log (tr ("<b>Wavylon %1 @ http://semiletov.org/wavylon</b><br>by Peter Semiletov (tea@list.ru)<br>read the Manual under the <i>learn</i> tab!").arg (QString (VERSION_NUMBER)));
   
   idx_tab_edit_activate();

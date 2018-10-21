@@ -3920,8 +3920,13 @@ void CWAVTrackWidget::prepare_image()
                clip_brush.setColor ("green");
                
            clip_brush.setStyle  (Qt::Dense3Pattern);
-               
-           painter.font().setPointSize (12);    
+           
+           QFont f (painter.font());
+           f.setPointSize (12);    
+
+           painter.setFont (f);
+    
+//           painter.font().setPointSize (12);    
            painter.fillRect (r, clip_brush);
            painter.drawText (r, clip->name);
            
