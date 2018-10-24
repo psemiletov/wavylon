@@ -25,6 +25,7 @@
 #include <QPlainTextEdit>
 #include <QImage>
 #include <QPainter>
+#include <QHash>
 
 
 #include <QMessageBox>
@@ -53,7 +54,7 @@
 
 
 extern CFxList *avail_fx;
-
+extern QHash <QString, QString> global_palette;
 
 CTioHandler *tio_handler;
 CWAVPlayer *wav_player;
@@ -148,18 +149,13 @@ void CProject::project_new (const QString &fname)
   tab_project_ui->addTab (table_container, tr ("table"));
 }
 
-
   
 CProjectManager::CProjectManager()
 {
   project = 0;
-  
   tio_handler = new CTioHandler;
-
   wav_player = new CWAVPlayer;
-
  // fb_stereo_rec = 0;
-
 }
 
 
@@ -1790,8 +1786,6 @@ void CTrackTableWidget::keyPressEvent (QKeyEvent *event)
 }
 
 
-
-
 void CProject::list_tracks()
 {
   for (int i = 0; i < tracks.size(); i++)
@@ -1805,8 +1799,6 @@ void CProject::list_tracks()
           }
      }
 }
-
-
 
 
 CTrack::CTrack (CProject *prj, int nchannels)
@@ -1850,7 +1842,6 @@ CTrack::CTrack (CProject *prj, int nchannels)
   //qDebug() << "buffer_length_frames: " << buffer_length_frames;
  
 }
-
 
 
 void CProject::track_insert_new()
@@ -1906,8 +1897,6 @@ void CProject::track_delete (int track_number)
      CTrackTableWidget *p = (CTrackTableWidget*)w;
      
      }
- 
-
 }
 
 
@@ -2769,10 +2758,7 @@ void CProject::mixdown_to_default()
   sf_close  (file_mixdown_handle);
   
   qDebug() << "RENDERED";
- 
 }
-
-
 
 
 void CMasterTrack::update_strip()
@@ -3912,14 +3898,20 @@ void CWAVTrackWidget::prepare_image()
            
            QRect r (x, y, w, h);
            
-           QBrush clip_brush;
+          // QBrush clip_brush;
+
+           QColor cl_clip_color (hash_get_val (global_palette, "clip_color", "blue")); 
+           QColor cl_seleced_clip_color (hash_get_val (global_palette, "selected_clip_color", "green")); 
            
+/*
            if (! clip->selected)
-              clip_brush.setColor ("blue");
+              clip_brush.setColor (cl_clip_color);
            else    
-               clip_brush.setColor ("green");
-               
-           clip_brush.setStyle  (Qt::Dense3Pattern);
+               clip_brush.setColor (cl_seleced_clip_color);
+  */             
+           //clip_brush.setStyle  (Qt::Dense3Pattern);
+
+           
            
            QFont f (painter.font());
            f.setPointSize (12);    
@@ -3927,8 +3919,15 @@ void CWAVTrackWidget::prepare_image()
            painter.setFont (f);
     
 //           painter.font().setPointSize (12);    
-           painter.fillRect (r, clip_brush);
+   //        painter.fillRect (r, clip_brush);
+
+         if (clip->selected)
+            painter.fillRect (r, cl_seleced_clip_color);
+         else 
+            painter.fillRect (r, cl_clip_color);
+
            painter.drawText (r, clip->name);
+           painter.drawRect (r);
            
           } 
        }   
@@ -4067,8 +4066,6 @@ int CTimeLine::clip_select_at_pos (size_t frame, bool add_to_selection)
                
             } 
           } 
-           
-  
   
   w_tracks->update();
    
