@@ -3603,12 +3603,10 @@ void CWAVTrackWidget::paintEvent (QPaintEvent *event)
   
   //scaled = window_start * p_track->p_project->w_timeline->frames_per_pixel();
   
-  
   QPainter painter (this);
   
-  prepare_image();  
-  painter.drawImage (0, 0, image);
-  
+  prepare_image(); //а какая ширина image? проверить 
+  painter.drawImage (0, 0, image); //а где отрисовка с TRACKCONTROLW?
   
   if (p_track->focused)
       painter.setPen (Qt::red);
@@ -3617,7 +3615,6 @@ void CWAVTrackWidget::paintEvent (QPaintEvent *event)
   
   painter.drawRect (rect());
   painter.drawText (rect(), p_track->track_name);
-    
     
   event->accept();
 }
@@ -3721,8 +3718,7 @@ void CWAVTrackWidget::prepare_image()
 
   QImage img (width() - TRACKCONTROLW, height(), QImage::Format_RGB32);
   QPainter painter (&img);
-  
-  
+    
   img.fill (QColor ("white")); 
   
   //painter.setPen (cl_waveform_foreground);
