@@ -34,7 +34,7 @@ CFloatBuffer::CFloatBuffer (size_t len, size_t channels_count)
       } 
 }
 
-
+/*
 CFloatBuffer::CFloatBuffer (float *interleaved_buffer, size_t len)
 {
   head = 1;
@@ -51,7 +51,7 @@ CFloatBuffer::CFloatBuffer (float *interleaved_buffer, size_t len)
   sndfile_format = sndfile_format | SF_FORMAT_WAV | SF_FORMAT_FLOAT;  
   buffer[0] = interleaved_buffer;
 }
- 
+ */
  
 CFloatBuffer::CFloatBuffer (float *interleaved_buffer, size_t len, size_t channels_count)
 {
@@ -67,9 +67,16 @@ CFloatBuffer::CFloatBuffer (float *interleaved_buffer, size_t len, size_t channe
   samplerate = 0;
   sndfile_format = 0;
   sndfile_format = sndfile_format | SF_FORMAT_WAV | SF_FORMAT_FLOAT;  
+
+  if (channels == 1)
+     {
+      buffer[0] = interleaved_buffer;
+      return;
+     }
    
   if (channels > FLOAT_BUFFER_MAX_CHANNELS)
      channels = FLOAT_BUFFER_MAX_CHANNELS;
+
   
   for (size_t ch = 0; ch < channels; ch++)
       {
@@ -80,12 +87,14 @@ CFloatBuffer::CFloatBuffer (float *interleaved_buffer, size_t len, size_t channe
    size_t c = 0;   
       
    for (size_t i = 0; i < length_frames; i++)
-      {
-       for (size_t ch = 0; ch < channels; ch++) 
-           {
-            buffer[ch][i] = interleaved_buffer[c++];
-           }     
-      }
+       {
+        for (size_t ch = 0; ch < channels; ch++) 
+            {
+             buffer[ch][i] = interleaved_buffer[c++];
+            }     
+       }
+
+   delete [] interleaved_buffer;
 }
   
 
@@ -580,5 +589,3 @@ void CFloatBuffer::ringbuffer_set_length (size_t len)
   if (ringbuffer_length > length_frames)
      ringbuffer_length = length_frames;   
 }
-
-
